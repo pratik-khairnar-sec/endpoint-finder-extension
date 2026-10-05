@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Endpoint Hunter — API & Route Reconnaissance",
+  "version": "1.0.0",
+  "description": "Advanced client-side website crawler & endpoint discovery suite. Extracts API routes, hidden paths, and query parameters from JS & DOM with zero false positives.",
+  "author": "Pratik Khairnar <pratik-khairnar-sec@users.noreply.github.com>",
+  "homepage_url": "https://github.com/pratik-khairnar-sec/endpoint-finder-extension",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "downloads",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "https://api.telegram.org/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Endpoint Hunter",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; base-uri 'none'; frame-ancestors 'none'"
+  }
+}

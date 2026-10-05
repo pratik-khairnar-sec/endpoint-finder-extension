@@ -1,0 +1,38 @@
+name: Package & Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Package Extension ZIP
+        run: |
+          zip -r endpoint-hunter-${{ github.ref_name }}.zip \
+            manifest.json \
+            background.js \
+            content.js \
+            popup.html \
+            popup.js \
+            icon16.png \
+            icon48.png \
+            icon128.png \
+            LICENSE \
+            README.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: endpoint-hunter-${{ github.ref_name }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false

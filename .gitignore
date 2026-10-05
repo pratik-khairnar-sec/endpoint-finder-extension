@@ -1,0 +1,23 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor & IDE files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Release packages & Archives
+*.zip
+*.tar.gz
+*.crx
+
+# Logs & Diagnostics
+*.log
+npm-debug.log*
+
+# Node / Temporary
+node_modules/
+.temp/
