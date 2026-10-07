@@ -29,6 +29,10 @@
 
 ---
 
+<p align="center">
+  <img src="endpoint_finder_dashboard.png" alt="Endpoint Hunter Dashboard Preview" width="100%">
+</p>
+
 ## 📌 Overview
 
 **Endpoint Hunter** is an autonomous client-side reconnaissance and endpoint discovery suite built specifically for **bug bounty hunters**, **penetration testers**, and **application security engineers**.
