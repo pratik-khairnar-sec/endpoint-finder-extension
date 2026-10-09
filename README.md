@@ -13,11 +13,12 @@
   <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License MIT"></a>
   <a href="https://pratik-khairnar-sec.github.io/endpoint-finder-extension/"><img src="https://img.shields.io/badge/Landing%20Page-Live%20Demo-2dd4bf?logo=github&logoColor=white" alt="Live Demo"></a>
-  <a href="#-zero-false-positive-guarantee"><img src="https://img.shields.io/badge/False%20Positives-Zero%20Heuristic-brightgreen" alt="Zero False Positives"></a>
+  <a href="#-false-positive-suppression"><img src="https://img.shields.io/badge/Noise%20Suppression-AST%20Heuristics-brightgreen" alt="Noise Suppression"></a>
   <a href="#-privacy--zero-tracking"><img src="https://img.shields.io/badge/Privacy-100%25%20Offline-0284c7" alt="Zero Tracking"></a>
   <a href="https://pratik-khairnar-sec.medium.com/"><img src="https://img.shields.io/badge/Medium-Deep_Dive_Writeup-black.svg?logo=medium" alt="Medium"></a>
   <a href="https://x.com/PratikSec/status/2108584870293451190"><img src="https://img.shields.io/badge/X-Official_Thread-000000.svg?logo=x" alt="X Thread"></a>
   <a href="https://pratik-khairnar-sec.github.io/portfolio/"><img src="https://img.shields.io/badge/Live_Sandbox-Portfolio_Demo-38bdf8.svg?logo=shield" alt="Portfolio Sandbox"></a>
+  <a href="https://discord.com/users/1531910259080167494"><img src="https://img.shields.io/badge/Discord-pratik.khairnar.sec-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
 <p align="center">
@@ -48,7 +49,7 @@ Endpoint Hunter runs directly inside your browser as a **Manifest V3** service w
 
 ## ⚡ Key Features
 
-- **🛡️ Zero False-Positive Engine**: Built-in sanitization pipeline filters out XML/SVG namespaces (`w3.org`), closing HTML tag fragments (`/div>`, `/span>`), template literal expressions, library internals (`node_modules`), and invalid schemes.
+- **🛡️ AST Noise Suppression Pipeline**: Built-in sanitization pipeline filters out XML/SVG namespaces (`w3.org`), closing HTML tag fragments (`/div>`, `/span>`), template literal expressions, library internals (`node_modules`), and invalid schemes.
 - **⚡ Deep AST & Network Regex Mining**: Detects routes hidden in:
   - Standard `fetch()`, `axios.get/post/put/delete`, and jQuery `$.ajax` calls.
   - Native `XMLHttpRequest.open()` calls.
@@ -120,7 +121,7 @@ Typical regex scrapers dump massive amounts of junk data that waste researchers'
 
 ## 📊 Comparison Matrix
 
-| Reconnaissance Tool | Zero False-Positive Engine | In-Browser Recursive Crawling | Category Classification | Human Stealth Evasion | Offline Privacy |
+| Reconnaissance Tool | Heuristic Noise Suppression | In-Browser Recursive Crawling | Category Classification | Human Stealth Evasion | Offline Privacy |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Endpoint Hunter v1.0** | **YES (Heuristic)** | **YES (Autonomous)** | **YES (Color-coded)** | **YES (Delays & Jitter)** | **100% Offline** |
 | Burp JS Miner | NO | NO | NO | NO | Offline Proxy |
