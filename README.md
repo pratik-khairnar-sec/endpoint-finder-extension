@@ -2,73 +2,76 @@
   <img src="icon128.png" width="96" height="96" alt="Endpoint Hunter Logo">
 </p>
 
-<h1 align="center">Endpoint Hunter</h1>
+<h1 align="center">Endpoint Hunter v4.0</h1>
 
 <p align="center">
-  <b>Advanced Client-Side API & Route Reconnaissance Suite for Chrome (Manifest V3)</b>
+  <b>Enterprise API &amp; Route Reconnaissance Suite for Chromium Browsers (Manifest V3)</b><br>
+  <i>WebSocket/SSE Interceptor • Parameter Miner • SPA DOM Walker • HAR 1.2 Exporter • Mini-Repeater • GraphQL Introspector • Source-Map Unpacker • Secrets Harvester</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-1.0.0-38bdf8" alt="Version 1.0.0"></a>
-  <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License MIT"></a>
-  <a href="https://pratik-khairnar-sec.github.io/endpoint-finder-extension/"><img src="https://img.shields.io/badge/Landing%20Page-Live%20Demo-2dd4bf?logo=github&logoColor=white" alt="Live Demo"></a>
-  <a href="#-false-positive-suppression"><img src="https://img.shields.io/badge/Noise%20Suppression-AST%20Heuristics-brightgreen" alt="Noise Suppression"></a>
-  <a href="#-privacy--zero-tracking"><img src="https://img.shields.io/badge/Privacy-100%25%20Offline-0284c7" alt="Zero Tracking"></a>
-  <a href="https://pratik-khairnar-sec.medium.com/"><img src="https://img.shields.io/badge/Medium-Deep_Dive_Writeup-black.svg?logo=medium" alt="Medium"></a>
-  <a href="https://x.com/PratikSec/status/2108584870293451190"><img src="https://img.shields.io/badge/X-Official_Thread-000000.svg?logo=x" alt="X Thread"></a>
-  <a href="https://pratikkhairnarsec.web.app/"><img src="https://img.shields.io/badge/Live_Sandbox-Portfolio_Demo-38bdf8.svg?logo=shield" alt="Portfolio Sandbox"></a>
-  <a href="https://discord.com/users/1531910259080167494"><img src="https://img.shields.io/badge/Discord-pratik.khairnar.sec-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-4.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 4.0.0"></a>
+  <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"></a>
+  <a href="#-manual-trigger-policy-zero-auto-scanning"><img src="https://img.shields.io/badge/Auto--Start-DISABLED%20(Manual%20Only)-red?style=for-the-badge&logo=power" alt="Zero Auto-Scan"></a>
+  <a href="#-privacy--zero-tracking"><img src="https://img.shields.io/badge/Privacy-100%25%20Offline-0284c7?style=for-the-badge&logo=shield" alt="Zero Tracking"></a>
 </p>
 
 <p align="center">
-  <a href="https://pratik-khairnar-sec.github.io/endpoint-finder-extension/"><b>🌐 Official Landing Page &amp; Live Demo</b></a> •
+  <a href="#-overview"><b>Overview</b></a> •
   <a href="#-key-features"><b>Key Features</b></a> •
   <a href="#-architecture--pipeline"><b>Architecture</b></a> •
-  <a href="#-quick-start"><b>Quick Start</b></a> •
-  <a href="#-false-positive-suppression"><b>False Positive Suppression</b></a> •
+  <a href="#-reconnaissance-modules"><b>Recon Modules</b></a> •
+  <a href="#-false-positive-suppression"><b>Noise Suppression</b></a> •
   <a href="#-comparison-matrix"><b>Comparison</b></a> •
-  <a href="#-privacy--security"><b>Security</b></a>
+  <a href="#-quick-start"><b>Installation</b></a> •
+  <a href="#-security--ethics"><b>Ethics</b></a>
 </p>
 
 ---
 
 <p align="center">
-  <img src="endpoint_finder_dashboard.png" alt="Endpoint Hunter Dashboard Preview" width="100%">
+  <img src="endpoint_hunter_banner.png" alt="Endpoint Hunter Cyberpunk Dashboard" width="100%">
 </p>
+
+---
 
 ## 📌 Overview
 
-**Endpoint Hunter** is an autonomous client-side reconnaissance and endpoint discovery suite built specifically for **bug bounty hunters**, **penetration testers**, and **application security engineers**.
+**Endpoint Hunter** is an enterprise-grade client-side reconnaissance and API discovery suite built specifically for **bug bounty hunters**, **penetration testers**, and **application security engineers**.
 
-Modern single-page applications (React, Angular, Vue, Next.js, Nuxt) compile hundreds of server endpoints, internal microservices, administrative portals, and authentication handlers into large, minified JavaScript bundles. Manually finding these routes with grep or burp proxies is tedious and prone to severe false positives (e.g. XML namespaces, closing HTML tags, regex syntax).
+Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hundreds of internal REST routes, administrative gateways, hidden microservices, WebSocket channels, and GraphQL schemas into minified JavaScript bundles. Manually finding these with proxy interceptors or grep CLI tools is noisy, slow, and full of false positives (XML schemas, broken HTML tags, SVG paths).
 
-Endpoint Hunter runs directly inside your browser as a **Manifest V3** service worker, continuously inspecting the DOM, script tags, stylesheets, and asynchronous network invocations (`fetch`, `axios`, `$.ajax`, `XMLHttpRequest`). It utilizes an intelligent heuristic sanitizer to deliver **clean, high-confidence endpoints** categorized by sensitivity.
+**Endpoint Hunter v4.0** runs directly inside Chromium browsers under **Manifest V3**. It mines client-side scripts, intercepts bi-directional WebSocket and SSE communications, discovers hidden query parameters (Arjun-style), walks SPA DOM hierarchies to trigger dynamic endpoints, unbundles production source maps (`.map`), introspects live GraphQL schemas, and exports industry-standard **HAR 1.2** archives for Burp Suite and Caido.
+
+---
+
+## 🛑 Manual Trigger Policy (Zero Auto-Scanning)
+
+> [!IMPORTANT]
+> **Endpoint Hunter strictly enforces a ZERO auto-start policy.**
+> - **No Background Spying**: The extension will **never** automatically scan, crawl, or sniff when you open or switch browser tabs.
+> - **Explicit User Triggers**: Scans only begin when you explicitly click **`📡 SCAN (ALL)`**, **`🎯 SCAN CURRENT`**, or **`▶ START SNIFFER`**.
+> - **Instant Emergency Stop**: Clicking **`⏹ STOP`** immediately halts all crawlers, probes, fuzzers, and network interceptors in real time.
 
 ---
 
 ## ⚡ Key Features
 
-- **🛡️ AST Noise Suppression Pipeline**: Built-in sanitization pipeline filters out XML/SVG namespaces (`w3.org`), closing HTML tag fragments (`/div>`, `/span>`), template literal expressions, library internals (`node_modules`), and invalid schemes.
-- **⚡ Deep AST & Network Regex Mining**: Detects routes hidden in:
-  - Standard `fetch()`, `axios.get/post/put/delete`, and jQuery `$.ajax` calls.
-  - Native `XMLHttpRequest.open()` calls.
-  - DOM attributes: `href`, `src`, `action`, `formaction`, and `data-*` properties.
-  - Variable declarations (`baseURL`, `endpoint`, `api_url`).
-- **🕷️ Autonomous Multi-Depth Crawler**: Configurable crawler traverses pages recursively within the target domain and subdomains, parsing newly rendered scripts and DOM trees dynamically.
-- **🕵️ Human-Kinematic Stealth Engine**: Built-in evasion system uses randomized human-like delays (2-10s), smooth viewport scrolling, mouse movement simulation, and randomized User-Agent rotation to bypass bot detectors and rate limits.
-- **🏷️ Instant Attack-Surface Classification**:
-  - 🔴 **Admin & Internal**: `/admin/*`, `/internal/*`, `/metrics`, `/audit`, `/dashboard`.
-  - 🟣 **Authentication & OAuth**: `/oauth/*`, `/auth/*`, `/login`, `/token`, `/refresh`.
-  - 🔵 **API Gateways**: `/api/v1/` to `/api/v5/`, `/rest/*`, `/v1/*`.
-  - 🌸 **GraphQL Endpoints**: `/graphql`, `/graphiql`, `/gql`, query strings.
-  - 🟡 **Sensitive Query Parameters**: `token`, `secret`, `api_key`, `redirect_uri`, `sku`.
-- **📦 Multi-Format Export**:
-  - `TXT` — Clean deduplicated URLs ready for `ffuf`, `nuclei`, or `katana`.
-  - `JSON` — Full metadata structured report with categorization and discovery timestamps.
-  - `PDF` — Clean printable triage report.
-- **📤 Local Telegram Notifications**: Optional instant Telegram alert dispatch when new sensitive or administrative endpoints are uncovered (credentials stored locally only).
-- **🔒 100% Offline & Private**: Zero external analytics, zero tracking pixels, and zero remote servers. Everything executes inside your local browser context.
+- **🔌 Real-Time WebSocket & SSE Interceptor**: In-browser frame capture of `window.WebSocket` (`send`/`message`) and `window.EventSource` streams with direction markers and formatted payload previews.
+- **🔍 In-Browser Parameter Miner (Arjun-style)**: Active probe engine testing top 30 sensitive query parameters against response length and status code baselines, with 1-click injection into the Mini-Repeater.
+- **🤖 SPA Headless DOM Walker**: Safely fires synthetic user interactions across non-destructive navigation tabs, accordions, and dropdowns to trigger hidden lazy-loaded API calls.
+- **📦 Standard HTTP Archive (HAR 1.2) Exporter**: 1-click export of captured traffic in standard HAR 1.2 format for direct drag-and-drop import into **Burp Suite**, **Caido**, and **Postman**.
+- **🧪 In-Browser Mini-Repeater**: Burp Suite & Postman style HTTP request dispatcher. Edit HTTP method (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`, `OPTIONS`), headers, and body with live latency measurement and pretty-printed JSON response viewer.
+- **🌸 GraphQL Schema Introspector**: Sends standard `IntrospectionQuery` to `/graphql` endpoints, maps out all Queries, Mutations, Types, and arguments, and generates 1-click test templates for the Mini-Repeater.
+- **🗺️ Source-Map (`.map`) Route Unpacker**: Reconstructs original TypeScript and JavaScript source files from `.map` files, unearthing internal routes and API definitions stripped from production bundles.
+- **🔑 Client-Side Secrets & Token Harvester**: High-precision TruffleHog-style detection of leaked AWS keys, Google API keys, GitHub PATs, Stripe tokens, Slack/Discord webhooks, OpenAI keys, and JWTs.
+- **🕷️ Micro-Fuzzer & Route Dictionary**: Rapidly checks target base URLs for high-value unlinked assets: Swagger/OpenAPI docs, Spring Boot Actuators, Admin consoles, `.env` files, and `.git/HEAD` leaks with stealth delays.
+- **⚡ Passive Runtime Network Sniffer**: Main-world injected hook non-intrusively captures real fetch and XHR calls made as you interact with the target application.
+- **🎯 Live Status Prober & Security Triage**: Batch-probes discovered endpoints to tag `200 OK`, `401/403 Protected`, and `500 Error`. Heuristically flags query parameters prone to `SSRF`, `IDOR`, and `LFI`.
+- **🛠️ Chrome DevTools (F12) & Side Panel**: Open Endpoint Hunter in the Chrome Side Panel or as a native Developer Tools panel right next to Network and Console.
+- **📦 Multi-Format Exporters**: 1-click export to **Postman Collection v2.1**, **OpenAPI 3.0 Specification**, **Clean TXT** (for `ffuf`, `nuclei`, `katana`), **JSON**, and printable **PDF**.
+- **📢 Tri-Platform Webhook Alerts**: Configurable notifications dispatched to **Telegram**, **Discord**, or **Slack** when sensitive credentials or admin portals are uncovered.
 
 ---
 
@@ -77,105 +80,157 @@ Endpoint Hunter runs directly inside your browser as a **Manifest V3** service w
 ```mermaid
 flowchart TD
     subgraph Browser Context
-        A[Web Page / SPA] -->|DOM Mutation| B[content.js Scanner]
-        A -->|Script Tags & Bundles| C[Deep AST & Regex Parser]
-        B -->|Form Actions, Href, Data-*| D[Candidate Queue]
-        C -->|Fetch, Axios, XHR, Literals| D
+        Page[Target Web Application] -->|DOM & Scripts| CS[content.js Content Script]
+        Page -->|Fetch / XHR Intercept| INJ[injected.js Main-World Hook]
+        INJ -->|PostMessage Bridge| CS
     end
 
-    subgraph Service Worker [background.js]
-        D --> E{isFalsePositive Sanitizer}
-        E -->|Drop Noise: XML, SVGs, Tags| F[Suppressed Noise Sink]
-        E -->|Valid Route| G[Classification Engine]
-        G --> H[Admin / Auth / API / GraphQL]
-        G --> I[Sensitive Parameter Harvester]
-        H --> J[(Chrome Local Storage)]
-        I --> J
+    subgraph MV3 Service Worker [background.js]
+        CS -->|Raw Candidates| NOISE{isFalsePositive Sanitizer}
+        NOISE -->|Filter Noise: XML, SVGs, Tags| TRASH[Suppressed Noise Sink]
+        NOISE -->|Valid Routes| CLASSIFY[Route Classification Engine]
+        
+        CLASSIFY --> ENDPOINTS[Discovered Endpoints Store]
+        
+        SW_ENGINES[Recon Engines]
+        SW_ENGINES --> SEC[SecretsScanner - TruffleHog Regex]
+        SW_ENGINES --> SM[SourceMapUnpacker - .map Parser]
+        SW_ENGINES --> GQL[GraphQLIntrospector - Schema Engine]
+        SW_ENGINES --> REP[MiniRepeater - HTTP Dispatcher]
+        SW_ENGINES --> FUZZ[MicroFuzzer - Dictionary Engine]
+        SW_ENGINES --> PROBE[StatusProber - Live Status Checker]
     end
 
-    subgraph User Interface [popup.html & popup.js]
-        J --> K[Live Terminal Dashboard]
-        K --> L[Export: TXT / JSON / PDF]
-        K --> M[Optional: Telegram Alert]
+    subgraph User Interface Ecosystem
+        ENDPOINTS --> POPUP[popup.html Popup View]
+        ENDPOINTS --> SIDEPANEL[sidepanel.html Persistent Side Panel]
+        ENDPOINTS --> DEVTOOLS[devtools.html Chrome DevTools Panel F12]
+    end
+
+    subgraph Integration & Exporters
+        POPUP --> POSTMAN[📦 Postman v2.1 Collection]
+        POPUP --> OPENAPI[📜 OpenAPI 3.0 Spec]
+        POPUP --> CLI_TXT[📋 Clean TXT for ffuf / nuclei]
+        POPUP --> WEBHOOKS[📢 Telegram / Discord / Slack Alerts]
     end
 ```
+
+---
+
+## 🧰 Reconnaissance Modules
+
+### 1. In-Browser Mini-Repeater
+Test APIs immediately inside your workflow without switching to external software:
+- **Methods**: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`, `OPTIONS`.
+- **Headers**: Custom header input automatically merged with **Global Auth** (Bearer token, Session cookies, API keys).
+- **Body**: Raw or JSON request body payload editor.
+- **Inspector**: High-resolution latency timer (`ms`), response size (`bytes`), status badge (`200 OK`, `401 AUTH`, `500 ERR`), and 1-click response copy.
+
+### 2. GraphQL Schema Introspector
+Discover the entire backend API surface hidden behind a single `/graphql` endpoint:
+- Executes standard `IntrospectionQuery`.
+- Parses all available **Queries** and **Mutations** with argument names, types, and return values.
+- Synthesizes ready-to-test GraphQL query templates.
+- Features a direct **"Test in Repeater"** button for instant payload execution.
+
+### 3. Source-Map (`.map`) Route Unpacker
+Modern build tools (Webpack, Vite, Rollup) often deploy source maps alongside minified code:
+- Fetches and parses `.map` JSON data.
+- Extracts the original file tree (`sources`), identifying controllers, services, and API handlers.
+- Scans `sourcesContent` for internal API routes, query strings, and environment secrets that were stripped from the production bundle.
+
+### 4. Client-Side Secrets Harvester
+Scans all scripts, inline code, and DOM content using high-entropy regex patterns:
+- **AWS**: Access Key IDs (`AKIA...`).
+- **Google**: API Keys (`AIza...`).
+- **GitHub**: Personal Access Tokens (`ghp_...`, `github_pat_...`).
+- **Stripe**: Live & Test Secret Keys (`sk_live_...`, `pk_live_...`).
+- **Webhooks**: Discord & Slack webhook URLs.
+- **OpenAI**: API Keys (`sk-proj-...`, `sk-...`).
+- **JWT**: Web Tokens (`eyJ...`).
+- **Environment**: Exposed `NEXT_PUBLIC_*`, `REACT_APP_*`, `VITE_*` configuration keys.
+
+### 5. Micro-Fuzzer & Sensitive Dictionary
+Target an origin with high-confidence, non-destructive path checks:
+- **API Docs**: `/swagger.json`, `/openapi.json`, `/v2/api-docs`, `/api-docs`, `/swagger-ui.html`.
+- **Actuators**: `/actuator`, `/actuator/health`, `/actuator/env`, `/actuator/metrics`, `/health`, `/metrics`.
+- **Admin**: `/admin`, `/administrator`, `/console`, `/dashboard`, `/internal`, `/management`.
+- **Configs**: `/.env`, `/.git/HEAD`, `/config.json`, `/.well-known/security.txt`, `/robots.txt`.
+- **GraphQL**: `/graphql`, `/graphiql`, `/altair`, `/playground`, `/debug`.
 
 ---
 
 ## 🚫 False Positive Suppression
 
-Typical regex scrapers dump massive amounts of junk data that waste researchers' time. Endpoint Hunter actively discards non-actionable strings:
+Typical regex scrapers flood researchers with non-actionable junk strings. Endpoint Hunter actively discards invalid strings using AST heuristics:
 
-| Candidate Captured | Scraper Result | Endpoint Hunter Action | Reason for Suppression |
-| :--- | :--- | :--- | :--- |
-| `http://www.w3.org/2000/svg` | ❌ Flagged as URL | **DROPPED** | W3C / XML Schema Namespace |
+| Scraped Candidate | Standard Scraper | Endpoint Hunter v3.0 | Heuristic Reason |
+| :--- | :---: | :---: | :--- |
+| `http://www.w3.org/2000/svg` | ❌ Flagged as URL | **DROPPED** | W3C / SVG Schema Namespace |
 | `https://schemas.microsoft.com/...` | ❌ Flagged as URL | **DROPPED** | Microsoft XML metadata schema |
-| `/div>` or `/span>` | ❌ Flagged as Route | **DROPPED** | Broken HTML closing tag fragment |
+| `/div>` or `/span>` | ❌ Flagged as Route | **DROPPED** | HTML closing tag fragment |
 | `/${path}/endpoint` | ❌ Broken Route | **DROPPED** | Unresolved template literal |
-| `/node_modules/lodash/debounce.js` | ❌ Flagged as Route | **DROPPED** | Internal JavaScript vendor artifact |
+| `/node_modules/lodash/debounce.js` | ❌ Flagged as Route | **DROPPED** | Vendor bundle internal artifact |
 | `javascript:void(0)` | ❌ Flagged as Route | **DROPPED** | Pseudo-protocol URI |
-| `/api/v2/auth/token` | ✔️ Valid Endpoint | **KEPT (AUTH)** | High-value API route |
-| `/admin/users/export` | ✔️ Valid Endpoint | **KEPT (ADMIN)** | High-value administrative portal |
+| `/api/v2/auth/token` | ✔️ Valid Endpoint | **KEPT (AUTH)** | Actionable API route |
+| `/admin/users/export` | ✔️ Valid Endpoint | **KEPT (ADMIN)** | Actionable administrative route |
 
 ---
 
 ## 📊 Comparison Matrix
 
-| Reconnaissance Tool | Heuristic Noise Suppression | In-Browser Recursive Crawling | Category Classification | Human Stealth Evasion | Offline Privacy |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Endpoint Hunter v1.0** | **YES (Heuristic)** | **YES (Autonomous)** | **YES (Color-coded)** | **YES (Delays & Jitter)** | **100% Offline** |
-| Burp JS Miner | NO | NO | NO | NO | Offline Proxy |
-| LinkFinder (Python) | NO | NO | NO | N/A | Local CLI |
-| Standard MV2 Extensions | NO | NO | NO | NO | Often Unmaintained |
+| Capability | Endpoint Hunter v4.0 | Burp Suite JS Miner | Postman | Katana / LinkFinder |
+| :--- | :---: | :---: | :---: | :---: |
+| **In-Browser Execution** | **YES (MV3 Extension)** | Requires Desktop Proxy | Desktop App | CLI Only |
+| **Zero Auto-Scan Invariant** | **YES (100% Manual)** | Depends on scope | Manual | Manual |
+| **WebSocket & SSE Interceptor** | **YES (Live Frame Feed)** | Burp Proxy WS | Limited | NO |
+| **In-Browser Parameter Miner** | **YES (Differential)** | Param Miner Extension | NO | Arjun (CLI) |
+| **SPA Headless DOM Walker** | **YES (Safe Clicker)** | Burp Spider | NO | Katana Headless |
+| **Standard HAR 1.2 Export** | **YES (1-Click)** | XML Export | HAR Export | NO |
+| **In-Browser Mini-Repeater** | **YES (Built-In)** | Separate Tool (Repeater) | YES | NO |
+| **GraphQL Introspector** | **YES (Auto-Templates)** | Requires Plugin | Manual | NO |
+| **Source-Map (.map) Unpacker** | **YES (Tree + Routes)** | Basic | NO | Requires separate tool |
+| **TruffleHog Secrets Hunter** | **YES (Multi-Provider)** | Basic Secrets | NO | Separate CLI |
+| **Micro-Fuzzer Dictionary** | **YES (Non-destructive)** | Intrude-heavy | Collection Runner | CLI / ffuf |
+| **Chrome Side Panel & DevTools** | **YES (SidePanel + F12)** | NO | NO | NO |
+| **Postman / OpenAPI Export** | **YES (1-Click)** | Plugin dependent | Native | NO |
+| **100% Offline Privacy** | **YES (Zero Telemetry)** | Local | Cloud Account | Local |
 
 ---
 
 ## 🚀 Quick Start & Installation
 
-### Step 1: Clone or Download
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/pratik-khairnar-sec/endpoint-finder-extension.git
 ```
 
-Or download `endpoint-hunter-v1.0.0.zip` directly from [Latest Releases](https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases/latest).
+### Step 2: Enable Developer Mode in Chromium
 
-### Step 2: Enable Chrome Developer Mode
+1. Open **Google Chrome**, **Brave**, or **Microsoft Edge**.
+2. Navigate to `chrome://extensions` in your address bar.
+3. In the top-right corner, toggle **Developer mode** to `ON`.
 
-1. Open Google Chrome, Brave, Edge, or any Chromium browser.
-2. Navigate to `chrome://extensions`.
-3. In the top-right corner, enable the **Developer mode** toggle.
+### Step 3: Load Unpacked Extension
 
-### Step 3: Load the Extension
-
-1. Click **Load unpacked** in the top-left corner.
+1. Click the **Load unpacked** button in the top-left corner.
 2. Select the cloned `endpoint-finder-extension` folder.
-3. The Endpoint Hunter radar icon will appear in your browser extension toolbar!
+3. The **Endpoint Hunter** radar icon will appear in your browser toolbar!
 
----
+### Step 4: Access DevTools Panel or Side Panel
 
-## 🎮 Usage Guide
-
-### 1. Active Tab Scan
-- Click the Endpoint Hunter extension icon on any webpage.
-- Click **⚡ Scan Current Tab** to immediately extract all DOM elements, form targets, scripts, and inline endpoints on the active page.
-
-### 2. Full Recursive Crawl
-- Click **🕷️ Crawl Domain** to initiate deep crawling.
-- The crawler respects the target domain scope, discovers linked pages, extracts newly loaded bundles, and applies stealth delays between requests.
-
-### 3. Settings Configuration
-- **Max Pages & Depth**: Configure crawl bounds (default: unlimited / safe bounds).
-- **Stealth Mode**: Toggle 1-4s randomized delays and human-like viewport actions.
-- **Telegram Alerts**: Input your personal Bot Token and Chat ID to receive instant alerts when critical administrative endpoints are discovered.
+- **Chrome Side Panel**: Click the extension icon and click **`🪟 SIDE PANEL`** to keep the tool pinned side-by-side with your browsing.
+- **Chrome DevTools**: Press `F12` (or Right-Click -> *Inspect*), and switch to the **Endpoint Hunter** tab.
 
 ---
 
 ## 🔒 Security & Privacy Guarantees
 
-- **No Remote Telemetry**: The extension contains zero tracking analytics, Google Analytics, or third-party telemetry scripts.
-- **Content Security Policy**: Hardened Manifest V3 Content Security Policy prevents remote code execution (`script-src 'self'`).
-- **Safe Rendering**: All discovered URLs, paths, and DOM values are escaped before rendering in the UI to prevent DOM-based XSS attacks from scanned web targets.
+- **100% Local Execution**: All extraction, pattern matching, source map unpacking, and secret hunting occurs strictly in your browser.
+- **Zero Telemetry**: No Google Analytics, no tracking pixels, and no remote servers.
+- **Hardened CSP**: Extension pages enforce a strict Content Security Policy (`script-src 'self'`).
+- **Safe DOM Rendering**: All scraped data is escaped prior to insertion into the DOM to eliminate DOM-based XSS risks.
 
 ---
 
@@ -183,10 +238,14 @@ Or download `endpoint-hunter-v1.0.0.zip` directly from [Latest Releases](https:/
 
 **Pratik Khairnar**
 - GitHub: [@pratik-khairnar-sec](https://github.com/pratik-khairnar-sec)
-- Security Research & Open Source Reconnaissance Tools
+- Bug Bounty Hunting, Application Security & Open-Source Reconnaissance Tooling
 
 ---
 
-## 📄 License
+## 📄 License & Ethics
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+> [!CAUTION]
+> **Endpoint Hunter is designed for authorized security assessments, penetration testing, and bug bounty programs only.**  
+> Always obtain explicit authorization before probing, repeating, or fuzzing targets that you do not own.

@@ -1,16 +1,108 @@
 // ================================================================
-// 🔗 ENDPOINT HUNTER - CONTENT SCRIPT (ENHANCED & BUG-FREE)
+// 🔗 ENDPOINT HUNTER - CONTENT SCRIPT (v4.0 UPGRADE)
 // ================================================================
 // Author: Pratik Khairnar (https://github.com/pratik-khairnar-sec)
+// Handles DOM scraping, injected network/ws hook bridge & SPA Walker
 // ================================================================
 
 (function() {
   'use strict';
 
-  console.log('[ENDPOINT_HUNTER] 🔗 Content script loaded');
+  console.log('[ENDPOINT_HUNTER] 🔗 Content script loaded (v4.0)');
 
-  // Listen for messages from background service worker
+  // ================================================================
+  // 1️⃣ INJECT RUNTIME NETWORK & WS HOOK (MAIN WORLD)
+  // ================================================================
+  try {
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('injected.js');
+    script.onload = function() {
+      this.remove();
+    };
+    (document.head || document.documentElement).appendChild(script);
+  } catch (e) {
+    console.debug('[ENDPOINT_HUNTER] Could not inject network hook:', e);
+  }
+
+  // Forward network & websocket events from main world to background worker
+  window.addEventListener('message', (event) => {
+    if (event.source !== window || !event.data) return;
+
+    if (event.data.type === '__EH_NETWORK_EVENT__' && event.data.data) {
+      try {
+        chrome.runtime.sendMessage({
+          action: 'networkRequestCaptured',
+          data: event.data.data
+        });
+      } catch (e) {}
+    }
+
+    if (event.data.type === '__EH_WS_EVENT__' && event.data.data) {
+      try {
+        chrome.runtime.sendMessage({
+          action: 'wsFrameCaptured',
+          data: event.data.data
+        });
+      } catch (e) {}
+    }
+  });
+
+  // ================================================================
+  // 2️⃣ MESSAGE LISTENER FROM EXTENSION BACKGROUND / POPUP
+  // ================================================================
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Toggle sniffer active state
+    if (request.action === 'setSnifferState') {
+      window.postMessage({
+        type: '__EH_TOGGLE_SNIFFER__',
+        active: !!request.active
+      }, '*');
+      sendResponse({ success: true, active: !!request.active });
+      return true;
+    }
+
+    // SPA Headless DOM Walker (v4.0)
+    if (request.action === 'triggerDOMWalk') {
+      try {
+        const safeSelectors = [
+          'button:not([type="submit"]):not([data-danger]):not([data-delete]):not([class*="delete"]):not([class*="remove"])',
+          '[role="tab"]',
+          '[role="button"]:not([class*="delete"])',
+          '.tab',
+          '.nav-link',
+          '.accordion',
+          'summary',
+          '[data-toggle]',
+          '[aria-expanded="false"]'
+        ];
+
+        const elements = Array.from(document.querySelectorAll(safeSelectors.join(',')))
+          .filter(el => {
+            const rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).display !== 'none';
+          })
+          .slice(0, 35);
+
+        let clicked = 0;
+        const clickInterval = setInterval(() => {
+          if (clicked >= elements.length) {
+            clearInterval(clickInterval);
+            return;
+          }
+          const el = elements[clicked];
+          try {
+            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+          } catch (e) {}
+          clicked++;
+        }, 220);
+
+        sendResponse({ success: true, scheduledClicks: elements.length });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
+
     if (request.action === 'getPageData') {
       try {
         const data = {
@@ -92,7 +184,7 @@
           addCandidate(el.data || el.getAttribute('data'), 'object-data', 'object');
         });
 
-        // 6. Safe data-* attribute extraction (Fixes invalid [data-*] selector crash)
+        // 6. Safe data-* attribute extraction
         document.querySelectorAll('*').forEach(el => {
           if (el.attributes) {
             for (let i = 0; i < el.attributes.length; i++) {
@@ -116,5 +208,5 @@
     }
   });
 
-  console.log('[ENDPOINT_HUNTER] ✅ Content script ready');
+  console.log('[ENDPOINT_HUNTER] ✅ Content script v4.0 ready');
 })();
