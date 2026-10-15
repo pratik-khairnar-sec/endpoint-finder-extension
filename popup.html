@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔗 Endpoint Hunter v5.0</title>
+<title>🔗 Endpoint Hunter v6.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     🔗 ENDPOINT HUNTER v5.0 - ADVANCED OBSIDIAN CYBER RECON UI
+     🔗 ENDPOINT HUNTER v6.0 - ADVANCED OBSIDIAN CYBER RECON UI
      Author: Pratik Khairnar (https://github.com/pratik-khairnar-sec)
      ============================================================ */
   :root {
@@ -719,7 +719,7 @@
     <img src="icon48.png" alt="Endpoint Hunter Logo" class="brand-logo">
     <div class="brand-info">
       <div class="brand-title">Endpoint Hunter</div>
-      <div class="brand-sub">Enterprise Recon Suite • v5.0.0</div>
+      <div class="brand-sub">Enterprise Recon Suite • v6.0.0</div>
     </div>
   </div>
   <div class="header-actions">
@@ -796,6 +796,7 @@
     <button class="btn btn-export" id="pdfBtn" title="Export HTML / Print report">📄 PDF</button>
     <button class="btn btn-export" id="txtBtn" title="Export clean list for ffuf/nuclei">📋 TXT</button>
     <button class="btn btn-export" id="bashBtn" title="Export Executable Recon Bash Script (recon_audit.sh)">🐚 BASH</button>
+    <button class="btn btn-export" id="htmlReportBtn" title="Export Standalone Interactive HTML Recon Report (recon_report.html)">📄 HTML</button>
     <button class="btn btn-export" id="exportBtn" title="Export full JSON report">💾 JSON</button>
   </div>
 </div>
@@ -814,6 +815,8 @@
   <div class="tab-pill tab" data-tab="jwt">🔑 JWT</div>
   <div class="tab-pill tab" data-tab="swagger">📜 Swagger</div>
   <div class="tab-pill tab" data-tab="cloud">☁️ Cloud <span class="tab-chip" id="cloudBadge">0</span></div>
+  <div class="tab-pill tab" data-tab="advanced">⚡ Advanced</div>
+  <div class="tab-pill tab" data-tab="dorks">🕵️ Dorks</div>
   <div class="tab-pill tab" data-tab="paths">📁 Paths</div>
   <div class="tab-pill tab" data-tab="logs">📝 Logs</div>
   <div class="tab-pill tab" data-tab="settings">⚙️ Settings</div>
@@ -877,7 +880,7 @@
     </div>
   </section>
 
-  <!-- TAB 4: WEBSOCKET & SSE (v5.0) -->
+  <!-- TAB 4: WEBSOCKET & SSE (v6.0) -->
   <section class="tab-pane tab-content" id="wsTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid var(--border);">
       <span style="font-size:8.5px; color:var(--text-muted); font-weight:700;">Bi-Directional WebSocket & SSE Stream</span>
@@ -986,7 +989,7 @@
 
   <!-- TAB 9: DISCOVERED PATHS -->
   
-  <!-- TAB: SECURITY (v5.0) -->
+  <!-- TAB: SECURITY (v6.0) -->
   <section class="tab-pane tab-content" id="securityTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--accent-rose); text-transform:uppercase;">🛡️ Active Security Assessment</span>
@@ -1030,7 +1033,7 @@
     </div>
   </section>
 
-  <!-- TAB: JWT INSPECTOR (v5.0) -->
+  <!-- TAB: JWT INSPECTOR (v6.0) -->
   <section class="tab-pane tab-content" id="jwtTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🔑 Real-Time JWT Inspector & Alg:None Generator</span>
@@ -1057,7 +1060,7 @@
     </div>
   </section>
 
-  <!-- TAB: SWAGGER / OPENAPI (v5.0) -->
+  <!-- TAB: SWAGGER / OPENAPI (v6.0) -->
   <section class="tab-pane tab-content" id="swaggerTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">📜 Swagger 2.0 & OpenAPI 3.0 Live Importer</span>
@@ -1072,7 +1075,7 @@
     <div id="swaggerImportStatus" style="margin-top:6px; font-size:8px;"></div>
   </section>
 
-  <!-- TAB: CLOUD BUCKETS (v5.0) -->
+  <!-- TAB: CLOUD BUCKETS (v6.0) -->
   <section class="tab-pane tab-content" id="cloudTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-purple); text-transform:uppercase;">☁️ Discovered Cloud Storage Buckets</span>
@@ -1080,6 +1083,81 @@
     </div>
     <div id="cloudBucketList" style="max-height:220px; overflow-y:auto;">
       <div class="empty">No AWS S3, GCP, or Azure blob storage buckets discovered yet.<br>Buckets are automatically harvested from page source and API traffic.</div>
+    </div>
+  </section>
+  
+  
+  <!-- TAB: ADVANCED RECON ENGINES (v6.0) -->
+  <section class="tab-pane tab-content" id="advancedTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+      <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">⚡ Advanced Threat & Vulnerability Engines</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-sm-action" id="detectWafBtn" title="Fingerprint WAF / CDN signatures">🛡️ Detect WAF</button>
+        <button class="btn-sm-action" id="auditDomXssBtn" title="Audit DOM for source-to-sink taint">💥 DOM XSS</button>
+      </div>
+    </div>
+
+    <!-- Subdomain Takeover Box -->
+    <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:8px; margin-bottom:8px;">
+      <div style="font-size:8.5px; font-weight:800; color:var(--accent-rose); margin-bottom:4px;">🌐 Subdomain Takeover Analyzer</div>
+      <div style="display:grid; grid-template-columns: 1fr auto; gap:6px;">
+        <input type="text" id="takeoverTargetInput" class="search-input" placeholder="subdomain.target.com">
+        <button class="btn-sm-action" id="checkTakeoverBtn" style="color:var(--accent-rose);">CHECK TAKEOVER</button>
+      </div>
+      <div id="takeoverResultBox" style="margin-top:4px; font-size:8px;"></div>
+    </div>
+
+    <!-- Cache Poisoning & Open Redirect Grid -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+      <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px;">
+        <div style="font-size:8px; font-weight:800; color:var(--accent-purple); margin-bottom:4px;">🧪 Cache Poisoning</div>
+        <button class="btn-sm-action" id="probeCachePoisonBtn" style="width:100%; font-size:7.5px;">Probe Unkeyed Headers</button>
+        <div id="cachePoisonResult" style="margin-top:4px; font-size:7.5px; max-height:80px; overflow-y:auto;"></div>
+      </div>
+      <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px;">
+        <div style="font-size:8px; font-weight:800; color:var(--accent-amber); margin-bottom:4px;">↪️ Open Redirect</div>
+        <button class="btn-sm-action" id="probeOpenRedirectBtn" style="width:100%; font-size:7.5px;">Probe Redirect Params</button>
+        <div id="openRedirectResult" style="margin-top:4px; font-size:7.5px; max-height:80px; overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- OAuth Flow & Rate Limit Grid -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+      <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px;">
+        <div style="font-size:8px; font-weight:800; color:var(--cyan); margin-bottom:4px;">🔑 OAuth Flow Auditor</div>
+        <button class="btn-sm-action" id="auditOAuthBtn" style="width:100%; font-size:7.5px;">Audit OAuth URL</button>
+        <div id="oauthResultBox" style="margin-top:4px; font-size:7.5px; max-height:80px; overflow-y:auto;"></div>
+      </div>
+      <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px;">
+        <div style="font-size:8px; font-weight:800; color:var(--accent-emerald); margin-bottom:4px;">⏱️ Rate Limit Burst</div>
+        <button class="btn-sm-action" id="testRateLimitBtn" style="width:100%; font-size:7.5px;">Test Burst Concurrency</button>
+        <div id="rateLimitResultBox" style="margin-top:4px; font-size:7.5px; max-height:80px; overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- Active Findings Output Area -->
+    <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <span style="font-size:8px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">WAF & DOM XSS Output Stream</span>
+        <span id="advStatusBadge" class="badge">IDLE</span>
+      </div>
+      <div id="advOutputBox" style="font-size:8px; max-height:100px; overflow-y:auto; font-family:var(--font-mono);">
+        <div class="empty">Click any auditing button above to launch real-time assessment.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: RECON DORKS GENERATOR (v6.0) -->
+  <section class="tab-pane tab-content" id="dorksTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🕵️ Automated GitHub & Google Recon Dorks</span>
+      <button class="btn-sm-action" id="refreshDorksBtn" style="color:var(--accent-amber);">Generate Dorks</button>
+    </div>
+    <div style="margin-bottom:6px;">
+      <input type="text" id="dorkDomainInput" class="search-input" placeholder="target.com">
+    </div>
+    <div id="dorksList" style="max-height:260px; overflow-y:auto;">
+      <div class="empty">Click "Generate Dorks" to build high-impact reconnaissance queries for target domain.</div>
     </div>
   </section>
   

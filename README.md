@@ -2,15 +2,15 @@
   <img src="icon128.png" width="96" height="96" alt="Endpoint Hunter Logo">
 </p>
 
-<h1 align="center">Endpoint Hunter v5.0</h1>
+<h1 align="center">Endpoint Hunter v6.0</h1>
 
 <p align="center">
   <b>Enterprise API Reconnaissance &amp; Vulnerability Assessment Suite for Chromium Browsers (Manifest V3)</b><br>
-  <i>CORS Auditor • JWT Inspector • Security Headers • Swagger Importer • Verb Tamper Matrix • IDOR Sequencer • Cloud Buckets • Bash Exporter • WS/SSE Interceptor • Parameter Miner</i>
+  <i>Subdomain Takeover • DOM XSS Auditor • WAF Fingerprinter • Cache Poisoning • Open Redirect • OAuth Auditor • Dork Generator • Rate Limiter • Interactive HTML Report</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-5.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 5.0.0"></a>
+  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-6.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 6.0.0"></a>
   <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"></a>
   <a href="#-manual-trigger-policy-zero-auto-scanning"><img src="https://img.shields.io/badge/Auto--Start-DISABLED%20(Manual%20Only)-red?style=for-the-badge&logo=power" alt="Zero Auto-Scan"></a>
@@ -42,7 +42,7 @@
 
 Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hundreds of internal REST routes, administrative gateways, hidden microservices, WebSocket channels, and GraphQL schemas into minified JavaScript bundles. Manually finding these with proxy interceptors or grep CLI tools is noisy, slow, and full of false positives (XML schemas, broken HTML tags, SVG paths).
 
-**Endpoint Hunter v5.0** runs directly inside Chromium browsers under **Manifest V3**. It combines advanced endpoint discovery with active defensive auditing: CORS origin reflection probing, dual-pane JWT decoding with `alg: "none"` attack vectors, letter-grade HTTP security headers analysis (A+ to F), live Swagger/OpenAPI spec importing, client storage & unflagged cookie auditing, Luhn-verified PII leak detection, 7-verb tampering authentication bypass matrix, numeric IDOR sequencing, AWS/GCP/Azure bucket harvesting, and executable **Bash curl** script generation.
+**Endpoint Hunter v6.0** runs directly inside Chromium browsers under **Manifest V3**. It introduces full-spectrum threat assessment: Subdomain Takeover signature analysis (10 cloud providers), runtime DOM XSS source-to-sink taint tracking, multi-vendor WAF/CDN fingerprinter, unkeyed cache poisoning testing, open redirect parameter heuristics, OAuth 2.0 flow anti-CSRF auditing, automated GitHub/Google recon dork synthesis, concurrency rate limit analysis, and standalone interactive **HTML Recon Report** exports.
 
 ---
 
@@ -58,6 +58,16 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 
 ## ⚡ Key Features
 
+- **🌐 Subdomain Takeover Analyzer**: Checks external domains against dangling CNAME signatures for 10 cloud services (GitHub Pages, AWS S3, Heroku, Fastly, Shopify, Tumblr, WordPress, Ghost, Bitbucket, Surge.sh).
+- **💥 Client-Side DOM XSS Taint Auditor**: Scans inline scripts and reflected parameters for source-to-sink taint paths (`location.hash/search` into `innerHTML`, `document.write`, `eval`).
+- **🛡️ Multi-Vendor WAF Fingerprinter**: Identifies Cloudflare, AWS WAF, Akamai, Imperva Incapsula, Fastly, ModSecurity, F5 BIG-IP, and Sucuri from headers and error pages.
+- **🧪 Unkeyed Cache Poisoning Prober**: Injects unkeyed headers (`X-Forwarded-Host`, `X-Host`, `X-Original-URL`, `X-Rewrite-URL`) to detect dangerous cache reflections.
+- **↪️ Open Redirect Probe Engine**: Scans 18 common redirect parameters and checks for reflection in HTTP 301/302 `Location` headers.
+- **🔑 OAuth 2.0 & OpenID Flow Auditor**: Validates `state` parameter presence, warns against deprecated implicit grant (`token`), and flags plaintext HTTP redirect URIs.
+- **🌸 Advanced GraphQL Exploration**: Probes for array batching support (brute force & DoS risk) and error-based field suggestions to map schemas without introspection.
+- **🕵️ Automated Recon Dork Generator**: 1-click tailored GitHub and Google dorks searching for leaked `.env` files, RSA keys, internal routes, and database dumps.
+- **⏱️ Rate Limit Concurrency Burst Analyzer**: Executes rapid 6x burst requests to check `X-RateLimit-*`, `Retry-After`, and HTTP 429 throttling thresholds.
+- **📄 Standalone Interactive HTML Report**: Exports `recon_report.html` with Obsidian Cyberpunk styling, summary cards, and responsive data tables.
 - **🌐 Active CORS Origin Reflection Auditor**: Probes preflight OPTIONS and GET requests with arbitrary attacker origins (`https://evil-attacker.com`) and `null` origins, detecting dangerous `Access-Control-Allow-Credentials: true` combinations with instant reproducible `curl` commands.
 - **🔑 Dual-Pane JWT Inspector & Attack Generator**: Decodes header and payload in real time, audits for weak algorithms and expired tokens (`exp`), and generates ready-to-test `Alg: None` bypass tokens.
 - **📊 Security Headers Analyzer & Letter Grade**: Evaluates CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy, calculating a letter grade (A+ to F) and providing hardening recommendations.

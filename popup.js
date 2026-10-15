@@ -124,6 +124,17 @@ class PopupController {
     this.probeAllBucketsBtn = document.getElementById('probeAllBucketsBtn');
     this.verbTamperBtn = document.getElementById('verbTamperBtn');
     this.idorSeqBtn = document.getElementById('idorSeqBtn');
+    this.htmlReportBtn = document.getElementById('htmlReportBtn');
+    this.testGqlBatchBtn = document.getElementById('testGqlBatchBtn');
+    this.probeGqlFieldsBtn = document.getElementById('probeGqlFieldsBtn');
+    this.checkTakeoverBtn = document.getElementById('checkTakeoverBtn');
+    this.detectWafBtn = document.getElementById('detectWafBtn');
+    this.auditDomXssBtn = document.getElementById('auditDomXssBtn');
+    this.probeCachePoisonBtn = document.getElementById('probeCachePoisonBtn');
+    this.probeOpenRedirectBtn = document.getElementById('probeOpenRedirectBtn');
+    this.auditOAuthBtn = document.getElementById('auditOAuthBtn');
+    this.testRateLimitBtn = document.getElementById('testRateLimitBtn');
+    this.refreshDorksBtn = document.getElementById('refreshDorksBtn');
     this.stopFuzzerBtn = document.getElementById('stopFuzzerBtn');
     this.fuzzerPill = document.getElementById('fuzzerPill');
     this.fuzzerCountLabel = document.getElementById('fuzzerCountLabel');
@@ -190,6 +201,17 @@ class PopupController {
     if (this.probeAllBucketsBtn) this.probeAllBucketsBtn.addEventListener('click', () => this.probeAllBuckets());
     if (this.verbTamperBtn) this.verbTamperBtn.addEventListener('click', () => this.runVerbTamperMatrix());
     if (this.idorSeqBtn) this.idorSeqBtn.addEventListener('click', () => this.runIdorSequence());
+    if (this.htmlReportBtn) this.htmlReportBtn.addEventListener('click', () => this.exportHTMLReport());
+    if (this.testGqlBatchBtn) this.testGqlBatchBtn.addEventListener('click', () => this.testGraphQLBatch());
+    if (this.probeGqlFieldsBtn) this.probeGqlFieldsBtn.addEventListener('click', () => this.probeGraphQLFields());
+    if (this.checkTakeoverBtn) this.checkTakeoverBtn.addEventListener('click', () => this.checkSubdomainTakeover());
+    if (this.detectWafBtn) this.detectWafBtn.addEventListener('click', () => this.detectWAF());
+    if (this.auditDomXssBtn) this.auditDomXssBtn.addEventListener('click', () => this.auditDOMXSS());
+    if (this.probeCachePoisonBtn) this.probeCachePoisonBtn.addEventListener('click', () => this.probeCachePoisoning());
+    if (this.probeOpenRedirectBtn) this.probeOpenRedirectBtn.addEventListener('click', () => this.probeOpenRedirect());
+    if (this.auditOAuthBtn) this.auditOAuthBtn.addEventListener('click', () => this.auditOAuth());
+    if (this.testRateLimitBtn) this.testRateLimitBtn.addEventListener('click', () => this.testRateLimit());
+    if (this.refreshDorksBtn) this.refreshDorksBtn.addEventListener('click', () => this.renderDorks());
 
     // Bind Repeater
     if (this.repeaterSendBtn) this.repeaterSendBtn.addEventListener('click', () => this.sendRepeaterRequest());
@@ -259,6 +281,8 @@ class PopupController {
         if (tabId === 'jwt') this.initJwtTab();
         if (tabId === 'swagger') this.initSwaggerTab();
         if (tabId === 'cloud') this.loadCloudBuckets();
+        if (tabId === 'advanced') this.initAdvancedTab();
+        if (tabId === 'dorks') this.initDorksTab();
       });
     });
 
@@ -1838,6 +1862,323 @@ class PopupController {
     d.textContent = t;
     return d.innerHTML;
   }
+
+  // ================================================================
+  // 📄 V6.0 EXPORT INTERACTIVE HTML REPORT
+  // ================================================================
+  async exportHTMLReport() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportHTMLReport' });
+      this.log('📄 Exporting standalone Interactive HTML Recon Report (recon_report.html)...', 'info');
+    } catch (e) {
+      this.log('❌ HTML report export error: ' + e.message, 'error');
+    }
+  }
+
+  // ================================================================
+  // 🌸 V6.0 GRAPHQL BATCH & FIELD LEAKAGE CONTROLLERS
+  // ================================================================
+  async testGraphQLBatch() {
+    const url = (document.getElementById('graphqlUrlInput')?.value || '').trim();
+    const box = document.getElementById('graphqlSchemaBox');
+    if (!url) {
+      alert('Please specify a GraphQL endpoint URL.');
+      return;
+    }
+    if (box) box.innerHTML = '<div style="color:var(--accent-amber);">⏳ Probing GraphQL batch query execution support...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'testGraphQLBatching', url });
+      if (!res || !res.success || !res.result) throw new Error(res?.error || 'Batch test failed');
+      const r = res.result;
+      const col = r.batchSupported ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+      if (box) {
+        box.innerHTML = `
+          <div style="font-family:var(--font-mono); font-size:8px;">
+            <div style="font-weight:800; color:${col}; margin-bottom:4px;">[${r.severity}] ${r.message}</div>
+            <pre style="white-space:pre-wrap; background:var(--bg-elevated); padding:4px;">${JSON.stringify(r.response || {}, null, 2)}</pre>
+          </div>
+        `;
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async probeGraphQLFields() {
+    const url = (document.getElementById('graphqlUrlInput')?.value || '').trim();
+    const box = document.getElementById('graphqlSchemaBox');
+    if (!url) {
+      alert('Please specify a GraphQL endpoint URL.');
+      return;
+    }
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Probing GraphQL error suggestions for schema leaks...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'probeGraphQLFieldSuggestions', url });
+      if (!res || !res.success || !res.result) throw new Error(res?.error || 'Field suggestions probe failed');
+      const r = res.result;
+      if (box) {
+        box.innerHTML = `
+          <div style="font-family:var(--font-mono); font-size:8px;">
+            <div style="font-weight:800; color:var(--cyan); margin-bottom:4px;">🔍 GRAPHQL FIELD SUGGESTIONS LEAK</div>
+            <div style="color:var(--text-main); margin-bottom:4px;">Discovered suggestions: ${r.suggestions.length > 0 ? r.suggestions.map(s => '<span class="badge" style="color:var(--cyan);">' + s + '</span>').join(' ') : 'None detected'}</div>
+            <pre style="white-space:pre-wrap; background:var(--bg-elevated); padding:4px;">${JSON.stringify(r.rawErrors || [], null, 2)}</pre>
+          </div>
+        `;
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  // ================================================================
+  // ⚡ V6.0 ADVANCED AUDITORS CONTROLLER
+  // ================================================================
+  initAdvancedTab() {
+    const takeoverTarget = document.getElementById('takeoverTargetInput');
+    if (takeoverTarget && !takeoverTarget.value) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].url) {
+          try {
+            const u = new URL(tabs[0].url);
+            takeoverTarget.value = u.hostname;
+          } catch (e) {}
+        }
+      });
+    }
+  }
+
+  async checkSubdomainTakeover() {
+    const target = (document.getElementById('takeoverTargetInput')?.value || '').trim();
+    const box = document.getElementById('takeoverResultBox');
+    if (!target) {
+      alert('Please enter a target domain/subdomain.');
+      return;
+    }
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Inspecting DNS fingerprints for dangling pointers...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'checkSubdomainTakeover', target });
+      if (!res || !res.success || !res.result) throw new Error(res?.error || 'Takeover probe failed');
+      const r = res.result;
+      const col = r.isVulnerable ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+      if (box) {
+        box.innerHTML = `<div style="color:${col}; font-weight:700;">${r.message}</div>`;
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async detectWAF() {
+    const outBox = document.getElementById('advOutputBox');
+    const badge = document.getElementById('advStatusBadge');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl || !activeUrl.startsWith('http')) {
+        alert('Active tab is not an HTTP/HTTPS URL.');
+        return;
+      }
+
+      if (outBox) outBox.innerHTML = '<div style="color:var(--cyan);">⏳ Fingerprinting headers and server signatures...</div>';
+      if (badge) badge.textContent = 'DETECTING';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'detectWAF', url: activeUrl });
+        if (!res || !res.success || !res.result) throw new Error(res?.error || 'WAF detection failed');
+        const r = res.result;
+        if (badge) badge.textContent = r.detected ? 'WAF PRESENT' : 'NO WAF';
+
+        if (outBox) {
+          outBox.innerHTML = `
+            <div style="font-weight:800; color:var(--cyan); margin-bottom:4px;">🛡️ WAF DETECTION RESULT</div>
+            <div style="margin-bottom:2px;">Primary: <b style="color:var(--accent-amber);">${r.primaryWAF}</b></div>
+            ${r.wafs.map(w => `<div style="color:var(--text-muted); font-size:7.5px;">• ${w.name} (${w.type}) [Confidence: ${w.confidence}]</div>`).join('')}
+          `;
+        }
+      } catch (e) {
+        if (outBox) outBox.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async auditDOMXSS() {
+    const outBox = document.getElementById('advOutputBox');
+    const badge = document.getElementById('advStatusBadge');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs && tabs[0];
+      if (!activeTab || !activeTab.id) {
+        alert('No active web page.');
+        return;
+      }
+
+      if (outBox) outBox.innerHTML = '<div style="color:var(--cyan);">⏳ Auditing DOM sources & execution sinks...</div>';
+      if (badge) badge.textContent = 'AUDITING';
+
+      chrome.tabs.sendMessage(activeTab.id, { action: 'auditDOMXSS' }, (res) => {
+        if (chrome.runtime.lastError || !res || !res.success) {
+          if (outBox) outBox.innerHTML = '<div style="color:var(--accent-rose);">❌ DOM XSS audit failed. Refresh target tab.</div>';
+          return;
+        }
+
+        const items = res.findings || [];
+        if (badge) badge.textContent = items.length + ' SINKS';
+
+        if (items.length === 0) {
+          if (outBox) outBox.innerHTML = '<div style="color:var(--accent-emerald);">✅ No direct source-to-sink DOM XSS flows detected in inline scripts.</div>';
+          return;
+        }
+
+        if (outBox) {
+          outBox.innerHTML = items.map(f => `
+            <div style="background:var(--bg-glass); border-left:2px solid var(--accent-rose); padding:3px 5px; margin-bottom:3px;">
+              <div style="font-weight:700; color:var(--accent-rose);">💥 ${f.type}: ${f.source || f.param} ➔ ${f.sink || f.element}</div>
+              <div style="color:var(--text-muted); font-size:7px;">${f.location || ''} ${f.snippet || ''}</div>
+            </div>
+          `).join('');
+        }
+      });
+    });
+  }
+
+  async probeCachePoisoning() {
+    const box = document.getElementById('cachePoisonResult');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+      if (box) box.innerHTML = '<span style="color:var(--cyan);">Probing unkeyed headers...</span>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'probeCachePoisoning', url: activeUrl });
+        const r = res?.result;
+        if (r && box) {
+          if (r.isPoisonable) {
+            box.innerHTML = r.findings.map(f => `<div style="color:var(--accent-rose);">🚨 ${f.header} reflected!</div>`).join('');
+          } else {
+            box.innerHTML = '<span style="color:var(--accent-emerald);">✅ Safe: No unkeyed header reflection.</span>';
+          }
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<span style="color:var(--accent-rose);">Err</span>';
+      }
+    });
+  }
+
+  async probeOpenRedirect() {
+    const box = document.getElementById('openRedirectResult');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+      if (box) box.innerHTML = '<span style="color:var(--cyan);">Scanning parameters...</span>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'probeOpenRedirect', url: activeUrl });
+        const r = res?.result;
+        if (r && box) {
+          if (r.isVulnerable) {
+            box.innerHTML = r.findings.map(f => `<div style="color:var(--accent-rose); font-weight:700;">🚨 ${f.param} ➔ ${f.location}</div>`).join('');
+          } else {
+            box.innerHTML = '<span style="color:var(--text-muted);">' + (r.message || 'No redirect detected') + '</span>';
+          }
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<span style="color:var(--accent-rose);">Err</span>';
+      }
+    });
+  }
+
+  async auditOAuth() {
+    const box = document.getElementById('oauthResultBox');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+      if (box) box.innerHTML = '<span style="color:var(--cyan);">Checking OAuth spec...</span>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'auditOAuthFlow', url: activeUrl });
+        const r = res?.result;
+        if (r && box) {
+          if (!r.isOAuth) {
+            box.innerHTML = '<span style="color:var(--text-muted); font-size:7px;">Not an OAuth authorization URL</span>';
+          } else if (r.isVulnerable) {
+            box.innerHTML = r.issues.map(iss => `<div style="color:var(--accent-rose);">⚠️ ${iss.title}</div>`).join('');
+          } else {
+            box.innerHTML = '<span style="color:var(--accent-emerald);">✅ Valid OAuth state & secure flow</span>';
+          }
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<span style="color:var(--accent-rose);">Err</span>';
+      }
+    });
+  }
+
+  async testRateLimit() {
+    const box = document.getElementById('rateLimitResultBox');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+      if (box) box.innerHTML = '<span style="color:var(--cyan);">Sending burst (6x)...</span>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'analyzeRateLimit', url: activeUrl, burst: 6 });
+        const r = res?.result;
+        if (r && box) {
+          const col = r.rateLimited ? 'var(--accent-emerald)' : 'var(--accent-amber)';
+          box.innerHTML = `<div style="color:${col}; font-weight:700;">${r.verdict}</div>`;
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<span style="color:var(--accent-rose);">Err</span>';
+      }
+    });
+  }
+
+  // ================================================================
+  // 🕵️ V6.0 RECON DORKS CONTROLLER
+  // ================================================================
+  initDorksTab() {
+    const input = document.getElementById('dorkDomainInput');
+    if (input && !input.value) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].url) {
+          try {
+            const u = new URL(tabs[0].url);
+            input.value = u.hostname;
+            this.renderDorks();
+          } catch (e) {}
+        }
+      });
+    }
+  }
+
+  async renderDorks() {
+    const input = document.getElementById('dorkDomainInput');
+    const list = document.getElementById('dorksList');
+    const domain = (input?.value || 'target.com').trim();
+    if (!list) return;
+
+    list.innerHTML = '<div style="color:var(--cyan);">⏳ Generating high-impact recon dorks...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'generateGitDorks', domain });
+      const dorks = res?.dorks || [];
+
+      list.innerHTML = dorks.map(d => `
+        <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px; margin-bottom:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <span style="font-weight:700; color:var(--accent-amber); font-size:8px;">${d.category}</span>
+            <a href="${d.url}" target="_blank" class="btn-sm-action" style="text-decoration:none; display:inline-block; font-size:7px;">🔎 Search</a>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:7.5px; color:var(--text-muted); word-break:break-all;">${d.query}</div>
+        </div>
+      `).join('');
+    } catch (e) {
+      list.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
 
   // ================================================================
   // 🐚 V5.0 EXPORT BASH SCRIPT

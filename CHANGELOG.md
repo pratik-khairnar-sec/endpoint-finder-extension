@@ -5,6 +5,52 @@ All notable changes to **Endpoint Hunter** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-10-16
+
+### ⚡ Advanced Threat Assessment & Threat Intelligence Suite (v6.0)
+
+#### 🌸 Advanced GraphQL Exploration (`GraphQLAdvancedExploration`)
+- **Batch Query Amplification Tester**: Probes GraphQL endpoints with array batch queries to detect batching support, vulnerable to brute-force bypasses and DoS amplification.
+- **Field Suggestion Schema Mapper**: Leverages GraphQL engine error suggestions ("Did you mean ...?") to systematically uncover hidden queries, types, and internal fields when introspection is blocked.
+
+#### 🌐 Subdomain Takeover Analyzer (`SubdomainTakeoverAnalyzer`)
+- **Dangling CNAME Signature Fingerprinting**: Checks target domains against known signatures for 10 cloud hosting services (GitHub Pages, AWS S3, Heroku, Fastly, Shopify, Tumblr, WordPress, Ghost, Bitbucket, Surge.sh).
+- **Proactive Takeover Alerts**: Instantly alerts researchers to unclaimed cloud resources pointing to external domains.
+
+#### 💥 Client-Side DOM XSS Source-to-Sink Taint Auditor (`DOMXSSAuditor`)
+- **Runtime Taint Tracking**: Directly inspects inline scripts for dangerous data flows originating from browser sources (`location.hash`, `location.search`, `document.referrer`, `window.name`) terminating in unescaped execution sinks (`innerHTML`, `document.write`, `eval`, `setTimeout`).
+- **Reflected DOM Parameter Scanner**: Identifies URL query parameters immediately reflected into form inputs without sanitization.
+
+#### ↪️ Open Redirect Probe Engine (`OpenRedirectProbeEngine`)
+- **Heuristic Parameter Scanner**: Identifies 18 common open redirect parameters (`redirect`, `return_to`, `next`, `url`, `dest`, `checkout_url`, etc.).
+- **Manual Header Evaluation**: Probes endpoints with standard bypass vectors and verifies if the server returns HTTP 301/302 redirects with untrusted `Location` headers.
+
+#### 🔑 OAuth 2.0 / OpenID Connect Flow Auditor (`OAuthFlowAuditor`)
+- **Anti-CSRF State Validation**: Detects authorization requests missing the required `state` parameter, leaving users vulnerable to OAuth login CSRF.
+- **Implicit Grant Deprecation Flag**: Warns against insecure `response_type=token` configurations transmitting bearer tokens in URL fragments.
+- **Plaintext Transmission Warning**: Flags `redirect_uri` parameters using unencrypted HTTP protocols.
+
+#### 🛡️ Web Application Firewall Fingerprinter (`WAFDetector`)
+- **Multi-Vendor Signature Engine**: Analyzes response headers and block pages to identify Cloudflare, AWS WAF / CloudFront, Akamai Edge, Imperva Incapsula, Fastly, ModSecurity, F5 BIG-IP, and Sucuri.
+- **Confidence Scoring**: Delivers high-confidence attribution to help auditors tune their stealth profiles and evasion strategies.
+
+#### 🧪 Unkeyed Header Cache Poisoning Prober (`CachePoisoningProber`)
+- **Unkeyed Request Header Injection**: Tests `X-Forwarded-Host`, `X-Host`, `X-Original-URL`, `X-Rewrite-URL`, and `X-Forwarded-Scheme`.
+- **Reflection Detection**: Verifies if unkeyed inputs are mirrored in the response body or response headers, indicating a high probability of web cache poisoning.
+
+#### 🕵️ Automated GitHub & Google Recon Dorks Builder (`GitDorkGenerator`)
+- **Domain-Tailored Recon Queries**: Generates targeted dork links for GitHub and Google with 1-click execution.
+- **High-Impact Dork Library**: Covers `.env` files, leaked RSA private keys, internal `/api/v1/` routes, exposed database backups (`.sql`, `.bak`), and unlisted subdomains.
+
+#### ⏱️ Rate Limit & Concurrency Burst Analyzer (`RateLimitAnalyzer`)
+- **Rapid Concurrency Burst Probe**: Executes 6 rapid requests within a tight window to test server throttling response.
+- **Header Parsing**: Extracts and displays `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `Retry-After` headers.
+
+#### 📄 Standalone Interactive HTML Recon Report Exporter (`HTMLReportGenerator`)
+- **Self-Contained Executive Report**: Generates `recon_report.html` complete with modern Obsidian Cyberpunk styling, summary scorecards, responsive data tables, and zero external script dependencies.
+
+---
+
 ## [5.0.0] - 2026-10-16
 
 ### 🛡️ Enterprise Vulnerability Assessment & Cloud Recon Suite (v5.0)

@@ -299,7 +299,71 @@
       }
       return true;
     }
+    // ================================================================
+    // 💥 DOM XSS SOURCE-TO-SINK TAINT AUDITOR (v6.0)
+    // ================================================================
+    if (request.action === 'auditDOMXSS') {
+      try {
+        const findings = [];
+        const sources = [
+          'location.hash', 'location.search', 'location.href',
+          'document.URL', 'document.documentURI', 'document.referrer',
+          'window.name'
+        ];
+        const sinks = [
+          'innerHTML', 'outerHTML', 'document.write', 'document.writeln',
+          'eval(', 'setTimeout(', 'setInterval(', 'Function(', 'execScript('
+        ];
+
+        // 1. Audit Inline Scripts for Source-to-Sink Proximity
+        const scripts = Array.from(document.querySelectorAll('script:not([src])'));
+        scripts.forEach((s, idx) => {
+          const text = s.textContent || '';
+          sources.forEach(src => {
+            if (text.includes(src)) {
+              sinks.forEach(sink => {
+                if (text.includes(sink)) {
+                  findings.push({
+                    type: 'Source-to-Sink Taint',
+                    source: src,
+                    sink: sink,
+                    location: 'Inline Script #' + (idx + 1),
+                    snippet: text.substring(0, 100).trim() + '...',
+                    severity: 'HIGH'
+                  });
+                }
+              });
+            }
+          });
+        });
+
+        // 2. Check for Immediate URL Param Reflection in Forms / Inputs
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          for (const [key, val] of urlParams.entries()) {
+            if (val && val.length > 2) {
+              const matchedInput = document.querySelector('input[value*="' + CSS.escape(val) + '"]');
+              if (matchedInput) {
+                findings.push({
+                  type: 'Reflected URL Parameter in DOM',
+                  param: key,
+                  reflectedValue: val,
+                  element: matchedInput.tagName.toLowerCase(),
+                  severity: 'MEDIUM'
+                });
+              }
+            }
+          }
+        } catch (e) {}
+
+        sendResponse({ success: true, count: findings.length, findings });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
+
   });
 
-  console.log('[ENDPOINT_HUNTER] ✅ Content script v5.0 ready');
+  console.log('[ENDPOINT_HUNTER] ✅ Content script v6.0 ready');
 })();

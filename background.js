@@ -2185,6 +2185,468 @@ class BashCurlExporter {
 }
 
 
+
+// ================================================================
+// 🌸 GraphQLAdvancedExploration (v6.0) - BATCH & FIELD LEAKAGE AUDITOR
+// ================================================================
+class GraphQLAdvancedExploration {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+  }
+
+  generateBatchPayload(queries) {
+    return JSON.stringify(queries.map(q => ({ query: q })));
+  }
+
+  async testBatchSupport(url, headers = {}) {
+    const batchPayload = JSON.stringify([
+      { query: '{ __typename }' },
+      { query: '{ __typename }' }
+    ]);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: batchPayload
+      });
+      const json = await res.json();
+      const isBatchSupported = Array.isArray(json) && json.length === 2;
+      return {
+        url,
+        batchSupported: isBatchSupported,
+        severity: isBatchSupported ? 'HIGH' : 'INFO',
+        message: isBatchSupported 
+          ? 'GraphQL Batching is ENABLED! Vulnerable to batch brute-force and amplification DoS.' 
+          : 'Batch execution rejected by server.',
+        response: json
+      };
+    } catch (e) {
+      return { url, batchSupported: false, error: e.message };
+    }
+  }
+
+  async probeFieldSuggestions(url, invalidFieldName = 'nonExistentSecretFieldXYZ', headers = {}) {
+    const query = '{ ' + invalidFieldName + ' }';
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ query })
+      });
+      const json = await res.json();
+      let suggestions = [];
+      if (json.errors && Array.isArray(json.errors)) {
+        json.errors.forEach(err => {
+          const match = (err.message || '').match(/did you mean "([^"]+)"/i);
+          if (match) suggestions.push(match[1]);
+        });
+      }
+      return {
+        url,
+        suggestionsFound: suggestions.length > 0,
+        suggestions,
+        rawErrors: json.errors || []
+      };
+    } catch (e) {
+      return { url, suggestionsFound: false, error: e.message };
+    }
+  }
+}
+
+// ================================================================
+// 🌐 SubdomainTakeoverAnalyzer (v6.0) - DANGLING CNAME & POINTER AUDITOR
+// ================================================================
+class SubdomainTakeoverAnalyzer {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+    this.fingerprints = [
+      { service: 'GitHub Pages', pattern: "There isn't a GitHub Pages site here", cname: 'github.io' },
+      { service: 'AWS S3', pattern: "The specified bucket does not exist", cname: 's3.amazonaws.com' },
+      { service: 'Heroku', pattern: "No such app", cname: 'herokudns.com' },
+      { service: 'Fastly', pattern: "Fastly error: unknown domain", cname: 'fastly.net' },
+      { service: 'Shopify', pattern: "Sorry, this shop is currently unavailable", cname: 'myshopify.com' },
+      { service: 'Tumblr', pattern: "Whatever you were looking for doesn't seem to exist", cname: 'domains.tumblr.com' },
+      { service: 'WordPress.com', pattern: "Do you want to register", cname: 'wordpress.com' },
+      { service: 'Ghost', pattern: "The thing you were looking for is no longer here", cname: 'ghost.io' },
+      { service: 'Bitbucket', pattern: "Repository not found", cname: 'bitbucket.io' },
+      { service: 'Surge.sh', pattern: "project not found", cname: 'surge.sh' }
+    ];
+  }
+
+  async checkTakeover(domainOrUrl) {
+    let target = domainOrUrl.trim();
+    if (!target.startsWith('http://') && !target.startsWith('https://')) {
+      target = 'https://' + target;
+    }
+    try {
+      const res = await fetch(target, { method: 'GET' });
+      const text = await res.text();
+
+      for (const fp of this.fingerprints) {
+        if (text.includes(fp.pattern)) {
+          return {
+            target,
+            isVulnerable: true,
+            service: fp.service,
+            severity: 'CRITICAL',
+            matchedPattern: fp.pattern,
+            message: 'CRITICAL: Dangling DNS pointer detected for ' + fp.service + '! Potential Subdomain Takeover.'
+          };
+        }
+      }
+
+      return {
+        target,
+        isVulnerable: false,
+        severity: 'INFO',
+        message: 'No dangling service takeover signatures detected on endpoint.'
+      };
+    } catch (e) {
+      return { target, isVulnerable: false, error: e.message };
+    }
+  }
+}
+
+// ================================================================
+// ↪️ OpenRedirectProbeEngine (v6.0) - PARAMETER REDIRECT AUDITOR
+// ================================================================
+class OpenRedirectProbeEngine {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+    this.redirectParams = [
+      'redirect', 'redirect_uri', 'redirect_url', 'return', 'return_to',
+      'return_url', 'next', 'url', 'dest', 'destination', 'target',
+      'out', 'view', 'to', 'link', 'continue', 'checkout_url', 'r'
+    ];
+    this.payloads = [
+      'https://evil-attacker.com',
+      '//evil-attacker.com',
+      '/\\evil-attacker.com',
+      'https://target.com.evil-attacker.com'
+    ];
+  }
+
+  extractRedirectCandidates(urlStr) {
+    try {
+      const u = new URL(urlStr);
+      const candidates = [];
+      for (const [k, v] of u.searchParams.entries()) {
+        if (this.redirectParams.includes(k.toLowerCase()) || /redirect|return|next|url|dest/i.test(k)) {
+          candidates.push(k);
+        }
+      }
+      return candidates;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async probeUrl(urlStr) {
+    const candidates = this.extractRedirectCandidates(urlStr);
+    if (candidates.length === 0) {
+      return { url: urlStr, candidates: [], tested: false, message: 'No standard open redirect parameters in URL.' };
+    }
+
+    const findings = [];
+    for (const param of candidates) {
+      for (const payload of this.payloads) {
+        try {
+          const testUrl = new URL(urlStr);
+          testUrl.searchParams.set(param, payload);
+
+          const res = await fetch(testUrl.toString(), {
+            method: 'GET',
+            redirect: 'manual'
+          });
+
+          const location = res.headers.get('location') || '';
+          if (location.includes('evil-attacker.com')) {
+            findings.push({
+              param,
+              payload,
+              status: res.status,
+              location,
+              severity: 'HIGH',
+              message: 'Open Redirect confirmed on parameter "' + param + '"! Reflects: ' + location
+            });
+            break;
+          }
+        } catch (e) {}
+      }
+    }
+
+    return {
+      url: urlStr,
+      candidates,
+      tested: true,
+      isVulnerable: findings.length > 0,
+      findings
+    };
+  }
+}
+
+// ================================================================
+// 🔑 OAuthFlowAuditor (v6.0) - STATE & REDIRECT_URI AUDITOR
+// ================================================================
+class OAuthFlowAuditor {
+  auditOAuthUrl(urlStr) {
+    try {
+      const u = new URL(urlStr);
+      const isAuthEndpoint = /authorize|oauth\/auth|oauth2\/auth|login\/oauth/i.test(u.pathname);
+      if (!isAuthEndpoint) {
+        return { isOAuth: false, url: urlStr, message: 'Endpoint is not recognized as an OAuth authorization endpoint.' };
+      }
+
+      const issues = [];
+      const state = u.searchParams.get('state');
+      const responseType = u.searchParams.get('response_type');
+      const redirectUri = u.searchParams.get('redirect_uri');
+      const clientId = u.searchParams.get('client_id');
+      const scope = u.searchParams.get('scope');
+
+      if (!state) {
+        issues.push({
+          severity: 'HIGH',
+          title: 'Missing State Parameter (OAuth CSRF)',
+          details: 'The authorization request lacks a "state" anti-CSRF token. An attacker can bind their account to the victim session.'
+        });
+      }
+
+      if (responseType === 'token') {
+        issues.push({
+          severity: 'MEDIUM',
+          title: 'OAuth Implicit Grant Used (response_type=token)',
+          details: 'Implicit flow leaks access tokens via URL fragment (#access_token=...) into browser history and Referer headers. Authorization Code with PKCE is strongly recommended.'
+        });
+      }
+
+      if (redirectUri && (redirectUri.startsWith('http://') && !redirectUri.includes('localhost'))) {
+        issues.push({
+          severity: 'HIGH',
+          title: 'Insecure Plaintext Redirect URI (HTTP)',
+          details: 'redirect_uri transmits auth tokens/codes over plaintext HTTP!'
+        });
+      }
+
+      return {
+        isOAuth: true,
+        url: urlStr,
+        clientId,
+        responseType,
+        redirectUri,
+        scope,
+        hasState: !!state,
+        issues,
+        isVulnerable: issues.length > 0
+      };
+    } catch (e) {
+      return { isOAuth: false, error: e.message };
+    }
+  }
+}
+
+// ================================================================
+// 🛡️ WAFDetector (v6.0) - WEB APPLICATION FIREWALL FINGERPRINTER
+// ================================================================
+class WAFDetector {
+  detectWAF(headers = {}, responseBody = '') {
+    const hdrs = {};
+    for (const [k, v] of Object.entries(headers)) {
+      hdrs[k.toLowerCase()] = String(v).toLowerCase();
+    }
+    const body = (responseBody || '').toLowerCase();
+    const wafs = [];
+
+    if (hdrs['cf-ray'] || hdrs['server'] === 'cloudflare' || hdrs['cf-cache-status'] || body.includes('cloudflare ray id') || body.includes('attention required! | cloudflare')) {
+      wafs.push({ name: 'Cloudflare', type: 'CDN & WAF', confidence: 'HIGH' });
+    }
+
+    if (hdrs['x-amz-cf-id'] || hdrs['x-amzn-requestid'] || (body.includes('403 forbidden') && body.includes('cloudfront')) || body.includes('request blocked by aws waf')) {
+      wafs.push({ name: 'AWS CloudFront / AWS WAF', type: 'Cloud WAF', confidence: 'HIGH' });
+    }
+
+    if (hdrs['x-akamai-transformed'] || hdrs['akamai-origin-hop'] || body.includes('access denied - akamai') || body.includes('the requested url was not found on this server. - akamai')) {
+      wafs.push({ name: 'Akamai Edge', type: 'Enterprise WAF / CDN', confidence: 'HIGH' });
+    }
+
+    if (hdrs['x-iinfo'] || (hdrs['x-cdn'] && hdrs['x-cdn'].includes('incapsula')) || (body.includes('incident id') && body.includes('incapsula')) || body.includes('_incapsula_resource')) {
+      wafs.push({ name: 'Imperva Incapsula', type: 'Web Application Firewall', confidence: 'HIGH' });
+    }
+
+    if (hdrs['x-fastly-request-id'] || hdrs['fastly-debug-digest'] || body.includes('fastly error: unknown domain')) {
+      wafs.push({ name: 'Fastly Edge Cloud', type: 'CDN / WAF', confidence: 'HIGH' });
+    }
+
+    if (body.includes('mod_security') || body.includes('modsecurity') || (hdrs['server'] && hdrs['server'].includes('mod_security'))) {
+      wafs.push({ name: 'ModSecurity (OWASP CRS)', type: 'Open Source WAF', confidence: 'HIGH' });
+    }
+
+    if (hdrs['x-cnection'] || (hdrs['server'] && hdrs['server'].includes('big-ip')) || body.includes('the requested url was rejected. please consult with your administrator')) {
+      wafs.push({ name: 'F5 BIG-IP ASM', type: 'Enterprise Application Security', confidence: 'HIGH' });
+    }
+
+    if (hdrs['x-sucuri-id'] || hdrs['x-sucuri-cache'] || body.includes('access denied - sucuri website firewall')) {
+      wafs.push({ name: 'Sucuri CloudProxy', type: 'WAF', confidence: 'HIGH' });
+    }
+
+    return {
+      detected: wafs.length > 0,
+      wafs,
+      primaryWAF: wafs[0] ? wafs[0].name : 'No WAF Detected / Direct Origin'
+    };
+  }
+}
+
+// ================================================================
+// 🧪 CachePoisoningProber (v6.0) - UNKEYED HEADER CACHE POISONING AUDITOR
+// ================================================================
+class CachePoisoningProber {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+    this.unkeyedHeaders = [
+      { name: 'X-Forwarded-Host', testVal: 'poisoned-cache-test.evil-attacker.com' },
+      { name: 'X-Host', testVal: 'poisoned-cache-test.evil-attacker.com' },
+      { name: 'X-Original-URL', testVal: '/admin-console-poisoned' },
+      { name: 'X-Rewrite-URL', testVal: '/admin-console-poisoned' },
+      { name: 'X-Forwarded-Scheme', testVal: 'http' }
+    ];
+  }
+
+  async probeEndpoint(urlStr) {
+    const findings = [];
+    for (const item of this.unkeyedHeaders) {
+      try {
+        const headers = {};
+        headers[item.name] = item.testVal;
+        const res = await fetch(urlStr, { method: 'GET', headers });
+        const body = await res.text();
+        const reflectedInBody = body.includes(item.testVal);
+        let reflectedInHeader = null;
+
+        res.headers.forEach((val, key) => {
+          if (val.includes(item.testVal)) reflectedInHeader = key;
+        });
+
+        if (reflectedInBody || reflectedInHeader) {
+          findings.push({
+            header: item.name,
+            injectedValue: item.testVal,
+            status: res.status,
+            reflectedInBody,
+            reflectedInHeader,
+            severity: 'HIGH',
+            message: 'Unkeyed header "' + item.name + '" reflected in ' + (reflectedInHeader ? 'Header [' + reflectedInHeader + ']' : 'Response Body') + '! Potential Web Cache Poisoning.'
+          });
+        }
+      } catch (e) {}
+    }
+
+    return {
+      url: urlStr,
+      testedHeadersCount: this.unkeyedHeaders.length,
+      isPoisonable: findings.length > 0,
+      findings
+    };
+  }
+}
+
+// ================================================================
+// 🔍 GitDorkGenerator (v6.0) - AUTOMATED RECON DORKS BUILDER
+// ================================================================
+class GitDorkGenerator {
+  generateDorks(domain) {
+    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+    return [
+      { category: 'GitHub Env & Secrets', query: '"' + cleanDomain + '" filename:.env', url: 'https://github.com/search?type=code&q=%22' + encodeURIComponent(cleanDomain) + '%22+filename%3A.env' },
+      { category: 'GitHub Passwords & Secrets', query: '"' + cleanDomain + '" password OR secret OR api_key', url: 'https://github.com/search?type=code&q=%22' + encodeURIComponent(cleanDomain) + '%22+password+OR+secret+OR+api_key' },
+      { category: 'GitHub Internal Endpoints', query: '"' + cleanDomain + '" /api/v1/ OR /admin/ OR /auth/', url: 'https://github.com/search?type=code&q=%22' + encodeURIComponent(cleanDomain) + '%22+%2Fapi%2Fv1%2F+OR+%2Fadmin%2F' },
+      { category: 'GitHub Private Keys', query: '"' + cleanDomain + '" "-----BEGIN RSA PRIVATE KEY-----"', url: 'https://github.com/search?type=code&q=%22' + encodeURIComponent(cleanDomain) + '%22+%22BEGIN+RSA+PRIVATE+KEY%22' },
+      { category: 'Google Sensitive Files', query: 'site:' + cleanDomain + ' ext:xml OR ext:conf OR ext:cnf OR ext:reg OR ext:inf OR ext:rdp OR ext:sql OR ext:bak', url: 'https://www.google.com/search?q=site%3A' + encodeURIComponent(cleanDomain) + '+ext%3Axml+OR+ext%3Aconf+OR+ext%3Acnf+OR+ext%3Areg+OR+ext%3Ainf+OR+ext%3Ardp+OR+ext%3Asql+OR+ext%3Abak' },
+      { category: 'Google Exposed Documents', query: 'site:' + cleanDomain + ' ext:doc OR ext:docx OR ext:pdf OR ext:xls OR ext:xlsx OR ext:ppt OR ext:pptx', url: 'https://www.google.com/search?q=site%3A' + encodeURIComponent(cleanDomain) + '+ext%3Adoc+OR+ext%3Adocx+OR+ext%3Apdf+OR+ext%3Axls+OR+ext%3Axlsx' },
+      { category: 'Google Subdomains & Gateways', query: 'site:*.' + cleanDomain + ' -www.' + cleanDomain, url: 'https://www.google.com/search?q=site%3A*.' + encodeURIComponent(cleanDomain) + '+-www.' + encodeURIComponent(cleanDomain) + '' },
+      { category: 'Google Directory Listing', query: 'site:' + cleanDomain + ' intitle:"index of" OR "parent directory"', url: 'https://www.google.com/search?q=site%3A' + encodeURIComponent(cleanDomain) + '+intitle%3A%22index+of%22+OR+%22parent+directory%22' }
+    ];
+  }
+}
+
+// ================================================================
+// ⏱️ RateLimitAnalyzer (v6.0) - CONCURRENCY BURST & LIMIT AUDITOR
+// ================================================================
+class RateLimitAnalyzer {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+  }
+
+  async testRateLimit(urlStr, burstCount = 6, headers = {}) {
+    const results = [];
+
+    for (let i = 0; i < burstCount; i++) {
+      try {
+        const res = await fetch(urlStr, { method: 'GET', headers });
+        const rateLimitHeader = res.headers.get('x-ratelimit-remaining') || res.headers.get('ratelimit-remaining') || null;
+        const retryAfter = res.headers.get('retry-after') || null;
+
+        results.push({
+          iteration: i + 1,
+          status: res.status,
+          rateLimitRemaining: rateLimitHeader,
+          retryAfter
+        });
+      } catch (e) {
+        results.push({ iteration: i + 1, status: 0, error: e.message });
+      }
+      await new Promise(r => setTimeout(r, 60));
+    }
+
+    const hit429 = results.some(r => r.status === 429);
+    const hasRateLimitHeaders = results.some(r => r.rateLimitRemaining !== null);
+
+    return {
+      url: urlStr,
+      burstTested: burstCount,
+      rateLimited: hit429,
+      hasRateLimitHeaders,
+      severity: hit429 || hasRateLimitHeaders ? 'INFO' : 'LOW',
+      verdict: hit429 
+        ? 'Rate limiting is ACTIVE (HTTP 429 Too Many Requests encountered).' 
+        : hasRateLimitHeaders 
+          ? 'Rate limiting headers detected on server.' 
+          : 'No rate limiting headers or throttling observed during rapid burst test (Check brute force protection).',
+      results
+    };
+  }
+}
+
+// ================================================================
+// 📄 HTMLReportGenerator (v6.0) - STANDALONE RECON HTML REPORT GENERATOR
+// ================================================================
+class HTMLReportGenerator {
+  generateReport(hunterData) {
+    const domain = hunterData.baseDomain || 'target.com';
+    const timestamp = new Date().toUTCString();
+    const endpoints = hunterData.discoveredEndpoints || [];
+    const secrets = hunterData.discoveredSecrets || [];
+    const pii = hunterData.discoveredPII || [];
+    const cloudBuckets = Array.from(hunterData.cloudBucketCollector?.buckets?.values() || []);
+
+    const endpointRows = endpoints.map(ep => {
+      const col = ep.method === 'GET' ? '#38bdf8' : ep.method === 'POST' ? '#34d399' : '#fbbf24';
+      return '<tr><td><b style="color:' + col + '">' + (ep.method || 'GET') + '</b></td><td style="font-family:monospace; word-break:break-all;">' + ep.url + '</td><td><span class="badge" style="background:rgba(255,255,255,0.06);">' + (ep.type || 'api') + '</span></td><td><span class="badge" style="background:' + (ep.statusCode === 200 ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.05)') + '; color:' + (ep.statusCode === 200 ? '#34d399' : '#94a3b8') + '">' + (ep.statusCode || '--') + '</span></td><td style="color:#94a3b8; font-size:10px;">' + (ep.source || 'crawl') + '</td></tr>';
+    }).join('');
+
+    const secretRows = secrets.map(s => {
+      return '<tr><td><b>' + s.type + '</b></td><td style="font-family:monospace;">' + (s.preview || s.value) + '</td><td><span class="badge" style="background:rgba(244,63,94,0.2); color:#f43f5e;">HIGH</span></td><td style="font-size:10px; color:#94a3b8;">' + (s.source || 'script') + '</td></tr>';
+    }).join('');
+
+    const bucketRows = cloudBuckets.map(b => {
+      return '<tr><td><span class="badge" style="background:rgba(52,211,153,0.15); color:#34d399;">' + b.provider + '</span></td><td style="font-family:monospace;"><b>' + b.name + '</b></td><td style="font-family:monospace;"><a href="' + b.url + '" target="_blank" style="color:#38bdf8;">' + b.url + '</a></td><td><b>' + b.status + '</b></td></tr>';
+    }).join('');
+
+    return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>Endpoint Hunter Recon Report — ' + domain + '</title>\n<style>\n  :root { --bg: #060913; --card: #0d162a; --border: rgba(56,189,248,0.2); --text: #e2e8f0; --cyan: #38bdf8; --rose: #f43f5e; --amber: #fbbf24; --emerald: #34d399; }\n  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; }\n  .header { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }\n  .badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; font-family: monospace; }\n  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }\n  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }\n  .stat-num { font-size: 28px; font-weight: 800; color: var(--cyan); margin-top: 4px; }\n  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }\n  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }\n  th { background: rgba(56,189,248,0.1); color: var(--cyan); font-weight: 700; }\n  tr:hover { background: rgba(255,255,255,0.02); }\n  .section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }\n</style>\n</head>\n<body>\n<div class="header">\n  <div>\n    <h1 style="margin:0; font-size:24px; color:var(--cyan);">🎯 ENDPOINT HUNTER RECON REPORT</h1>\n    <div style="font-size:12px; color:#94a3b8; margin-top:4px;">Target: <b>' + domain + '</b> | Generated: ' + timestamp + '</div>\n  </div>\n  <span class="badge" style="background:rgba(56,189,248,0.2); color:var(--cyan); font-size:14px;">v6.0.0</span>\n</div>\n\n<div class="grid">\n  <div class="stat-card"><div>DISCOVERED ENDPOINTS</div><div class="stat-num">' + endpoints.length + '</div></div>\n  <div class="stat-card"><div>LEAKED SECRETS</div><div class="stat-num" style="color:var(--rose);">' + secrets.length + '</div></div>\n  <div class="stat-card"><div>PII LEAKS</div><div class="stat-num" style="color:var(--amber);">' + pii.length + '</div></div>\n  <div class="stat-card"><div>CLOUD BUCKETS</div><div class="stat-num" style="color:var(--emerald);">' + cloudBuckets.length + '</div></div>\n</div>\n\n<div class="section">\n  <h2 style="margin:0 0 12px 0; font-size:16px; color:var(--cyan);">🔗 Discovered API Endpoints & Routes (' + endpoints.length + ')</h2>\n  <table>\n    <thead><tr><th>Method</th><th>URL</th><th>Category</th><th>Status</th><th>Source</th></tr></thead>\n    <tbody>' + endpointRows + '</tbody>\n  </table>\n</div>\n\n' + (secrets.length > 0 ? '<div class="section"><h2 style="margin:0 0 12px 0; font-size:16px; color:var(--rose);">🔑 Discovered Credentials & API Tokens (' + secrets.length + ')</h2><table><thead><tr><th>Type</th><th>Preview</th><th>Severity</th><th>Source</th></tr></thead><tbody>' + secretRows + '</tbody></table></div>' : '') + '\n\n' + (cloudBuckets.length > 0 ? '<div class="section"><h2 style="margin:0 0 12px 0; font-size:16px; color:var(--emerald);">☁️ Cloud Storage Buckets (' + cloudBuckets.length + ')</h2><table><thead><tr><th>Provider</th><th>Bucket Name</th><th>URL</th><th>Status</th></tr></thead><tbody>' + bucketRows + '</tbody></table></div>' : '') + '\n\n<div style="text-align:center; color:#64748b; font-size:11px; margin-top:32px;">Report generated automatically by <b>Endpoint Hunter v6.0</b> • Authorized Cybersecurity Testing Only</div>\n</body>\n</html>';
+  }
+}
+
+
 const ENDPOINT_PATTERNS = {
   api: [
     '/api/', '/v1/', '/v2/', '/v3/', '/v4/', '/v5/',
@@ -2337,6 +2799,15 @@ class CrawlEngine {
     this.idorSequencer = new IDORSequencer(this.stealthEngine);
     this.cloudBucketCollector = new CloudBucketCollector(this.stealthEngine);
     this.bashCurlExporter = new BashCurlExporter();
+    this.graphqlAdvanced = new GraphQLAdvancedExploration(this.stealthEngine);
+    this.takeoverAnalyzer = new SubdomainTakeoverAnalyzer(this.stealthEngine);
+    this.openRedirectEngine = new OpenRedirectProbeEngine(this.stealthEngine);
+    this.oauthAuditor = new OAuthFlowAuditor();
+    this.wafDetector = new WAFDetector();
+    this.cachePoisoner = new CachePoisoningProber(this.stealthEngine);
+    this.gitDorkGenerator = new GitDorkGenerator();
+    this.rateLimitAnalyzer = new RateLimitAnalyzer(this.stealthEngine);
+    this.htmlReportGenerator = new HTMLReportGenerator();
     this.discoveredPII = [];
     this.wsFrames = [];
     this.unpackedSourceMaps = new Map();
@@ -3182,6 +3653,25 @@ class CrawlEngine {
   // ================================================================
   // 📦 HAR (HTTP ARCHIVE 1.2) EXPORT (v4.0)
   // ================================================================
+
+  exportHTMLReport() {
+    try {
+      const html = this.htmlReportGenerator.generateReport(this);
+      const blob = new Blob([html], { type: 'text/html' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        chrome.downloads.download({
+          url: reader.result,
+          filename: 'recon_report_' + (this.baseDomain || 'endpoints').replace(/[^a-zA-Z0-9_-]/g, '_') + '.html',
+          saveAs: true
+        });
+      };
+      reader.readAsDataURL(blob);
+      this.addLog('📄 Exported standalone Interactive HTML Recon Report (recon_report.html)', 'success');
+    } catch (e) {
+      this.addLog('❌ HTML Report Export Error: ' + e.message, 'error');
+    }
+  }
 
   exportBashScript() {
     try {
