@@ -144,6 +144,13 @@ class PopupController {
     this.saveSnapshotBtn = document.getElementById('saveSnapshotBtn');
     this.computeDiffBtn = document.getElementById('computeDiffBtn');
     this.refreshSsrfBtn = document.getElementById('refreshSsrfBtn');
+    this.burpXmlBtn = document.getElementById('burpXmlBtn');
+    this.execSummaryBtn = document.getElementById('execSummaryBtn');
+    this.runRegexBtn = document.getElementById('runRegexBtn');
+    this.calcEntropyBtn = document.getElementById('calcEntropyBtn');
+    this.auditCookiesBtn = document.getElementById('auditCookiesBtn');
+    this.parseRobotsBtn = document.getElementById('parseRobotsBtn');
+    this.evalCspBtn = document.getElementById('evalCspBtn');
     this.stopFuzzerBtn = document.getElementById('stopFuzzerBtn');
     this.fuzzerPill = document.getElementById('fuzzerPill');
     this.fuzzerCountLabel = document.getElementById('fuzzerCountLabel');
@@ -230,6 +237,13 @@ class PopupController {
     if (this.saveSnapshotBtn) this.saveSnapshotBtn.addEventListener('click', () => this.saveSnapshot());
     if (this.computeDiffBtn) this.computeDiffBtn.addEventListener('click', () => this.computeDiff());
     if (this.refreshSsrfBtn) this.refreshSsrfBtn.addEventListener('click', () => this.renderSSRFCandidates());
+    if (this.burpXmlBtn) this.burpXmlBtn.addEventListener('click', () => this.exportBurpXml());
+    if (this.execSummaryBtn) this.execSummaryBtn.addEventListener('click', () => this.exportExecutiveSummary());
+    if (this.runRegexBtn) this.runRegexBtn.addEventListener('click', () => this.runCustomRegex());
+    if (this.calcEntropyBtn) this.calcEntropyBtn.addEventListener('click', () => this.calcEntropy());
+    if (this.auditCookiesBtn) this.auditCookiesBtn.addEventListener('click', () => this.auditCookies());
+    if (this.parseRobotsBtn) this.parseRobotsBtn.addEventListener('click', () => this.parseRobots());
+    if (this.evalCspBtn) this.evalCspBtn.addEventListener('click', () => this.evalCSPBypasses());
 
     // Bind Repeater
     if (this.repeaterSendBtn) this.repeaterSendBtn.addEventListener('click', () => this.sendRepeaterRequest());
@@ -303,6 +317,8 @@ class PopupController {
         if (tabId === 'dorks') this.initDorksTab();
         if (tabId === 'changelog') this.initChangelogTab();
         if (tabId === 'ssrf') this.renderSSRFCandidates();
+        if (tabId === 'playground') this.initPlaygroundTab();
+        if (tabId === 'fingerprint') this.initFingerprintTab();
       });
     });
 
@@ -1882,6 +1898,203 @@ class PopupController {
     d.textContent = t;
     return d.innerHTML;
   }
+
+  // ================================================================
+  // 📦 V8.0 EXPORT BURP XML & EXECUTIVE SUMMARY
+  // ================================================================
+  async exportBurpXml() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportBurpXml' });
+      this.log('📦 Exporting Burp Suite Site Map XML (burp_sitemap.xml)...', 'info');
+    } catch (e) {
+      this.log('❌ Burp XML export error: ' + e.message, 'error');
+    }
+  }
+
+  async exportExecutiveSummary() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportExecutiveSummary' });
+      this.log('📝 Exporting Markdown Executive Summary Report...', 'info');
+    } catch (e) {
+      this.log('❌ Executive summary export error: ' + e.message, 'error');
+    }
+  }
+
+  // ================================================================
+  // 🔬 V8.0 SECURITY PLAYGROUND & ENTROPY LAB
+  // ================================================================
+  initPlaygroundTab() {}
+
+  async runCustomRegex() {
+    const pattern = (document.getElementById('regexPatternInput')?.value || '').trim();
+    const box = document.getElementById('regexMatchesBox');
+    if (!pattern) {
+      alert('Please enter a regular expression pattern.');
+      return;
+    }
+    if (box) box.innerHTML = '<span style="color:var(--cyan);">Scanning crawled routes and secrets...</span>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'runCustomRegex', pattern });
+      const r = res?.result;
+      if (r && box) {
+        if (r.error) {
+          box.innerHTML = '<span style="color:var(--accent-rose);">❌ Invalid Regex: ' + r.error + '</span>';
+        } else if (r.totalMatches === 0) {
+          box.innerHTML = '<span style="color:var(--text-muted);">No matches found across discovered targets.</span>';
+        } else {
+          box.innerHTML = '<div style="color:var(--accent-emerald); font-weight:700; margin-bottom:2px;">Found ' + r.totalMatches + ' matches:</div>' +
+            r.matches.map(m => '<div style="color:var(--cyan); font-family:var(--font-mono);">' + m.match + '</div>').join('');
+        }
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<span style="color:var(--accent-rose);">Err</span>';
+    }
+  }
+
+  async calcEntropy() {
+    const text = (document.getElementById('entropyInputText')?.value || '').trim();
+    const box = document.getElementById('entropyScoreBox');
+    if (!text) {
+      alert('Please enter text to calculate Shannon Entropy.');
+      return;
+    }
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'calculateEntropy', text });
+      const r = res?.result;
+      if (r && box) {
+        const col = r.entropy >= 5.5 ? 'var(--accent-rose)' : r.entropy >= 4.0 ? 'var(--accent-amber)' : 'var(--accent-emerald)';
+        box.innerHTML = `
+          <div style="font-weight:800; color:${col};">Entropy Score: ${r.entropy} / 8.0 (${r.category})</div>
+          <div style="font-size:7.5px; color:var(--text-muted); margin-top:2px;">💡 ${r.recommendation}</div>
+        `;
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<span style="color:var(--accent-rose);">Err</span>';
+    }
+  }
+
+  // ================================================================
+  // 🏗️ V8.0 STACK FINGERPRINT & POLICY EVALUATOR
+  // ================================================================
+  initFingerprintTab() {
+    this.detectTechStack();
+  }
+
+  async detectTechStack() {
+    const box = document.getElementById('stackFindingsBox');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl || !activeUrl.startsWith('http')) return;
+      if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Fingerprinting web servers, frameworks & languages...</div>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'fingerprintTech', url: activeUrl });
+        const r = res?.result;
+        if (r && box) {
+          if (!r.technologies || r.technologies.length === 0) {
+            box.innerHTML = '<div style="color:var(--text-muted);">No distinct server headers or frontend framework markers uncovered.</div>';
+          } else {
+            box.innerHTML = r.technologies.map(t => `
+              <div style="background:var(--bg-glass); border-left:2px solid var(--accent-emerald); padding:4px 6px; margin-bottom:4px; border-radius:2px;">
+                <div style="font-weight:700; color:var(--accent-emerald);">${t.name} <span style="font-size:7px; color:var(--text-muted); font-weight:normal;">(${t.category})</span></div>
+                ${t.version ? `<div style="font-family:var(--font-mono); font-size:7px; color:var(--text-muted);">${t.version}</div>` : ''}
+              </div>
+            `).join('');
+          }
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async auditCookies() {
+    const box = document.getElementById('stackFindingsBox');
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Auditing cookies for HttpOnly, Secure & SameSite hygiene...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'auditCookies' });
+      const r = res?.result;
+      if (r && box) {
+        if (!r.findings || r.findings.length === 0) {
+          box.innerHTML = '<div style="color:var(--accent-emerald);">✅ No cookies set for the active domain.</div>';
+        } else {
+          box.innerHTML = `<div style="font-weight:800; color:var(--accent-amber); margin-bottom:4px;">🍪 ${r.vulnerableCount} of ${r.totalAudited} cookies missing security flags:</div>` +
+            r.findings.map(c => `
+              <div style="background:var(--bg-glass); border-left:2px solid ${c.isVulnerable ? 'var(--accent-rose)' : 'var(--accent-emerald)'}; padding:4px 6px; margin-bottom:4px; border-radius:2px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight:700; font-family:var(--font-mono); color:var(--cyan);">${c.name}</span>
+                  <span style="font-size:7px; color:var(--text-muted);">SameSite=${c.sameSite}</span>
+                </div>
+                ${c.issues.map(iss => `<div style="color:var(--accent-rose); font-size:7px;">⚠️ ${iss}</div>`).join('')}
+              </div>
+            `).join('');
+        }
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async parseRobots() {
+    const box = document.getElementById('stackFindingsBox');
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Fetching and parsing robots.txt...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'parseRobotsTxt' });
+      const r = res?.result;
+      if (r && box) {
+        if (!r.found) {
+          box.innerHTML = '<div style="color:var(--text-muted);">robots.txt not found (HTTP 404).</div>';
+        } else {
+          box.innerHTML = `
+            <div style="font-weight:800; color:var(--accent-emerald); margin-bottom:4px;">🤖 Found ${r.disallowedCount} Disallowed Paths (Added to Endpoints):</div>
+            <div style="font-family:var(--font-mono); font-size:7.5px; color:var(--cyan);">
+              ${r.disallowed.map(p => '<div>🚫 ' + p + '</div>').join('')}
+            </div>
+          `;
+          this.load();
+        }
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async evalCSPBypasses() {
+    const box = document.getElementById('stackFindingsBox');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+      if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Evaluating CSP directives against CDN bypass catalogs...</div>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'evaluateCSPBypasses', url: activeUrl });
+        const r = res?.result;
+        if (r && box) {
+          if (!r.hasCsp) {
+            box.innerHTML = '<div style="color:var(--accent-rose); font-weight:700;">⚠️ No Content Security Policy detected! Full XSS exposure.</div>';
+          } else if (r.bypassFound) {
+            box.innerHTML = `
+              <div style="color:var(--accent-rose); font-weight:800; margin-bottom:4px;">🚨 Known CSP Bypasses Detected in script-src!</div>
+              ${r.bypasses.map(b => `
+                <div style="background:var(--bg-glass); border-left:2px solid var(--accent-rose); padding:4px 6px; margin-bottom:4px;">
+                  <b>${b.cdn}</b>: ${b.reason}
+                </div>
+              `).join('')}
+            `;
+          } else {
+            box.innerHTML = '<div style="color:var(--accent-emerald); font-weight:700;">✅ Safe: No standard vulnerable CDN endpoints permitted in script-src directive.</div>';
+          }
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
 
   // ================================================================
   // 📖 V7.0 EXPORT WORDLIST & NUCLEI TEMPLATE

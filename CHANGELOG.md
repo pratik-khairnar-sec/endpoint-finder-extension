@@ -5,6 +5,49 @@ All notable changes to **Endpoint Hunter** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.0] - 2026-10-16
+
+### 🔬 Cryptographic Entropy, Stack Fingerprinting & Burp Suite Interoperability (v8.0)
+
+#### 🎲 Shannon Entropy Calculation Lab (`ResponseEntropyCalculator`)
+- **Mathematical Information Theory Scoring**: Computes Shannon entropy ($H = -\sum p_i \log_2 p_i$) on responses, headers, and tokens on a 0.0 to 8.0 scale.
+- **Cryptographic & Secret Leak Heuristics**: Automatically flags high-randomness tokens (entropy $\ge$ 5.5) as potential API keys or credentials, and distinguishes between encrypted ciphertext vs standard static code.
+
+#### 🏗️ Comprehensive Web Tech Stack Fingerprinter (`FingerprintMatrix`)
+- **Multi-Layer Fingerprinting**: Identifies backend engines (Express.js, Django, Spring Boot, Ruby on Rails, PHP, ASP.NET) from response headers, session cookies, and runtime behaviors.
+- **Modern SPA Stack Attribution**: Detects Next.js, Nuxt.js, React, and Angular from HTML structures and asset paths.
+
+#### 📦 Burp Suite Target Site Map XML Exporter (`BurpSuiteXmlExporter`)
+- **Native Burp XML Serialization**: Generates standard Burp Suite XML exports (`burp_sitemap.xml`) populated with URLs, hostnames, ports, methods, and status codes.
+- **Instant Target Import**: Enables drag-and-drop ingestion straight into Burp Suite's Target Site Map tab.
+
+#### 🛡️ CDN & JSONP CSP Bypass Evaluator (`CSPBypassEvaluator`)
+- **Whitelist Exposure Analysis**: Checks `script-src` CSP directives against cataloged CDN endpoints (`cdnjs.cloudflare.com`, `ajax.googleapis.com`, `cdn.jsdelivr.net`, `unpkg.com`).
+- **Bypass Attribution**: Warns when trusted CDNs allow loading older vulnerable JavaScript or arbitrary user packages.
+
+#### 🔍 Interactive Regex Extraction Playground (`RegexExtractorPlayground`)
+- **Live Regex Execution**: Run custom regular expressions with flags against all discovered endpoints, leaked secrets, and extracted paths in real time.
+- **Group Capture & Deduplication**: Displays captured matches with match counts and distinct group representations.
+
+#### 🍪 Deep Cookie Security Hygiene Auditor (`CookieSecurityAuditor`)
+- **Attribute Hygiene Audit**: Evaluates cookies for `HttpOnly`, `Secure`, and `SameSite` flags.
+- **Prefix Hardening Checker**: Flags cookies lacking `__Host-` or `__Secure-` defensive prefixes to prevent subdomain cookie tossing.
+
+#### 🤖 Recursive Robots & Sitemap Harvester (`RobotsSitemapParser`)
+- **Automated Discovery**: Recursively fetches `/robots.txt` and `/sitemap.xml`.
+- **Disallowed Path Auto-Population**: Discovers high-value hidden admin and API paths from `Disallow:` directives and adds them directly to the active endpoint catalog.
+
+#### 🌸 GraphQL Mock Operation Mapper (`GraphQLExtendedMapper`)
+- **Synthetic Query Generator**: Automatically builds executable GraphQL queries and mutations from introspected type schemas.
+
+#### 📝 Markdown Executive Summary Report Exporter (`MarkdownExecutiveSummaryExporter`)
+- **C-Suite & Bug Bounty Ready**: Generates a polished `executive_summary.md` detailing discovered attack surface metrics, leaked secrets tables, and cloud asset inventories.
+
+#### 🔌 WebSocket Payload Mutator (`WebSocketFuzzer`)
+- **JSON Field Tampering**: Mutates specific JSON fields in captured WebSocket messages to test for input validation vulnerabilities over persistent socket channels.
+
+---
+
 ## [7.0.0] - 2026-10-16
 
 ### 🎯 Polyglot Injection, SSRF & Active Automation Suite (v7.0)

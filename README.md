@@ -2,15 +2,15 @@
   <img src="icon128.png" width="96" height="96" alt="Endpoint Hunter Logo">
 </p>
 
-<h1 align="center">Endpoint Hunter v7.0</h1>
+<h1 align="center">Endpoint Hunter v8.0</h1>
 
 <p align="center">
   <b>Enterprise API Reconnaissance &amp; Vulnerability Assessment Suite for Chromium Browsers (Manifest V3)</b><br>
-  <i>SSTI Prober • SQLi Heuristics • XXE Detector • Prototype Pollution • Route Diff • Wordlist Harvester • CSTI Auditor • SSRF Scanner • Nuclei Exporter • Multi-Worker Prober</i>
+  <i>Shannon Entropy • Stack Fingerprinter • Burp XML Exporter • CSP Bypass • Regex Lab • Cookie Auditor • Robots Parser • GraphQL Operations • Executive Summary • WS Mutator</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-7.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 7.0.0"></a>
+  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-8.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 8.0.0"></a>
   <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"></a>
   <a href="#-manual-trigger-policy-zero-auto-scanning"><img src="https://img.shields.io/badge/Auto--Start-DISABLED%20(Manual%20Only)-red?style=for-the-badge&logo=power" alt="Zero Auto-Scan"></a>
@@ -42,7 +42,7 @@
 
 Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hundreds of internal REST routes, administrative gateways, hidden microservices, WebSocket channels, and GraphQL schemas into minified JavaScript bundles. Manually finding these with proxy interceptors or grep CLI tools is noisy, slow, and full of false positives (XML schemas, broken HTML tags, SVG paths).
 
-**Endpoint Hunter v7.0** runs directly inside Chromium browsers under **Manifest V3**. It introduces polyglot injection testing, SSRF identification, and automation exporters: Server-Side Template Injection (SSTI) mathematical validation, database error-based and length-differential SQLi heuristics, safe XXE canary expansion checking, runtime client-side prototype pollution monitoring, session-based route diffing and delta tracking, target-tailored wordlist harvesting (`wordlist.txt`), client-side template injection (CSTI) detection, candidate SSRF parameter harvesting with cloud metadata vectors, 8-thread multi-worker status probing, and automated **Nuclei YAML template** generation.
+**Endpoint Hunter v8.0** runs directly inside Chromium browsers under **Manifest V3**. It expands your reconnaissance arsenal with mathematical information theory and industry interoperability: Shannon entropy calculation to unearth high-randomness cryptographic secrets, multi-layer technology stack fingerprinting (Express, Django, Rails, PHP, Spring, Next.js, Nuxt), Burp Suite Site Map XML exporting, CDN-based CSP bypass detection, custom regex extraction playground, cookie security hygiene auditing (`HttpOnly`, `SameSite`, `__Host-`), recursive robots.txt and sitemap parser, GraphQL mock operation synthesizers, and C-Suite **Markdown Executive Summary** reports.
 
 ---
 
@@ -58,6 +58,16 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 
 ## ⚡ Key Features
 
+- **🎲 Shannon Entropy Calculation Lab**: Computes information theory entropy on 0.0 to 8.0 scale to identify leaked high-randomness credentials, crypto keys, and distinguish encrypted payloads from plain text.
+- **🏗️ Multi-Layer Tech Stack Fingerprinter**: Identifies backend engines (Express.js, Django, Spring Boot, Ruby on Rails, PHP, ASP.NET) and modern frontend frameworks (Next.js, Nuxt, React, Angular) from headers, cookies, and structures.
+- **📦 Burp Suite Target Site Map XML Exporter**: Serializes all discovered endpoints, methods, and status codes into standard Burp XML format (`burp_sitemap.xml`) for direct import into Burp Suite.
+- **🛡️ CDN & JSONP CSP Bypass Evaluator**: Inspects `script-src` directives against cataloged CDN endpoints (`cdnjs`, `googleapis`, `jsdelivr`, `unpkg`) to flag potential CSP bypass risks.
+- **🔍 Interactive Regex Playground**: Execute custom regular expressions against all crawled URLs, leaked secrets, and extracted paths in real time with group capture.
+- **🍪 Deep Cookie Security Hygiene Auditor**: Audits cookies for `HttpOnly`, `Secure`, `SameSite`, and prefix hardening (`__Host-` / `__Secure-`).
+- **🤖 Recursive Robots & Sitemap Harvester**: Recursively parses `/robots.txt` and `/sitemap.xml`, extracting `Disallow:` directives directly into the endpoint catalog.
+- **🌸 GraphQL Mock Operation Mapper**: Automatically constructs executable GraphQL queries and mutations from introspected type schemas with synthetic argument values.
+- **📝 Markdown Executive Summary Exporter**: Generates a professional bug bounty executive summary report in Markdown (`executive_summary.md`) with attack surface tables and remediation priorities.
+- **🔌 WebSocket Payload Mutator**: In-browser JSON field tampering for active WebSocket message testing.
 - **🎯 Server-Side Template Injection Prober**: Evaluates mathematical polyglots (`{{7*7}}`, `${7*7}`, `#{7*7}`, `<%= 7*7 %>`, `{{7*'7'}}`), confirming vulnerabilities only when backend template engines reflect computed outputs (`49` or `7777777`).
 - **💉 SQL Injection Heuristic & Error Detector**: Probes parameters with single quote mutations, matching against error signatures for MySQL, PostgreSQL, SQLite, Oracle, and MSSQL with length delta analysis.
 - **📜 XML External Entity Expansion Prober**: Formulates safe XML payloads with canary entity declarations to detect endpoints vulnerable to XML entity expansion.

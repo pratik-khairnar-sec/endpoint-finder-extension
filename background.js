@@ -3044,6 +3044,379 @@ pathsYaml + '\n' +
 }
 
 
+
+// ================================================================
+// 🎲 ResponseEntropyCalculator (v8.0) - SHANNON ENTROPY LEAK CALCULATOR
+// ================================================================
+class ResponseEntropyCalculator {
+  calculateEntropy(str) {
+    if (!str || str.length === 0) return 0;
+    const len = str.length;
+    const freq = {};
+    for (let i = 0; i < len; i++) {
+      const char = str[i];
+      freq[char] = (freq[char] || 0) + 1;
+    }
+    let entropy = 0;
+    for (const char in freq) {
+      const p = freq[char] / len;
+      entropy -= p * Math.log2(p);
+    }
+    return parseFloat(entropy.toFixed(3));
+  }
+
+  evaluateText(str) {
+    const score = this.calculateEntropy(str);
+    let category = 'LOW (Repetitive / Static)';
+    let recommendation = 'Standard HTML / template structure.';
+    if (score >= 7.5) {
+      category = 'VERY HIGH (Encrypted / Compressed / Packed)';
+      recommendation = 'Response appears encrypted, gzipped, or packed executable.';
+    } else if (score >= 5.5) {
+      category = 'HIGH (Potential Secret / Token / Raw Data)';
+      recommendation = 'Contains high-randomness string tokens. Inspect for leaked credentials or cryptographic keys.';
+    } else if (score >= 4.0) {
+      category = 'MODERATE (Standard English / JSON / Code)';
+      recommendation = 'Typical structured source code or API JSON payload.';
+    }
+    return { entropy: score, category, recommendation };
+  }
+}
+
+// ================================================================
+// 🏗️ FingerprintMatrix (v8.0) - TECH STACK & FRAMEWORK FINGERPRINTER
+// ================================================================
+class FingerprintMatrix {
+  fingerprint(headers = {}, html = '', cookies = []) {
+    const detected = [];
+    const hdrs = {};
+    for (const [k, v] of Object.entries(headers)) {
+      hdrs[k.toLowerCase()] = String(v).toLowerCase();
+    }
+    const htmlLower = (html || '').toLowerCase();
+
+    const server = hdrs['server'] || '';
+    const powered = hdrs['x-powered-by'] || '';
+
+    if (server.includes('nginx')) detected.push({ name: 'Nginx', category: 'Web Server', version: server });
+    if (server.includes('apache')) detected.push({ name: 'Apache HTTP Server', category: 'Web Server', version: server });
+    if (server.includes('caddy')) detected.push({ name: 'Caddy', category: 'Web Server', version: server });
+
+    if (powered.includes('express')) detected.push({ name: 'Express.js', category: 'Node.js Backend Framework' });
+    if (powered.includes('php') || cookies.some(c => (c.name || '').includes('PHPSESSID'))) detected.push({ name: 'PHP', category: 'Backend Language', detail: powered });
+    if (powered.includes('asp.net') || hdrs['x-aspnet-version'] || cookies.some(c => (c.name || '').includes('ASP.NET_SessionId'))) detected.push({ name: 'ASP.NET', category: 'Microsoft Web Framework' });
+    if (cookies.some(c => (c.name || '').includes('JSESSIONID'))) detected.push({ name: 'Java Servlet / Spring', category: 'Enterprise Java Framework' });
+    if (cookies.some(c => (c.name || '').includes('csrftoken') || (c.name || '').includes('django'))) detected.push({ name: 'Django', category: 'Python Web Framework' });
+    if (cookies.some(c => (c.name || '').includes('_rails_session') || (c.name || '').includes('remember_token'))) detected.push({ name: 'Ruby on Rails', category: 'Ruby Framework' });
+
+    if (htmlLower.includes('__next') || htmlLower.includes('/_next/static/')) detected.push({ name: 'Next.js', category: 'React Framework' });
+    if (htmlLower.includes('__nuxt') || htmlLower.includes('/_nuxt/')) detected.push({ name: 'Nuxt.js', category: 'Vue Framework' });
+    if (htmlLower.includes('react-root') || htmlLower.includes('data-reactroot')) detected.push({ name: 'React', category: 'Frontend Library' });
+    if (htmlLower.includes('ng-version') || htmlLower.includes('ng-app')) detected.push({ name: 'Angular', category: 'Frontend Framework' });
+
+    return {
+      count: detected.length,
+      technologies: detected
+    };
+  }
+}
+
+// ================================================================
+// 📦 BurpSuiteXmlExporter (v8.0) - BURP SUITE TARGET SITE MAP EXPORTER
+// ================================================================
+class BurpSuiteXmlExporter {
+  escapeXml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe.replace(/[<>&'"]/g, c => {
+      switch (c) {
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '&': return '&amp;';
+        case '\'': return '&apos;';
+        case '"': return '&quot;';
+      }
+    });
+  }
+
+  generateXml(endpoints, domain = 'target.com') {
+    const items = endpoints.map(ep => {
+      let host = domain;
+      let path = ep.url;
+      let protocol = 'https';
+      let port = 443;
+      try {
+        const u = new URL(ep.url);
+        host = u.hostname;
+        path = u.pathname + u.search;
+        protocol = u.protocol.replace(':', '');
+        port = u.port || (protocol === 'https' ? 443 : 80);
+      } catch (e) {}
+
+      return '  <item>\n' +
+'    <time>' + new Date().toISOString() + '</time>\n' +
+'    <url>' + this.escapeXml(ep.url) + '</url>\n' +
+'    <host ip="">' + this.escapeXml(host) + '</host>\n' +
+'    <port>' + port + '</port>\n' +
+'    <protocol>' + protocol + '</protocol>\n' +
+'    <method>' + (ep.method || 'GET') + '</method>\n' +
+'    <path>' + this.escapeXml(path) + '</path>\n' +
+'    <extension>null</extension>\n' +
+'    <status>' + (ep.statusCode || 200) + '</status>\n' +
+'    <responselength>0</responselength>\n' +
+'    <mimetype>text/plain</mimetype>\n' +
+'    <comment>Discovered by Endpoint Hunter v8.0</comment>\n' +
+'  </item>';
+    }).join('\n');
+
+    return '<?xml version="1.0"?>\n<items burpVersion="2024.1" exportTime="' + new Date().toUTCString() + '">\n' + items + '\n</items>';
+  }
+}
+
+// ================================================================
+// 🛡️ CSPBypassEvaluator (v8.0) - CDN & JSONP CSP BYPASS DETECTOR
+// ================================================================
+class CSPBypassEvaluator {
+  constructor() {
+    this.bypassableCdns = [
+      { domain: 'cdnjs.cloudflare.com', reason: 'Hosts Angular and polyfills vulnerable to JSONP / script execution' },
+      { domain: 'ajax.googleapis.com', reason: 'Hosts legacy AngularJS (1.x) allowing client-side sandbox bypass' },
+      { domain: 'cdn.jsdelivr.net', reason: 'Universal package proxy hosting arbitrary npm/github JavaScript' },
+      { domain: 'unpkg.com', reason: 'Hosts entire npm registry; allows loading custom malicious packages' },
+      { domain: 'code.jquery.com', reason: 'Contains vulnerable jQuery versions vulnerable to selector XSS' }
+    ];
+  }
+
+  evaluateCSP(cspHeader) {
+    if (!cspHeader || typeof cspHeader !== 'string') {
+      return { hasCsp: false, bypassable: true, message: 'No CSP configured.' };
+    }
+
+    const scriptSrcMatch = cspHeader.match(/script-src\s+([^;]+)/i);
+    const directive = scriptSrcMatch ? scriptSrcMatch[1] : (cspHeader.match(/default-src\s+([^;]+)/i)?.[1] || '');
+
+    const foundBypasses = [];
+    this.bypassableCdns.forEach(cdn => {
+      if (directive.includes(cdn.domain)) {
+        foundBypasses.push({
+          cdn: cdn.domain,
+          reason: cdn.reason,
+          severity: 'HIGH'
+        });
+      }
+    });
+
+    return {
+      hasCsp: true,
+      directive,
+      bypassFound: foundBypasses.length > 0,
+      bypasses: foundBypasses
+    };
+  }
+}
+
+// ================================================================
+// 🔍 RegexExtractorPlayground (v8.0) - CUSTOM REGEX TESTING PLAYGROUND
+// ================================================================
+class RegexExtractorPlayground {
+  executePattern(patternStr, flags = 'gi', targets = []) {
+    try {
+      const rx = new RegExp(patternStr, flags);
+      const matches = [];
+      const seen = new Set();
+
+      targets.forEach(item => {
+        const text = typeof item === 'string' ? item : JSON.stringify(item);
+        let m;
+        while ((m = rx.exec(text)) !== null) {
+          const matchedVal = m[0];
+          if (!seen.has(matchedVal)) {
+            seen.add(matchedVal);
+            matches.push({
+              match: matchedVal,
+              groups: m.slice(1),
+              index: m.index
+            });
+          }
+          if (!rx.global) break;
+        }
+      });
+
+      return {
+        pattern: patternStr,
+        totalMatches: matches.length,
+        matches: matches.slice(0, 100)
+      };
+    } catch (e) {
+      return { pattern: patternStr, error: e.message, totalMatches: 0, matches: [] };
+    }
+  }
+}
+
+// ================================================================
+// 🍪 CookieSecurityAuditor (v8.0) - COOKIE SECURITY HYGIENE AUDITOR
+// ================================================================
+class CookieSecurityAuditor {
+  auditCookies(cookieList) {
+    const findings = [];
+    cookieList.forEach(c => {
+      const issues = [];
+      if (!c.secure) issues.push('Missing "Secure" flag (transmitted over plaintext HTTP)');
+      if (!c.httpOnly) issues.push('Missing "HttpOnly" flag (accessible to JavaScript / XSS theft)');
+      if (!c.sameSite || c.sameSite.toLowerCase() === 'none') {
+        issues.push('Weak or missing SameSite (vulnerable to CSRF)');
+      }
+      if (!c.name.startsWith('__Host-') && !c.name.startsWith('__Secure-')) {
+        issues.push('Missing prefix security hardening (__Host- / __Secure-)');
+      }
+
+      findings.push({
+        name: c.name,
+        domain: c.domain,
+        path: c.path,
+        secure: !!c.secure,
+        httpOnly: !!c.httpOnly,
+        sameSite: c.sameSite || 'None',
+        isVulnerable: issues.length > 0,
+        issues
+      });
+    });
+
+    return {
+      totalAudited: cookieList.length,
+      vulnerableCount: findings.filter(f => f.isVulnerable).length,
+      findings
+    };
+  }
+}
+
+// ================================================================
+// 🤖 RobotsSitemapParser (v8.0) - RECURSIVE ROBOTS & SITEMAP PARSER
+// ================================================================
+class RobotsSitemapParser {
+  constructor(hunterInstance) {
+    this.hunter = hunterInstance;
+  }
+
+  async parseRobots(targetDomain) {
+    const robotsUrl = 'https://' + targetDomain + '/robots.txt';
+    try {
+      const res = await fetch(robotsUrl);
+      if (!res.ok) return { url: robotsUrl, found: false };
+      const text = await res.text();
+      const disallowed = [];
+      const sitemaps = [];
+
+      text.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (/^disallow\s*:\s*(.+)$/i.test(trimmed)) {
+          const path = trimmed.match(/^disallow\s*:\s*(.+)$/i)[1].trim();
+          if (path && path !== '/') {
+            disallowed.push(path);
+            if (this.hunter) {
+              this.hunter.addEndpoint({
+                url: 'https://' + targetDomain + (path.startsWith('/') ? path : '/' + path),
+                method: 'GET',
+                type: 'robots-disallow',
+                source: 'robots.txt'
+              });
+            }
+          }
+        } else if (/^sitemap\s*:\s*(.+)$/i.test(trimmed)) {
+          sitemaps.push(trimmed.match(/^sitemap\s*:\s*(.+)$/i)[1].trim());
+        }
+      });
+
+      return {
+        url: robotsUrl,
+        found: true,
+        disallowedCount: disallowed.length,
+        disallowed,
+        sitemaps
+      };
+    } catch (e) {
+      return { url: robotsUrl, found: false, error: e.message };
+    }
+  }
+}
+
+// ================================================================
+// 🌸 GraphQLExtendedMapper (v8.0) - OPERATION SCHEMA VISUALIZER
+// ================================================================
+class GraphQLExtendedMapper {
+  generateMockCalls(types) {
+    const calls = [];
+    (types || []).forEach(t => {
+      if (t.name && (t.name === 'Query' || t.name === 'Mutation') && Array.isArray(t.fields)) {
+        t.fields.forEach(f => {
+          let argsStr = '';
+          if (Array.isArray(f.args) && f.args.length > 0) {
+            argsStr = '(' + f.args.map(a => a.name + ': "test"').join(', ') + ')';
+          }
+          calls.push({
+            type: t.name,
+            operationName: f.name,
+            query: t.name.toLowerCase() + ' { ' + f.name + argsStr + ' { __typename } }'
+          });
+        });
+      }
+    });
+    return calls;
+  }
+}
+
+// ================================================================
+// 📝 MarkdownExecutiveSummaryExporter (v8.0) - BUG BOUNTY EXECUTIVE REPORT
+// ================================================================
+class MarkdownExecutiveSummaryExporter {
+  generateMarkdown(hunterData) {
+    const domain = hunterData.baseDomain || 'target.com';
+    const timestamp = new Date().toUTCString();
+    const endpoints = hunterData.discoveredEndpoints || [];
+    const secrets = hunterData.discoveredSecrets || [];
+    const pii = hunterData.discoveredPII || [];
+    const buckets = Array.from(hunterData.cloudBucketCollector?.buckets?.values() || []);
+
+    const secretsText = secrets.length === 0 
+      ? '_No hardcoded secrets detected in client JavaScript bundles._' 
+      : secrets.map(s => '- **' + s.type + '**: `' + (s.preview || s.value) + '` (Source: `' + s.source + '`)').join('\n');
+
+    const bucketsText = buckets.length === 0 
+      ? '_No external AWS S3, GCP, or Azure storage buckets identified._' 
+      : buckets.map(b => '- **' + b.provider + '**: `' + b.name + '` — [' + b.url + '](' + b.url + ') — **Status**: `' + b.status + '`').join('\n');
+
+    const epSample = endpoints.slice(0, 25).map(e => (e.method || 'GET') + ' ' + e.url + ' [Status: ' + (e.statusCode || '--') + ']').join('\n');
+
+    return '# Executive Security Reconnaissance Summary\n' +
+'**Target Domain**: `' + domain + '`  \n' +
+'**Assessment Date**: ' + timestamp + '  \n' +
+'**Assessor Engine**: Endpoint Hunter v8.0 Enterprise Suite  \n\n' +
+'---\n\n' +
+'## 1. Executive Assessment Overview\n' +
+'During the reconnaissance assessment of `' + domain + '`, **Endpoint Hunter v8.0** mapped the client-side API attack surface and audited security controls using non-destructive, zero-false-positive discovery techniques.\n\n' +
+'### Key Metrics Summary\n' +
+'| Metric Category | Count Discovered | Risk Level |\n' +
+'| :--- | :---: | :---: |\n' +
+'| **Total API Endpoints & Routes** | **' + endpoints.length + '** | Informational |\n' +
+'| **Leaked Credentials / API Secrets** | **' + secrets.length + '** | ' + (secrets.length > 0 ? '**CRITICAL**' : 'Nominal') + ' |\n' +
+'| **PII Data Exposure Hits** | **' + pii.length + '** | ' + (pii.length > 0 ? '**HIGH**' : 'Nominal') + ' |\n' +
+'| **External Cloud Storage Buckets** | **' + buckets.length + '** | ' + (buckets.length > 0 ? '**MEDIUM**' : 'Nominal') + ' |\n\n' +
+'---\n\n' +
+'## 2. Priority Findings\n\n' +
+'### 🔑 Discovered Secrets & Hardcoded Credentials\n' +
+secretsText + '\n\n' +
+'### ☁️ Cloud Asset Storage Buckets\n' +
+bucketsText + '\n\n' +
+'---\n\n' +
+'## 3. High-Value Discovered Endpoints (Sample)\n' +
+'```http\n' +
+epSample + '\n' +
+'```\n\n' +
+'---\n' +
+'_Generated automatically by Endpoint Hunter v8.0. Confidential & Proprietary._\n';
+  }
+}
+
+
 const ENDPOINT_PATTERNS = {
   api: [
     '/api/', '/v1/', '/v2/', '/v3/', '/v4/', '/v5/',
@@ -3215,6 +3588,15 @@ class CrawlEngine {
     this.ssrfDetector = new SSRFHeuristicDetector();
     this.concurrentProber = new BulkStatusProberConcurrent(this.statusProber);
     this.nucleiExporter = new NucleiTemplateExporter();
+    this.entropyCalculator = new ResponseEntropyCalculator();
+    this.fingerprintMatrix = new FingerprintMatrix();
+    this.burpExporter = new BurpSuiteXmlExporter();
+    this.cspBypassEvaluator = new CSPBypassEvaluator();
+    this.regexPlayground = new RegexExtractorPlayground();
+    this.cookieAuditor = new CookieSecurityAuditor();
+    this.robotsParser = new RobotsSitemapParser(this);
+    this.gqlExtended = new GraphQLExtendedMapper();
+    this.execSummaryExporter = new MarkdownExecutiveSummaryExporter();
     this.discoveredPII = [];
     this.wsFrames = [];
     this.unpackedSourceMaps = new Map();
@@ -4060,6 +4442,44 @@ class CrawlEngine {
   // ================================================================
   // 📦 HAR (HTTP ARCHIVE 1.2) EXPORT (v4.0)
   // ================================================================
+
+  exportBurpXml() {
+    try {
+      const xml = this.burpExporter.generateXml(this.discoveredEndpoints, this.baseDomain || 'target.com');
+      const blob = new Blob([xml], { type: 'application/xml' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        chrome.downloads.download({
+          url: reader.result,
+          filename: 'burp_sitemap_' + (this.baseDomain || 'endpoints').replace(/[^a-zA-Z0-9_-]/g, '_') + '.xml',
+          saveAs: true
+        });
+      };
+      reader.readAsDataURL(blob);
+      this.addLog('📦 Exported Burp Suite Site Map XML (burp_sitemap.xml)', 'success');
+    } catch (e) {
+      this.addLog('❌ Burp XML Export Error: ' + e.message, 'error');
+    }
+  }
+
+  exportExecutiveSummary() {
+    try {
+      const md = this.execSummaryExporter.generateMarkdown(this);
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        chrome.downloads.download({
+          url: reader.result,
+          filename: 'executive_summary_' + (this.baseDomain || 'endpoints').replace(/[^a-zA-Z0-9_-]/g, '_') + '.md',
+          saveAs: true
+        });
+      };
+      reader.readAsDataURL(blob);
+      this.addLog('📝 Exported Markdown Executive Summary Report', 'success');
+    } catch (e) {
+      this.addLog('❌ Executive Summary Export Error: ' + e.message, 'error');
+    }
+  }
 
   exportWordlist() {
     try {
