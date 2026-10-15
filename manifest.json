@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Endpoint Hunter — API & Route Reconnaissance",
-  "version": "6.0.0",
-  "description": "Enterprise API reconnaissance & vulnerability auditor: CORS reflection auditor, JWT inspector, security headers analyzer, OpenAPI/Swagger importer, verb tampering matrix, IDOR sequencer, cloud bucket harvester, subdomain takeover analyzer, WAF fingerprinter, cache poisoning prober, DOM XSS taint auditor & interactive HTML recon report exporter.",
+  "version": "7.0.0",
+  "description": "Enterprise API reconnaissance & vulnerability auditor: CORS reflection auditor, JWT inspector, security headers analyzer, OpenAPI/Swagger importer, verb tampering matrix, IDOR sequencer, SSTI/SQLi probers, cloud bucket harvester, subdomain takeover analyzer, WAF fingerprinter, cache poisoning, DOM XSS taint auditor, Nuclei template & interactive HTML report exporter.",
   "author": "Pratik Khairnar <pratik-khairnar-sec@users.noreply.github.com>",
   "homepage_url": "https://github.com/pratik-khairnar-sec/endpoint-finder-extension",
   "permissions": [

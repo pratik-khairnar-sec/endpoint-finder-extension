@@ -2,15 +2,15 @@
   <img src="icon128.png" width="96" height="96" alt="Endpoint Hunter Logo">
 </p>
 
-<h1 align="center">Endpoint Hunter v6.0</h1>
+<h1 align="center">Endpoint Hunter v7.0</h1>
 
 <p align="center">
   <b>Enterprise API Reconnaissance &amp; Vulnerability Assessment Suite for Chromium Browsers (Manifest V3)</b><br>
-  <i>Subdomain Takeover • DOM XSS Auditor • WAF Fingerprinter • Cache Poisoning • Open Redirect • OAuth Auditor • Dork Generator • Rate Limiter • Interactive HTML Report</i>
+  <i>SSTI Prober • SQLi Heuristics • XXE Detector • Prototype Pollution • Route Diff • Wordlist Harvester • CSTI Auditor • SSRF Scanner • Nuclei Exporter • Multi-Worker Prober</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-6.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 6.0.0"></a>
+  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-7.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 7.0.0"></a>
   <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"></a>
   <a href="#-manual-trigger-policy-zero-auto-scanning"><img src="https://img.shields.io/badge/Auto--Start-DISABLED%20(Manual%20Only)-red?style=for-the-badge&logo=power" alt="Zero Auto-Scan"></a>
@@ -42,7 +42,7 @@
 
 Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hundreds of internal REST routes, administrative gateways, hidden microservices, WebSocket channels, and GraphQL schemas into minified JavaScript bundles. Manually finding these with proxy interceptors or grep CLI tools is noisy, slow, and full of false positives (XML schemas, broken HTML tags, SVG paths).
 
-**Endpoint Hunter v6.0** runs directly inside Chromium browsers under **Manifest V3**. It introduces full-spectrum threat assessment: Subdomain Takeover signature analysis (10 cloud providers), runtime DOM XSS source-to-sink taint tracking, multi-vendor WAF/CDN fingerprinter, unkeyed cache poisoning testing, open redirect parameter heuristics, OAuth 2.0 flow anti-CSRF auditing, automated GitHub/Google recon dork synthesis, concurrency rate limit analysis, and standalone interactive **HTML Recon Report** exports.
+**Endpoint Hunter v7.0** runs directly inside Chromium browsers under **Manifest V3**. It introduces polyglot injection testing, SSRF identification, and automation exporters: Server-Side Template Injection (SSTI) mathematical validation, database error-based and length-differential SQLi heuristics, safe XXE canary expansion checking, runtime client-side prototype pollution monitoring, session-based route diffing and delta tracking, target-tailored wordlist harvesting (`wordlist.txt`), client-side template injection (CSTI) detection, candidate SSRF parameter harvesting with cloud metadata vectors, 8-thread multi-worker status probing, and automated **Nuclei YAML template** generation.
 
 ---
 
@@ -58,6 +58,16 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 
 ## ⚡ Key Features
 
+- **🎯 Server-Side Template Injection Prober**: Evaluates mathematical polyglots (`{{7*7}}`, `${7*7}`, `#{7*7}`, `<%= 7*7 %>`, `{{7*'7'}}`), confirming vulnerabilities only when backend template engines reflect computed outputs (`49` or `7777777`).
+- **💉 SQL Injection Heuristic & Error Detector**: Probes parameters with single quote mutations, matching against error signatures for MySQL, PostgreSQL, SQLite, Oracle, and MSSQL with length delta analysis.
+- **📜 XML External Entity Expansion Prober**: Formulates safe XML payloads with canary entity declarations to detect endpoints vulnerable to XML entity expansion.
+- **☣️ Prototype Pollution Scanner**: Injects prototype pollution parameter patterns and monitors `Object.prototype.eh_polluted` in the browser runtime to verify client-side pollution.
+- **📊 Attack Surface Changelog & Route Diff**: Saves scan snapshots and computes attack surface deltas, highlighting newly exposed routes (`+ NEW`), removed routes (`- REMOVED`), and status changes.
+- **📖 Contextual Recon Wordlist Builder**: Extracts path tokens, filenames, and parameters into a clean, deduplicated wordlist (`wordlist.txt`) paired with sensitive backup extensions (`.json`, `.env`, `.bak`, `.sql`).
+- **🌸 Client-Side Template Injection Auditor**: Detects AngularJS, Vue.js, and Alpine.js in page DOM and provides tailored CSTI sandbox bypass vectors.
+- **🌐 SSRF Parameter Harvester & Payloads**: Discovers URL-carrying query parameters and provides standard internal loopback (`127.0.0.1`) and cloud metadata (`169.254.169.254`) test payloads.
+- **⚡ Multi-Worker High-Concurrency Status Prober**: 8-thread concurrent worker pool probing hundreds of endpoints simultaneously without UI latency.
+- **🧬 Automated Nuclei Template Exporter**: Generates standard Nuclei YAML templates (`recon_nuclei_template.yaml`) targeting discovered endpoints with status matchers.
 - **🌐 Subdomain Takeover Analyzer**: Checks external domains against dangling CNAME signatures for 10 cloud services (GitHub Pages, AWS S3, Heroku, Fastly, Shopify, Tumblr, WordPress, Ghost, Bitbucket, Surge.sh).
 - **💥 Client-Side DOM XSS Taint Auditor**: Scans inline scripts and reflected parameters for source-to-sink taint paths (`location.hash/search` into `innerHTML`, `document.write`, `eval`).
 - **🛡️ Multi-Vendor WAF Fingerprinter**: Identifies Cloudflare, AWS WAF, Akamai, Imperva Incapsula, Fastly, ModSecurity, F5 BIG-IP, and Sucuri from headers and error pages.

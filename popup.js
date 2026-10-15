@@ -135,6 +135,15 @@ class PopupController {
     this.auditOAuthBtn = document.getElementById('auditOAuthBtn');
     this.testRateLimitBtn = document.getElementById('testRateLimitBtn');
     this.refreshDorksBtn = document.getElementById('refreshDorksBtn');
+    this.wordlistBtn = document.getElementById('wordlistBtn');
+    this.nucleiBtn = document.getElementById('nucleiBtn');
+    this.probeConcurrentBtn = document.getElementById('probeConcurrentBtn');
+    this.probeSstiBtn = document.getElementById('probeSstiBtn');
+    this.probeSqliBtn = document.getElementById('probeSqliBtn');
+    this.probeXxeBtn = document.getElementById('probeXxeBtn');
+    this.saveSnapshotBtn = document.getElementById('saveSnapshotBtn');
+    this.computeDiffBtn = document.getElementById('computeDiffBtn');
+    this.refreshSsrfBtn = document.getElementById('refreshSsrfBtn');
     this.stopFuzzerBtn = document.getElementById('stopFuzzerBtn');
     this.fuzzerPill = document.getElementById('fuzzerPill');
     this.fuzzerCountLabel = document.getElementById('fuzzerCountLabel');
@@ -212,6 +221,15 @@ class PopupController {
     if (this.auditOAuthBtn) this.auditOAuthBtn.addEventListener('click', () => this.auditOAuth());
     if (this.testRateLimitBtn) this.testRateLimitBtn.addEventListener('click', () => this.testRateLimit());
     if (this.refreshDorksBtn) this.refreshDorksBtn.addEventListener('click', () => this.renderDorks());
+    if (this.wordlistBtn) this.wordlistBtn.addEventListener('click', () => this.exportWordlist());
+    if (this.nucleiBtn) this.nucleiBtn.addEventListener('click', () => this.exportNuclei());
+    if (this.probeConcurrentBtn) this.probeConcurrentBtn.addEventListener('click', () => this.probeConcurrent());
+    if (this.probeSstiBtn) this.probeSstiBtn.addEventListener('click', () => this.probeSSTI());
+    if (this.probeSqliBtn) this.probeSqliBtn.addEventListener('click', () => this.probeSQLi());
+    if (this.probeXxeBtn) this.probeXxeBtn.addEventListener('click', () => this.probeXXE());
+    if (this.saveSnapshotBtn) this.saveSnapshotBtn.addEventListener('click', () => this.saveSnapshot());
+    if (this.computeDiffBtn) this.computeDiffBtn.addEventListener('click', () => this.computeDiff());
+    if (this.refreshSsrfBtn) this.refreshSsrfBtn.addEventListener('click', () => this.renderSSRFCandidates());
 
     // Bind Repeater
     if (this.repeaterSendBtn) this.repeaterSendBtn.addEventListener('click', () => this.sendRepeaterRequest());
@@ -283,6 +301,8 @@ class PopupController {
         if (tabId === 'cloud') this.loadCloudBuckets();
         if (tabId === 'advanced') this.initAdvancedTab();
         if (tabId === 'dorks') this.initDorksTab();
+        if (tabId === 'changelog') this.initChangelogTab();
+        if (tabId === 'ssrf') this.renderSSRFCandidates();
       });
     });
 
@@ -1862,6 +1882,228 @@ class PopupController {
     d.textContent = t;
     return d.innerHTML;
   }
+
+  // ================================================================
+  // 📖 V7.0 EXPORT WORDLIST & NUCLEI TEMPLATE
+  // ================================================================
+  async exportWordlist() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportWordlist' });
+      this.log('📖 Exporting contextual recon wordlist (wordlist.txt)...', 'info');
+    } catch (e) {
+      this.log('❌ Wordlist export error: ' + e.message, 'error');
+    }
+  }
+
+  async exportNuclei() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportNucleiTemplate' });
+      this.log('🧬 Exporting automated Nuclei YAML template...', 'info');
+    } catch (e) {
+      this.log('❌ Nuclei export error: ' + e.message, 'error');
+    }
+  }
+
+  // ================================================================
+  // ⚡ V7.0 CONCURRENT PROBER WORKER POOL
+  // ================================================================
+  async probeConcurrent() {
+    this.log('⚡ Starting high-concurrency multi-worker status probe (8 threads)...', 'info');
+    try {
+      await chrome.runtime.sendMessage({ action: 'probeBatchConcurrent', concurrency: 8 });
+      this.load();
+    } catch (e) {
+      this.log('❌ Concurrent probe error: ' + e.message, 'error');
+    }
+  }
+
+  // ================================================================
+  // 🎯 V7.0 REPEATER ACTIVE PROBERS (SSTI, SQLI, XXE)
+  // ================================================================
+  async probeSSTI() {
+    const url = (document.getElementById('repeaterUrl')?.value || '').trim();
+    const box = document.getElementById('repeaterResponseBox');
+    if (!url) {
+      alert('Please enter a target URL with query parameters in the Repeater.');
+      return;
+    }
+    if (box) box.innerHTML = '<div style="color:var(--accent-amber);">⏳ Probing parameters with polyglot template injection vectors...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'probeSSTI', url });
+      const r = res?.result;
+      if (r && box) {
+        if (r.isVulnerable) {
+          box.innerHTML = r.findings.map(f => `
+            <div style="background:rgba(244,63,94,0.15); border:1px solid var(--accent-rose); color:var(--accent-rose); padding:6px; border-radius:2px;">
+              <b>🚨 ${f.message}</b>
+              <div style="font-size:7.5px; color:var(--text-muted); margin-top:2px;">Injected: ${f.payload} | Evaluated To: ${f.evaluated}</div>
+            </div>
+          `).join('');
+        } else {
+          box.innerHTML = '<div style="color:var(--accent-emerald); font-weight:700;">✅ Safe: Injected template expressions were not evaluated by the backend.</div>';
+        }
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async probeSQLi() {
+    const url = (document.getElementById('repeaterUrl')?.value || '').trim();
+    const box = document.getElementById('repeaterResponseBox');
+    if (!url) {
+      alert('Please enter a target URL in the Repeater.');
+      return;
+    }
+
+    try {
+      const u = new URL(url);
+      const firstParam = Array.from(u.searchParams.keys())[0];
+      if (!firstParam) {
+        alert('URL has no query parameters to test for SQLi.');
+        return;
+      }
+
+      if (box) box.innerHTML = `<div style="color:var(--accent-rose);">⏳ Testing parameter "${firstParam}" for SQL error disclosure and differential length...</div>`;
+
+      const res = await chrome.runtime.sendMessage({ action: 'probeSQLi', url, param: firstParam });
+      const r = res?.result;
+      if (r && box) {
+        const col = r.isVulnerable ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+        box.innerHTML = `
+          <div style="font-family:var(--font-mono); font-size:8px;">
+            <div style="font-weight:800; color:${col}; margin-bottom:4px;">[${r.severity}] ${r.message}</div>
+            <div style="color:var(--text-muted);">Baseline HTTP: ${r.baselineStatus} | Injected HTTP: ${r.injectedStatus} | Length Δ: ${r.deltaBytes} bytes</div>
+          </div>
+        `;
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async probeXXE() {
+    const url = (document.getElementById('repeaterUrl')?.value || '').trim();
+    const box = document.getElementById('repeaterResponseBox');
+    if (!url) {
+      alert('Please enter an endpoint URL in the Repeater.');
+      return;
+    }
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Dispatching safe XML External Entity expansion probe...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'probeXXE', url });
+      const r = res?.result;
+      if (r && box) {
+        const col = r.entityExpanded ? 'var(--accent-rose)' : 'var(--text-muted)';
+        box.innerHTML = `
+          <div style="font-family:var(--font-mono); font-size:8px;">
+            <div style="font-weight:800; color:${col};">[${r.severity}] ${r.message}</div>
+            <div style="color:var(--text-muted); margin-top:2px;">HTTP Status: ${r.status}</div>
+          </div>
+        `;
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  // ================================================================
+  // 📊 V7.0 CHANGELOG & ROUTE DIFF CONTROLLER
+  // ================================================================
+  initChangelogTab() {}
+
+  async saveSnapshot() {
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'saveSnapshot' });
+      if (res && res.snapshot) {
+        alert(`Saved snapshot with ${res.snapshot.endpoints.length} routes at ${new Date().toLocaleTimeString()}!`);
+      }
+    } catch (e) {
+      alert('Error saving snapshot: ' + e.message);
+    }
+  }
+
+  async computeDiff() {
+    const box = document.getElementById('changelogDiffBox');
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Computing attack surface route delta...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'computeChangelogDiff' });
+      if (!res || !res.success || !res.diff) throw new Error(res?.error || 'Could not compute diff');
+
+      const d = res.diff;
+      let html = '<div style="font-family:var(--font-mono); font-size:8px;">';
+      html += `<div style="display:flex; gap:12px; margin-bottom:6px; font-weight:800;">
+        <span style="color:var(--accent-emerald);">+ ${d.addedCount} NEW ROUTES</span>
+        <span style="color:var(--accent-rose);">- ${d.removedCount} REMOVED</span>
+        <span style="color:var(--accent-amber);">~ ${d.changedCount} STATUS CHANGED</span>
+      </div>`;
+
+      if (d.added.length > 0) {
+        html += '<div style="color:var(--accent-emerald); font-weight:800; margin-bottom:2px;">Newly Exposed Routes:</div>';
+        d.added.forEach(ep => {
+          html += `<div style="color:var(--accent-emerald); margin-bottom:2px;">+ [${ep.method}] ${ep.url}</div>`;
+        });
+      }
+
+      if (d.removed.length > 0) {
+        html += '<div style="color:var(--accent-rose); font-weight:800; margin-top:4px; margin-bottom:2px;">Hidden / Removed Routes:</div>';
+        d.removed.forEach(ep => {
+          html += `<div style="color:var(--accent-rose); margin-bottom:2px;">- [${ep.method}] ${ep.url}</div>`;
+        });
+      }
+
+      if (d.added.length === 0 && d.removed.length === 0) {
+        html += '<div style="color:var(--text-muted);">No route additions or deletions between the last two snapshots.</div>';
+      }
+
+      html += '</div>';
+      if (box) box.innerHTML = html;
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  // ================================================================
+  // 🌐 V7.0 SSRF CANDIDATE HARVESTER CONTROLLER
+  // ================================================================
+  async renderSSRFCandidates() {
+    const list = document.getElementById('ssrfCandidatesList');
+    if (!list) return;
+    list.innerHTML = '<div style="color:var(--cyan);">⏳ Extracting candidate URL and fetch parameters...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'getSSRFCandidates' });
+      const candidates = res?.candidates || [];
+
+      if (candidates.length === 0) {
+        list.innerHTML = '<div class="empty">No parameters matching SSRF candidate heuristics found across discovered endpoints.</div>';
+        return;
+      }
+
+      list.innerHTML = candidates.map((c, i) => `
+        <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px; margin-bottom:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <span style="font-weight:700; color:var(--accent-amber); font-size:8px;">Parameter: ${c.param}</span>
+            <button class="btn-sm-action" style="font-size:7px;" id="sendSsrfRepeaterBtn_${i}">Send to Repeater</button>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:7.5px; color:var(--cyan); word-break:break-all; margin-bottom:2px;">${c.url}</div>
+          <div style="font-size:7px; color:var(--text-muted);">Test payloads: ${c.testPayloads.slice(0, 2).join(' | ')}</div>
+        </div>
+      `).join('');
+
+      candidates.forEach((c, i) => {
+        document.getElementById('sendSsrfRepeaterBtn_' + i)?.addEventListener('click', () => {
+          this.sendToRepeater(c.url, 'GET');
+        });
+      });
+    } catch (e) {
+      list.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
 
   // ================================================================
   // 📄 V6.0 EXPORT INTERACTIVE HTML REPORT

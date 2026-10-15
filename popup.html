@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔗 Endpoint Hunter v6.0</title>
+<title>🔗 Endpoint Hunter v7.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     🔗 ENDPOINT HUNTER v6.0 - ADVANCED OBSIDIAN CYBER RECON UI
+     🔗 ENDPOINT HUNTER v7.0 - ADVANCED OBSIDIAN CYBER RECON UI
      Author: Pratik Khairnar (https://github.com/pratik-khairnar-sec)
      ============================================================ */
   :root {
@@ -719,7 +719,7 @@
     <img src="icon48.png" alt="Endpoint Hunter Logo" class="brand-logo">
     <div class="brand-info">
       <div class="brand-title">Endpoint Hunter</div>
-      <div class="brand-sub">Enterprise Recon Suite • v6.0.0</div>
+      <div class="brand-sub">Enterprise Recon Suite • v7.0.0</div>
     </div>
   </div>
   <div class="header-actions">
@@ -797,6 +797,8 @@
     <button class="btn btn-export" id="txtBtn" title="Export clean list for ffuf/nuclei">📋 TXT</button>
     <button class="btn btn-export" id="bashBtn" title="Export Executable Recon Bash Script (recon_audit.sh)">🐚 BASH</button>
     <button class="btn btn-export" id="htmlReportBtn" title="Export Standalone Interactive HTML Recon Report (recon_report.html)">📄 HTML</button>
+    <button class="btn btn-export" id="wordlistBtn" title="Export Contextual Recon Wordlist (wordlist.txt)">📖 WORDLIST</button>
+    <button class="btn btn-export" id="nucleiBtn" title="Export Automated Nuclei YAML Template">🧬 NUCLEI</button>
     <button class="btn btn-export" id="exportBtn" title="Export full JSON report">💾 JSON</button>
   </div>
 </div>
@@ -817,6 +819,8 @@
   <div class="tab-pill tab" data-tab="cloud">☁️ Cloud <span class="tab-chip" id="cloudBadge">0</span></div>
   <div class="tab-pill tab" data-tab="advanced">⚡ Advanced</div>
   <div class="tab-pill tab" data-tab="dorks">🕵️ Dorks</div>
+  <div class="tab-pill tab" data-tab="changelog">📊 Diff</div>
+  <div class="tab-pill tab" data-tab="ssrf">🌐 SSRF</div>
   <div class="tab-pill tab" data-tab="paths">📁 Paths</div>
   <div class="tab-pill tab" data-tab="logs">📝 Logs</div>
   <div class="tab-pill tab" data-tab="settings">⚙️ Settings</div>
@@ -846,6 +850,7 @@
         <option value="500">500 Server Error</option>
       </select>
       <button class="btn-sm-action" id="probeStatusBtn" title="Probe discovered endpoints for live status codes">🎯 PROBE STATUS</button>
+      <button class="btn-sm-action" id="probeConcurrentBtn" style="color:var(--cyan); border-color:rgba(56,189,248,0.4);" title="Probe all endpoints concurrently with multi-worker pool">⚡ MULTI-WORKER</button>
     </div>
     <div id="endpointList">
       <div class="empty">No endpoints discovered yet.<br>Click "📡 SCAN (ALL)" or "🎯 SCAN CURRENT" to begin reconnaissance.</div>
@@ -880,7 +885,7 @@
     </div>
   </section>
 
-  <!-- TAB 4: WEBSOCKET & SSE (v6.0) -->
+  <!-- TAB 4: WEBSOCKET & SSE (v7.0) -->
   <section class="tab-pane tab-content" id="wsTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid var(--border);">
       <span style="font-size:8.5px; color:var(--text-muted); font-weight:700;">Bi-Directional WebSocket & SSE Stream</span>
@@ -907,6 +912,9 @@
       <button class="btn-sm-action" id="mineParamsBtn" style="color:var(--accent-amber); border-color:rgba(251,191,36,0.4);" title="Actively probe for hidden query parameters (Arjun-style)">🔍 MINE PARAMS</button>
       <button class="btn-sm-action" id="verbTamperBtn" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.4);" title="Test GET/POST/PUT/DELETE/PATCH/HEAD/OPTIONS for Auth Bypass">⚡ VERB TAMPER</button>
       <button class="btn-sm-action" id="idorSeqBtn" style="color:var(--accent-purple); border-color:rgba(192,132,252,0.4);" title="Sequentially probe numeric IDs to detect potential IDOR">🎯 IDOR SEQ</button>
+      <button class="btn-sm-action" id="probeSstiBtn" style="color:var(--accent-amber); border-color:rgba(251,191,36,0.4);" title="Probe target parameters for SSTI template evaluation">🎯 SSTI</button>
+      <button class="btn-sm-action" id="probeSqliBtn" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.4);" title="Probe parameters for error-based SQL injection">💉 SQLI</button>
+      <button class="btn-sm-action" id="probeXxeBtn" style="color:var(--cyan); border-color:rgba(56,189,248,0.4);" title="Probe XML endpoint for entity expansion">📜 XXE</button>
       <button class="btn-sm-action" id="repeaterSendBtn" style="color:#000; background:var(--cyan); border:none; font-weight:800;">🚀 SEND</button>
     </div>
 
@@ -989,7 +997,7 @@
 
   <!-- TAB 9: DISCOVERED PATHS -->
   
-  <!-- TAB: SECURITY (v6.0) -->
+  <!-- TAB: SECURITY (v7.0) -->
   <section class="tab-pane tab-content" id="securityTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--accent-rose); text-transform:uppercase;">🛡️ Active Security Assessment</span>
@@ -1033,7 +1041,7 @@
     </div>
   </section>
 
-  <!-- TAB: JWT INSPECTOR (v6.0) -->
+  <!-- TAB: JWT INSPECTOR (v7.0) -->
   <section class="tab-pane tab-content" id="jwtTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🔑 Real-Time JWT Inspector & Alg:None Generator</span>
@@ -1060,7 +1068,7 @@
     </div>
   </section>
 
-  <!-- TAB: SWAGGER / OPENAPI (v6.0) -->
+  <!-- TAB: SWAGGER / OPENAPI (v7.0) -->
   <section class="tab-pane tab-content" id="swaggerTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">📜 Swagger 2.0 & OpenAPI 3.0 Live Importer</span>
@@ -1075,7 +1083,7 @@
     <div id="swaggerImportStatus" style="margin-top:6px; font-size:8px;"></div>
   </section>
 
-  <!-- TAB: CLOUD BUCKETS (v6.0) -->
+  <!-- TAB: CLOUD BUCKETS (v7.0) -->
   <section class="tab-pane tab-content" id="cloudTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-purple); text-transform:uppercase;">☁️ Discovered Cloud Storage Buckets</span>
@@ -1087,7 +1095,7 @@
   </section>
   
   
-  <!-- TAB: ADVANCED RECON ENGINES (v6.0) -->
+  <!-- TAB: ADVANCED RECON ENGINES (v7.0) -->
   <section class="tab-pane tab-content" id="advancedTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">⚡ Advanced Threat & Vulnerability Engines</span>
@@ -1147,7 +1155,7 @@
     </div>
   </section>
 
-  <!-- TAB: RECON DORKS GENERATOR (v6.0) -->
+  <!-- TAB: RECON DORKS GENERATOR (v7.0) -->
   <section class="tab-pane tab-content" id="dorksTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🕵️ Automated GitHub & Google Recon Dorks</span>
@@ -1158,6 +1166,32 @@
     </div>
     <div id="dorksList" style="max-height:260px; overflow-y:auto;">
       <div class="empty">Click "Generate Dorks" to build high-impact reconnaissance queries for target domain.</div>
+    </div>
+  </section>
+  
+  
+  <!-- TAB: ROUTE DIFF & CHANGELOG (v7.0) -->
+  <section class="tab-pane tab-content" id="changelogTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+      <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">📊 API Changelog & Route Exposure Diff</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-sm-action" id="saveSnapshotBtn">📸 Save Snapshot</button>
+        <button class="btn-sm-action" id="computeDiffBtn" style="color:var(--accent-emerald);">Compute Delta</button>
+      </div>
+    </div>
+    <div id="changelogDiffBox" style="max-height:240px; overflow-y:auto; font-size:8px;">
+      <div class="empty">Save at least 2 scan snapshots across different scans or session states to track newly added or removed attack surface routes.</div>
+    </div>
+  </section>
+
+  <!-- TAB: SSRF CANDIDATE HARVESTER (v7.0) -->
+  <section class="tab-pane tab-content" id="ssrfTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+      <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🌐 SSRF Parameter Harvester & Payloads</span>
+      <button class="btn-sm-action" id="refreshSsrfBtn">Scan Parameters</button>
+    </div>
+    <div id="ssrfCandidatesList" style="max-height:240px; overflow-y:auto; font-size:8px;">
+      <div class="empty">Click "Scan Parameters" to identify parameters prone to Server-Side Request Forgery.</div>
     </div>
   </section>
   

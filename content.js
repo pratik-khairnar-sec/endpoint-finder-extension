@@ -362,8 +362,38 @@
       }
       return true;
     }
+    // ================================================================
+    // ☣️ PROTOTYPE POLLUTION & CSTI RUNTIME AUDITOR (v7.0)
+    // ================================================================
+    if (request.action === 'auditPrototypeAndCSTI') {
+      try {
+        const isPolluted = !!Object.prototype.eh_polluted || !!window.eh_polluted;
+        const html = document.documentElement ? document.documentElement.outerHTML : '';
+        const frameworks = [];
+
+        if (/ng-app|angular\.js|ng-controller/i.test(html)) {
+          frameworks.push({ name: 'AngularJS', cstiPayload: "{{constructor.constructor('return 1337')()}}" });
+        }
+        if (/vue\.js|v-app|v-model|data-v-/i.test(html)) {
+          frameworks.push({ name: 'Vue.js', cstiPayload: '{{_c.constructor("return 1337")()}}' });
+        }
+        if (/alpinejs|x-data|x-bind/i.test(html)) {
+          frameworks.push({ name: 'Alpine.js', cstiPayload: 'x-data="{ count: 1337 }"' });
+        }
+
+        sendResponse({
+          success: true,
+          isPolluted,
+          frameworks,
+          hasCstiCandidates: frameworks.length > 0
+        });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
 
   });
 
-  console.log('[ENDPOINT_HUNTER] ✅ Content script v6.0 ready');
+  console.log('[ENDPOINT_HUNTER] ✅ Content script v7.0 ready');
 })();

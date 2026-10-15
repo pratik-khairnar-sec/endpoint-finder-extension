@@ -5,6 +5,51 @@ All notable changes to **Endpoint Hunter** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0] - 2026-10-16
+
+### 🎯 Polyglot Injection, SSRF & Active Automation Suite (v7.0)
+
+#### 🎯 Server-Side Template Injection Prober (`SSTIAuditor`)
+- **Multi-Engine Polyglot Evaluation**: Fires safe mathematical expressions (`{{7*7}}`, `${7*7}`, `#{7*7}`, `<%= 7*7 %>`, `{{7*'7'}}`) into discovered parameters.
+- **Execution Verification**: Confirms vulnerabilities only when backend template engines evaluate and reflect `49` (or string repetition `7777777`) instead of the literal input string.
+
+#### 💉 SQL Injection Error & Heuristic Detector (`SQLiHeuristicProbe`)
+- **Vendor-Specific Error Signatures**: Detects SQL syntax error disclosures across MySQL, PostgreSQL, SQLite, Oracle, and Microsoft SQL Server.
+- **Differential Length & Status Analysis**: Compares single-quote (`'`) mutated requests against clean baselines, flagging anomalous 500 status codes and significant body length shifts.
+
+#### 📜 XML External Entity Expansion Prober (`XXEProber`)
+- **Safe Canary Entity Injection**: Formulates non-destructive XML payloads containing internal entity definitions.
+- **Automated Expansion Detection**: Flags endpoints where XML parsers actively expand entities into the returned response payload.
+
+#### ☣️ Prototype Pollution Scanner (`ProtoPollutionScanner`)
+- **Query Parameter Vectors**: Generates tailored prototype pollution probe URLs (`__proto__[eh_polluted]=1337`, `constructor[prototype][eh_polluted]=1337`).
+- **Runtime DOM State Auditor**: Directly monitors `Object.prototype.eh_polluted` to detect client-side prototype pollution in production web applications.
+
+#### 📊 Attack Surface Changelog & Route Diff (`APIChangelogDiffEngine`)
+- **Session Snapshot Manager**: Captures point-in-time snapshots of all discovered routes, methods, and status codes.
+- **Delta Analysis**: Instantly highlights newly exposed routes (`+ NEW`), deprecated or removed routes (`- REMOVED`), and HTTP status changes between scans.
+
+#### 📖 Contextual Recon Wordlist Builder (`SensitiveFileWordlistHarvester`)
+- **Target-Specific Dictionaries**: Automatically mines discovered paths, filenames, and query parameters to generate a clean, deduplicated wordlist (`wordlist.txt`).
+- **Extension Permutations**: Automatically pairs extracted identifiers with sensitive backup and configuration extensions (`.json`, `.env`, `.bak`, `.old`, `.yml`, `.xml`, `.sql`).
+
+#### 🌸 Client-Side Template Injection Auditor (`CSTIAuditor`)
+- **Framework Fingerprinting**: Detects AngularJS (`ng-app`), Vue.js (`v-app`), and Alpine.js (`x-data`) in the active DOM.
+- **Sandbox Test Vectors**: Provides tailored client-side template injection payloads for active verification.
+
+#### 🌐 SSRF Parameter Harvester & Payloads (`SSRFHeuristicDetector`)
+- **Deep Parameter Discovery**: Identifies URL-carrying parameters (`webhook_url`, `callback`, `dest`, `feed`, `proxy`, `endpoint`).
+- **Cloud Metadata & Loopback Payloads**: Automatically provides standard internal loopback (`127.0.0.1`) and cloud metadata (`169.254.169.254`) test vectors with 1-click Mini-Repeater injection.
+
+#### ⚡ Multi-Worker High-Concurrency Status Prober (`BulkStatusProberConcurrent`)
+- **Worker Pool Architecture**: Probes hundreds of endpoints concurrently with 8 parallel worker threads.
+- **Real-Time Progress Feedback**: Continuously updates discovered endpoint response codes without UI freezes.
+
+#### 🧬 Automated Nuclei Template Exporter (`NucleiTemplateExporter`)
+- **Ready-to-Scan YAML Templates**: Exports standard Nuclei YAML templates (`recon_nuclei_template.yaml`) targeting all discovered routes with status code matchers.
+
+---
+
 ## [6.0.0] - 2026-10-16
 
 ### ⚡ Advanced Threat Assessment & Threat Intelligence Suite (v6.0)

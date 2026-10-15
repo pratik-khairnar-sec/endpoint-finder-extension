@@ -2647,6 +2647,403 @@ class HTMLReportGenerator {
 }
 
 
+
+// ================================================================
+// 🎯 SSTIAuditor (v7.0) - SERVER-SIDE TEMPLATE INJECTION PROBER
+// ================================================================
+class SSTIAuditor {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+    this.payloads = [
+      { exp: '{{7*7}}', expected: '49', engine: 'Jinja2/Twig' },
+      { exp: '${7*7}', expected: '49', engine: 'FreeMarker/MVEL/Spring EL' },
+      { exp: '#{7*7}', expected: '49', engine: 'Ruby ERB/Thymeleaf' },
+      { exp: '<%= 7*7 %>', expected: '49', engine: 'ERB/EJS' },
+      { exp: '{{7*\'7\'}}', expected: '7777777', engine: 'Jinja2 String Multiply' }
+    ];
+  }
+
+  async probeEndpoint(urlStr, paramName = null) {
+    try {
+      const u = new URL(urlStr);
+      const paramsToTest = paramName ? [paramName] : Array.from(u.searchParams.keys());
+      if (paramsToTest.length === 0) {
+        return { url: urlStr, tested: false, message: 'No query parameters to test for SSTI.' };
+      }
+
+      const findings = [];
+      for (const p of paramsToTest) {
+        for (const item of this.payloads) {
+          const testUrl = new URL(urlStr);
+          testUrl.searchParams.set(p, item.exp);
+
+          const res = await fetch(testUrl.toString(), { method: 'GET' });
+          const body = await res.text();
+
+          if (body.includes(item.expected) && !body.includes(item.exp)) {
+            findings.push({
+              param: p,
+              payload: item.exp,
+              evaluated: item.expected,
+              possibleEngine: item.engine,
+              severity: 'CRITICAL',
+              message: 'SSTI Confirmed on parameter "' + p + '"! Injected ' + item.exp + ' evaluated to ' + item.expected + ' (' + item.engine + ').'
+            });
+            break;
+          }
+        }
+      }
+
+      return {
+        url: urlStr,
+        testedParams: paramsToTest,
+        isVulnerable: findings.length > 0,
+        findings
+      };
+    } catch (e) {
+      return { url: urlStr, error: e.message };
+    }
+  }
+}
+
+// ================================================================
+// 💉 SQLiHeuristicProbe (v7.0) - ERROR & SYNTAX DIFFERENTIAL DETECTOR
+// ================================================================
+class SQLiHeuristicProbe {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+    this.sqlErrorPatterns = [
+      { engine: 'MySQL', regex: /you have an error in your sql syntax|warning: mysql_|check the manual that corresponds to your (mysql|mariadb)/i },
+      { engine: 'PostgreSQL', regex: /postgresql.*error|pg_query\(\)|pg_exec\(\)|syntax error at or near/i },
+      { engine: 'SQLite', regex: /sqlite3::sqlexception|sqlite_error|unrecognized token:/i },
+      { engine: 'Oracle', regex: /ora-[0-9]{5}|oracle error/i },
+      { engine: 'Microsoft SQL', regex: /microsoft sql server|sqlexception|unclosed quotation mark after the character string/i }
+    ];
+  }
+
+  async probeParameter(urlStr, paramName) {
+    try {
+      const baselineRes = await fetch(urlStr);
+      const baselineText = await baselineRes.text();
+      const baselineLen = baselineText.length;
+
+      const singleQuoteUrl = new URL(urlStr);
+      singleQuoteUrl.searchParams.set(paramName, (singleQuoteUrl.searchParams.get(paramName) || '') + "'");
+      const sqRes = await fetch(singleQuoteUrl.toString());
+      const sqText = await sqRes.text();
+
+      let detectedEngine = null;
+      for (const p of this.sqlErrorPatterns) {
+        if (p.regex.test(sqText) && !p.regex.test(baselineText)) {
+          detectedEngine = p.engine;
+          break;
+        }
+      }
+
+      const diffLength = Math.abs(sqText.length - baselineLen);
+      const statusChanged = sqRes.status !== baselineRes.status && sqRes.status >= 500;
+      const isVulnerable = detectedEngine !== null || (statusChanged && diffLength > 20);
+
+      return {
+        url: urlStr,
+        param: paramName,
+        isVulnerable,
+        detectedEngine,
+        statusChanged,
+        baselineStatus: baselineRes.status,
+        injectedStatus: sqRes.status,
+        deltaBytes: diffLength,
+        severity: detectedEngine ? 'CRITICAL' : isVulnerable ? 'HIGH' : 'INFO',
+        message: detectedEngine 
+          ? 'SQL Error Disclosure: ' + detectedEngine + ' syntax error triggered by single quote (\') on parameter "' + paramName + '".' 
+          : isVulnerable 
+            ? 'Anomalous HTTP ' + sqRes.status + ' error triggered on single quote (\') injection (Δ ' + diffLength + ' bytes).' 
+            : 'No SQL syntax errors or anomalies detected.'
+      };
+    } catch (e) {
+      return { url: urlStr, param: paramName, error: e.message };
+    }
+  }
+}
+
+// ================================================================
+// 📜 XXEProber (v7.0) - XML EXTERNAL ENTITY ENDPOINT DETECTOR
+// ================================================================
+class XXEProber {
+  generateSafePayload(canary = 'EH_XXE_CANARY_TEST') {
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE test [ <!ENTITY xxe "' + canary + '"> ]>\n<root>\n  <data>&xxe;</data>\n</root>';
+  }
+
+  async probeEndpoint(urlStr, headers = {}) {
+    const canary = 'CANARY_' + Math.random().toString(36).substring(2, 10);
+    const payload = this.generateSafePayload(canary);
+
+    try {
+      const res = await fetch(urlStr, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/xml', 'Accept': 'application/xml, text/xml, */*', ...headers },
+        body: payload
+      });
+
+      const text = await res.text();
+      const isReflected = text.includes(canary);
+
+      return {
+        url: urlStr,
+        status: res.status,
+        entityExpanded: isReflected,
+        severity: isReflected ? 'HIGH' : 'INFO',
+        message: isReflected 
+          ? 'XML Entity Expansion confirmed! Server parsed and expanded the custom entity.' 
+          : 'Server did not reflect expanded XML entity or rejected XML payload.'
+      };
+    } catch (e) {
+      return { url: urlStr, error: e.message };
+    }
+  }
+}
+
+// ================================================================
+// ☣️ ProtoPollutionScanner (v7.0) - OBJECT PROTOTYPE POLLUTION TESTER
+// ================================================================
+class ProtoPollutionScanner {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+    this.testPayloads = [
+      '__proto__[eh_polluted]=1337',
+      '__proto__.eh_polluted=1337',
+      'constructor[prototype][eh_polluted]=1337',
+      'constructor.prototype.eh_polluted=1337'
+    ];
+  }
+
+  generateTestUrls(urlStr) {
+    const urls = [];
+    try {
+      this.testPayloads.forEach(p => {
+        const testUrl = new URL(urlStr);
+        const [k, v] = p.split('=');
+        testUrl.searchParams.set(k, v);
+        urls.push(testUrl.toString());
+      });
+    } catch (e) {}
+    return urls;
+  }
+}
+
+// ================================================================
+// 📊 APIChangelogDiffEngine (v7.0) - ROUTE DELTA & EXPOSURE TRACKER
+// ================================================================
+class APIChangelogDiffEngine {
+  constructor() {
+    this.snapshots = [];
+  }
+
+  saveSnapshot(endpoints, label = '') {
+    const snap = {
+      timestamp: new Date().toISOString(),
+      label: label || ('Snapshot #' + (this.snapshots.length + 1)),
+      endpoints: endpoints.map(e => ({ url: e.url, method: e.method, status: e.statusCode }))
+    };
+    this.snapshots.push(snap);
+    return snap;
+  }
+
+  computeDiff(snapshotA, snapshotB) {
+    const setA = new Map(snapshotA.endpoints.map(e => [e.method + ':' + e.url, e]));
+    const setB = new Map(snapshotB.endpoints.map(e => [e.method + ':' + e.url, e]));
+
+    const added = [];
+    const removed = [];
+    const changed = [];
+
+    for (const [key, epB] of setB.entries()) {
+      if (!setA.has(key)) {
+        added.push(epB);
+      } else {
+        const epA = setA.get(key);
+        if (epA.status !== epB.status) {
+          changed.push({ url: epB.url, method: epB.method, oldStatus: epA.status, newStatus: epB.status });
+        }
+      }
+    }
+
+    for (const [key, epA] of setA.entries()) {
+      if (!setB.has(key)) {
+        removed.push(epA);
+      }
+    }
+
+    return {
+      addedCount: added.length,
+      removedCount: removed.length,
+      changedCount: changed.length,
+      added,
+      removed,
+      changed
+    };
+  }
+}
+
+// ================================================================
+// 📖 SensitiveFileWordlistHarvester (v7.0) - CONTEXTUAL WORDLIST BUILDER
+// ================================================================
+class SensitiveFileWordlistHarvester {
+  generateWordlist(endpoints, paths, params) {
+    const words = new Set();
+
+    paths.forEach(p => {
+      p.split('/').forEach(part => {
+        const clean = part.replace(/[^a-zA-Z0-9_-]/g, '').trim();
+        if (clean.length > 2 && !/^\d+$/.test(clean)) words.add(clean);
+      });
+    });
+
+    params.forEach(p => {
+      const clean = p.replace(/[^a-zA-Z0-9_-]/g, '').trim();
+      if (clean.length > 1) words.add(clean);
+    });
+
+    const baseNames = Array.from(words).slice(0, 50);
+    const exts = ['.json', '.php', '.env', '.bak', '.old', '.yml', '.yaml', '.xml', '.config', '.sql', '.zip'];
+    baseNames.forEach(b => {
+      exts.forEach(ext => words.add(b + ext));
+    });
+
+    return Array.from(words).sort();
+  }
+}
+
+// ================================================================
+// 🌸 CSTIAuditor (v7.0) - CLIENT-SIDE TEMPLATE INJECTION SCANNER
+// ================================================================
+class CSTIAuditor {
+  detectFrameworksInHtml(html) {
+    const engines = [];
+    if (/ng-app|angular\.js|ng-controller/i.test(html)) engines.push({ name: 'AngularJS', payload: "{{constructor.constructor('return 1337')()}}" });
+    if (/vue\.js|v-app|v-model|data-v-/i.test(html)) engines.push({ name: 'Vue.js', payload: '{{_c.constructor("return 1337")()}}' });
+    if (/alpinejs|x-data|x-bind/i.test(html)) engines.push({ name: 'Alpine.js', payload: 'x-data="{ count: 1337 }"' });
+    return engines;
+  }
+}
+
+// ================================================================
+// 🌐 SSRFHeuristicDetector (v7.0) - URL PARAMETER SSRF HARVESTER
+// ================================================================
+class SSRFHeuristicDetector {
+  constructor() {
+    this.ssrfParams = [
+      'url', 'target', 'dest', 'destination', 'redirect', 'uri',
+      'link', 'src', 'source', 'webhook', 'webhook_url', 'callback',
+      'feed', 'host', 'port', 'proxy', 'endpoint', 'domain', 'api_url'
+    ];
+  }
+
+  detectSSRFParameters(endpoints) {
+    const candidates = [];
+    endpoints.forEach(ep => {
+      try {
+        const u = new URL(ep.url);
+        for (const [k, v] of u.searchParams.entries()) {
+          if (this.ssrfParams.includes(k.toLowerCase()) || /webhook|callback|fetch|download|proxy|dest|feed/i.test(k)) {
+            candidates.push({
+              url: ep.url,
+              param: k,
+              currentValue: v,
+              testPayloads: [
+                'http://127.0.0.1:80',
+                'http://localhost:8080',
+                'http://169.254.169.254/latest/meta-data/',
+                'http://metadata.google.internal/computeMetadata/v1/'
+              ]
+            });
+          }
+        }
+      } catch (e) {}
+    });
+    return candidates;
+  }
+}
+
+// ================================================================
+// 🚀 BulkStatusProberConcurrent (v7.0) - MULTI-WORKER STATUS PROBER
+// ================================================================
+class BulkStatusProberConcurrent {
+  constructor(statusProber) {
+    this.prober = statusProber;
+    this.isProbing = false;
+  }
+
+  async probeBatch(endpoints, concurrency = 8, onProgress = null) {
+    this.isProbing = true;
+    let index = 0;
+    const total = endpoints.length;
+
+    const worker = async () => {
+      while (index < total && this.isProbing) {
+        const curIdx = index++;
+        const ep = endpoints[curIdx];
+        try {
+          const res = await this.prober.probeEndpoint(ep.url);
+          ep.statusCode = res.status;
+          ep.statusText = res.statusText;
+          ep.contentType = res.contentType;
+          if (onProgress) onProgress({ index: curIdx, total, ep });
+        } catch (e) {}
+      }
+    };
+
+    const pool = [];
+    for (let i = 0; i < Math.min(concurrency, total); i++) {
+      pool.push(worker());
+    }
+    await Promise.all(pool);
+    this.isProbing = false;
+    return endpoints;
+  }
+
+  stop() {
+    this.isProbing = false;
+  }
+}
+
+// ================================================================
+// 🧬 NucleiTemplateExporter (v7.0) - AUTOMATED NUCLEI YAML EXPORTER
+// ================================================================
+class NucleiTemplateExporter {
+  generateTemplate(endpoints, domain = 'target.com') {
+    const cleanDomain = domain.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const pathList = Array.from(new Set(endpoints.map(e => {
+      try { return new URL(e.url).pathname; } catch (e) { return e.url; }
+    }))).slice(0, 100);
+
+    const pathsYaml = pathList.map(p => '      - "{{BaseURL}}' + p + '"').join('\n');
+
+    return 'id: endpoint-hunter-recon-' + cleanDomain + '\n' +
+'info:\n' +
+'  name: Endpoint Hunter Auto-Generated Recon Suite\n' +
+'  author: Endpoint Hunter v7.0\n' +
+'  severity: info\n' +
+'  description: Auto-generated Nuclei reconnaissance template for discovered application routes on ' + domain + '.\n' +
+'  tags: recon,endpoint-hunter,discovered\n\n' +
+'http:\n' +
+'  - method: GET\n' +
+'    path:\n' +
+pathsYaml + '\n' +
+'    matchers-condition: or\n' +
+'    matchers:\n' +
+'      - type: status\n' +
+'        status:\n' +
+'          - 200\n' +
+'          - 201\n' +
+'          - 301\n' +
+'          - 302\n' +
+'          - 401\n' +
+'          - 403\n';
+  }
+}
+
+
 const ENDPOINT_PATTERNS = {
   api: [
     '/api/', '/v1/', '/v2/', '/v3/', '/v4/', '/v5/',
@@ -2808,6 +3205,16 @@ class CrawlEngine {
     this.gitDorkGenerator = new GitDorkGenerator();
     this.rateLimitAnalyzer = new RateLimitAnalyzer(this.stealthEngine);
     this.htmlReportGenerator = new HTMLReportGenerator();
+    this.sstiAuditor = new SSTIAuditor(this.stealthEngine);
+    this.sqliProbe = new SQLiHeuristicProbe(this.stealthEngine);
+    this.xxeProber = new XXEProber();
+    this.protoScanner = new ProtoPollutionScanner(this.stealthEngine);
+    this.diffEngine = new APIChangelogDiffEngine();
+    this.wordlistHarvester = new SensitiveFileWordlistHarvester();
+    this.cstiAuditor = new CSTIAuditor();
+    this.ssrfDetector = new SSRFHeuristicDetector();
+    this.concurrentProber = new BulkStatusProberConcurrent(this.statusProber);
+    this.nucleiExporter = new NucleiTemplateExporter();
     this.discoveredPII = [];
     this.wsFrames = [];
     this.unpackedSourceMaps = new Map();
@@ -3653,6 +4060,48 @@ class CrawlEngine {
   // ================================================================
   // 📦 HAR (HTTP ARCHIVE 1.2) EXPORT (v4.0)
   // ================================================================
+
+  exportWordlist() {
+    try {
+      const words = this.wordlistHarvester.generateWordlist(
+        this.discoveredEndpoints,
+        Array.from(this.discoveredPaths),
+        Array.from(this.discoveredParams)
+      );
+      const blob = new Blob([words.join('\n')], { type: 'text/plain' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        chrome.downloads.download({
+          url: reader.result,
+          filename: 'wordlist_' + (this.baseDomain || 'endpoints').replace(/[^a-zA-Z0-9_-]/g, '_') + '.txt',
+          saveAs: true
+        });
+      };
+      reader.readAsDataURL(blob);
+      this.addLog('📖 Exported contextual recon wordlist (' + words.length + ' words)', 'success');
+    } catch (e) {
+      this.addLog('❌ Wordlist Export Error: ' + e.message, 'error');
+    }
+  }
+
+  exportNucleiTemplate() {
+    try {
+      const yaml = this.nucleiExporter.generateTemplate(this.discoveredEndpoints, this.baseDomain || 'target.com');
+      const blob = new Blob([yaml], { type: 'text/yaml' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        chrome.downloads.download({
+          url: reader.result,
+          filename: 'recon_nuclei_' + (this.baseDomain || 'endpoints').replace(/[^a-zA-Z0-9_-]/g, '_') + '.yaml',
+          saveAs: true
+        });
+      };
+      reader.readAsDataURL(blob);
+      this.addLog('🧬 Exported automated Nuclei YAML template', 'success');
+    } catch (e) {
+      this.addLog('❌ Nuclei Export Error: ' + e.message, 'error');
+    }
+  }
 
   exportHTMLReport() {
     try {
