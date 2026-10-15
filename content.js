@@ -393,7 +393,131 @@
       return true;
     }
 
+    // ================================================================
+    // 🛡️ SUBRESOURCE INTEGRITY (SRI) AUDITOR (v9.0)
+    // ================================================================
+    if (request.action === 'auditSRI') {
+      try {
+        const scripts = Array.from(document.querySelectorAll('script[src]')).map(s => ({
+          src: s.src,
+          hasIntegrity: s.hasAttribute('integrity'),
+          integrity: s.getAttribute('integrity') || '',
+          crossorigin: s.getAttribute('crossorigin') || 'none',
+          isExternal: !s.src.startsWith(window.location.origin)
+        }));
+
+        const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]')).map(l => ({
+          href: l.href,
+          hasIntegrity: l.hasAttribute('integrity'),
+          integrity: l.getAttribute('integrity') || '',
+          crossorigin: l.getAttribute('crossorigin') || 'none',
+          isExternal: !l.href.startsWith(window.location.origin)
+        }));
+
+        const missingSri = scripts.concat(styles).filter(item => item.isExternal && !item.hasIntegrity);
+
+        sendResponse({
+          success: true,
+          totalScripts: scripts.length,
+          totalStyles: styles.length,
+          externalCount: scripts.concat(styles).filter(i => i.isExternal).length,
+          missingSriCount: missingSri.length,
+          missingSri,
+          scripts,
+          styles
+        });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
+
+    // ================================================================
+    // 📥 HIDDEN FORM FIELD & ANTI-CSRF HARVESTER (v9.0)
+    // ================================================================
+    if (request.action === 'harvestHiddenFields') {
+      try {
+        const forms = Array.from(document.querySelectorAll('form')).map((f, idx) => {
+          const action = f.getAttribute('action') || window.location.href;
+          const method = (f.getAttribute('method') || 'GET').toUpperCase();
+          const hiddenInputs = Array.from(f.querySelectorAll('input[type="hidden"]')).map(inp => ({
+            name: inp.name || inp.id || 'unnamed',
+            value: inp.value || '',
+            id: inp.id || ''
+          }));
+
+          const hasCsrfToken = hiddenInputs.some(inp => 
+            /csrf|token|xsrf|authenticity|_token|nonce/i.test(inp.name)
+          );
+
+          const isStateChanging = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+
+          return {
+            formIndex: idx + 1,
+            action,
+            method,
+            isStateChanging,
+            hasCsrfToken,
+            csrfWarning: isStateChanging && !hasCsrfToken,
+            hiddenCount: hiddenInputs.length,
+            hiddenInputs
+          };
+        });
+
+        // Standalone hidden inputs outside form tags
+        const standaloneHidden = Array.from(document.querySelectorAll('body > input[type="hidden"], div > input[type="hidden"]'))
+          .filter(inp => !inp.closest('form'))
+          .map(inp => ({
+            name: inp.name || inp.id || 'unnamed',
+            value: inp.value || '',
+            id: inp.id || ''
+          }));
+
+        sendResponse({
+          success: true,
+          totalForms: forms.length,
+          formsWithIssues: forms.filter(f => f.csrfWarning).length,
+          standaloneCount: standaloneHidden.length,
+          forms,
+          standaloneHidden
+        });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
+
+    // ================================================================
+    // 📱 DEEP LINK & CUSTOM MOBILE SCHEME HARVESTER (v9.0)
+    // ================================================================
+    if (request.action === 'harvestDeepLinksDOM') {
+      try {
+        const customSchemes = /^(slack|intent|tg|twitter|fb|market|whatsapp|mailto|tel|sms|zoommtg|spotify|discord|steam):/i;
+        const deepLinks = [];
+
+        Array.from(document.querySelectorAll('a[href]')).forEach(a => {
+          if (customSchemes.test(href) || (/^[a-z0-9+.-]+:\/\//i.test(href) && !/^https?:\/\//i.test(href))) {
+            deepLinks.push({
+              scheme: href.split(':')[0],
+              raw: href,
+              text: a.innerText.trim().slice(0, 40),
+              element: 'a[href]'
+            });
+          }
+        });
+
+        sendResponse({
+          success: true,
+          totalDeepLinks: deepLinks.length,
+          deepLinks
+        });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
+
   });
 
-  console.log('[ENDPOINT_HUNTER] ✅ Content script v7.0 ready');
+  console.log('[ENDPOINT_HUNTER] ✅ Content script v9.0 ready');
 })();

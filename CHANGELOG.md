@@ -5,6 +5,51 @@ All notable changes to **Endpoint Hunter** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.0.0] - 2026-10-16
+
+### 📐 Schema Boundary Fuzzing, Deep Security Audits & Multi-Role Sessions (v9.0)
+
+#### 📐 API Parameter Boundary & Type Fuzzer (`APISchemaFuzzer`)
+- **Type-Aware Boundary Vectors**: Generates RFC boundary edge cases for integer, string, boolean, array, and object parameters (e.g. 32-bit/64-bit int limits, IEEE-754 precision limits, null bytes, unicode normalization `\uFEFF`, zero values).
+- **1-Click Copy & Testing**: Instantly copy payloads or forward directly to Repeater.
+
+#### ✈️ CORS Preflight & Credentials Simulator (`CORSPreflightSimulator`)
+- **Active Preflight Simulation**: Sends safe `OPTIONS` preflight requests with customized `Origin`, `Access-Control-Request-Method`, and request headers.
+- **Vulnerability Heuristics**: Flags dangerous origin reflection, wildcard CORS with credentials, and sandboxed null origin access.
+
+#### 🛡️ Subresource Integrity (SRI) Auditor (`SubresourceIntegrityAuditor`)
+- **Third-Party Dependency Audit**: Scans active page scripts and stylesheets loaded from external CDNs lacking `integrity="sha..."` attributes.
+- **SHA-384 Hardening Tags**: Highlights external resources susceptible to CDN compromise or supply chain tampering.
+
+#### 💉 CRLF Response Splitting Canary Prober (`CRLFInjectionDetector`)
+- **HTTP Response Splitting Testing**: Safely injects encoded CRLF canary headers (`%0d%0aX-EH-Canary: InjectedCrlfValue1337`) into redirect parameters.
+- **Zero False-Positive Verification**: Only confirms vulnerability if the injected canary header actually appears in HTTP response headers.
+
+#### 📥 Hidden Form Field & Anti-CSRF Harvester (`HiddenFormFieldHarvester`)
+- **DOM Form Inspector**: Discovers all `<form>` elements and hidden `<input type="hidden">` tags across visited pages.
+- **CSRF Token Posture**: Flags state-changing forms (POST, PUT, DELETE) that lack anti-CSRF tokens (`_token`, `csrf_token`, `nonce`).
+
+#### 🔐 Client-Side Cryptographic Weakness Auditor (`ClientSideCryptoAuditor`)
+- **Insecure PRNG Detection**: Flags usage of `Math.random()` for generating tokens, session IDs, or nonces instead of `crypto.getRandomValues()`.
+- **Legacy Hashes & Keys**: Detects client-side MD5 / SHA-1 hashing and embedded symmetric encryption keys.
+
+#### 📱 Mobile Deep Link & Custom Scheme Harvester (`DeepLinkExtractor`)
+- **Universal & Custom Schemes**: Extracts `slack://`, `intent://`, `market://`, `fb://`, `tg://`, `oauth://` and custom app schemes from DOM anchors and JavaScript bundles.
+- **Intent Injection Audit**: Catalogs accepted deep link parameters to audit for unauthorized parameter hijacking.
+
+#### 📁 Config & Sensitive File Leak Prober (`EnvFileExposeProber`)
+- **Safe Environment Prober**: Scans origin for `/.env`, `/.env.local`, `/.git/config`, `/.git/HEAD`, `/docker-compose.yml`, and `/.well-known/security.txt`.
+- **Strict Content Signature Verification**: Rejects SPA 200 OK fallback HTML responses to eliminate false positives.
+
+#### 👥 Multi-Role Authorization Profile Switcher (`AdvancedSessionManager`)
+- **Privilege Escalation & BOLA Testing**: Define and switch between multiple authorization profiles ("Admin", "User B / Low-Priv", "Guest").
+- **1-Click Repeater Sync**: Apply active session headers straight into Repeater requests to test for Broken Object Level Authorization.
+
+#### 🌐 Postman Environment Spec Exporter (`PostmanEnvironmentExporter`)
+- **Postman Environment Export**: Generates an official `postman_environment.json` with pre-populated variables (`baseUrl`, `bearerToken`, `apiKey`) mapped from captured network traffic and secrets.
+
+---
+
 ## [8.0.0] - 2026-10-16
 
 ### 🔬 Cryptographic Entropy, Stack Fingerprinting & Burp Suite Interoperability (v8.0)

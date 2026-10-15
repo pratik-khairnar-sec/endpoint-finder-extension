@@ -151,6 +151,19 @@ class PopupController {
     this.auditCookiesBtn = document.getElementById('auditCookiesBtn');
     this.parseRobotsBtn = document.getElementById('parseRobotsBtn');
     this.evalCspBtn = document.getElementById('evalCspBtn');
+    this.postmanEnvBtn = document.getElementById('postmanEnvBtn');
+    this.generateVectorsBtn = document.getElementById('generateVectorsBtn');
+    this.auditSriBtn = document.getElementById('auditSriBtn');
+    this.probeCrlfBtn = document.getElementById('probeCrlfBtn');
+    this.harvestFormsBtn = document.getElementById('harvestFormsBtn');
+    this.auditCryptoBtn = document.getElementById('auditCryptoBtn');
+    this.deepLinksBtn = document.getElementById('deepLinksBtn');
+    this.probeEnvBtn = document.getElementById('probeEnvBtn');
+    this.selectAdminRoleBtn = document.getElementById('selectAdminRoleBtn');
+    this.selectUserBRoleBtn = document.getElementById('selectUserBRoleBtn');
+    this.selectGuestRoleBtn = document.getElementById('selectGuestRoleBtn');
+    this.saveProfileBtn = document.getElementById('saveProfileBtn');
+    this.applyProfileToRepeaterBtn = document.getElementById('applyProfileToRepeaterBtn');
     this.stopFuzzerBtn = document.getElementById('stopFuzzerBtn');
     this.fuzzerPill = document.getElementById('fuzzerPill');
     this.fuzzerCountLabel = document.getElementById('fuzzerCountLabel');
@@ -244,6 +257,19 @@ class PopupController {
     if (this.auditCookiesBtn) this.auditCookiesBtn.addEventListener('click', () => this.auditCookies());
     if (this.parseRobotsBtn) this.parseRobotsBtn.addEventListener('click', () => this.parseRobots());
     if (this.evalCspBtn) this.evalCspBtn.addEventListener('click', () => this.evalCSPBypasses());
+    if (this.postmanEnvBtn) this.postmanEnvBtn.addEventListener('click', () => this.exportPostmanEnvironment());
+    if (this.generateVectorsBtn) this.generateVectorsBtn.addEventListener('click', () => this.generateSchemaVectors());
+    if (this.auditSriBtn) this.auditSriBtn.addEventListener('click', () => this.auditSRI());
+    if (this.probeCrlfBtn) this.probeCrlfBtn.addEventListener('click', () => this.probeCRLF());
+    if (this.harvestFormsBtn) this.harvestFormsBtn.addEventListener('click', () => this.harvestForms());
+    if (this.auditCryptoBtn) this.auditCryptoBtn.addEventListener('click', () => this.auditCrypto());
+    if (this.deepLinksBtn) this.deepLinksBtn.addEventListener('click', () => this.harvestDeepLinks());
+    if (this.probeEnvBtn) this.probeEnvBtn.addEventListener('click', () => this.probeEnvLeaks());
+    if (this.selectAdminRoleBtn) this.selectAdminRoleBtn.addEventListener('click', () => this.switchSessionProfile('Admin'));
+    if (this.selectUserBRoleBtn) this.selectUserBRoleBtn.addEventListener('click', () => this.switchSessionProfile('UserB'));
+    if (this.selectGuestRoleBtn) this.selectGuestRoleBtn.addEventListener('click', () => this.switchSessionProfile('Guest'));
+    if (this.saveProfileBtn) this.saveProfileBtn.addEventListener('click', () => this.saveSessionProfile());
+    if (this.applyProfileToRepeaterBtn) this.applyProfileToRepeaterBtn.addEventListener('click', () => this.applySessionProfileToRepeater());
 
     // Bind Repeater
     if (this.repeaterSendBtn) this.repeaterSendBtn.addEventListener('click', () => this.sendRepeaterRequest());
@@ -2095,6 +2121,352 @@ class PopupController {
     });
   }
 
+
+  // ================================================================
+  // 📐 V9.0 SCHEMA FUZZER, DEEP AUDIT+ & MULTI-ROLE SESSIONS
+  // ================================================================
+
+  async exportPostmanEnvironment() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportPostmanEnvironment' });
+      this.log('🌐 Exporting Postman Environment JSON...', 'info');
+    } catch (e) {
+      this.log('❌ Postman Environment export error: ' + e.message, 'error');
+    }
+  }
+
+  async generateSchemaVectors() {
+    const param = (document.getElementById('schemaParamInput')?.value || 'id').trim();
+    const type = document.getElementById('schemaTypeSelect')?.value || 'string';
+    const box = document.getElementById('schemaVectorsBox');
+    if (!box) return;
+
+    box.innerHTML = '<div style="color:var(--cyan);">⏳ Generating boundary & edge-case test vectors...</div>';
+    try {
+      const res = await chrome.runtime.sendMessage({
+        action: 'generateSchemaVectors',
+        param,
+        type
+      });
+
+      const r = res?.result;
+      if (!r || !r.vectors || r.vectors.length === 0) {
+        box.innerHTML = '<div class="empty">No vectors generated for this type.</div>';
+        return;
+      }
+
+      box.innerHTML = `
+        <div style="color:var(--cyan); font-weight:700; margin-bottom:6px;">
+          Generated ${r.totalVectors} Boundary Vectors for Parameter: "${this.escape(r.param)}" (${r.type.toUpperCase()})
+        </div>
+        ${r.vectors.map(v => `
+          <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:var(--radius-xs); padding:4px 6px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:${v.risk === 'CRITICAL' ? 'var(--accent-rose)' : v.risk === 'HIGH' ? 'var(--accent-amber)' : 'var(--text-main)'};">
+                ${this.escape(v.name)} <span class="badge" style="font-size:7px;">${v.risk}</span>
+              </div>
+              <div style="color:var(--text-muted); font-size:7px;">${this.escape(v.rationale)}</div>
+              <code style="color:var(--cyan); font-family:var(--font-mono); font-size:7.5px; word-break:break-all;">${this.escape(v.payload)}</code>
+            </div>
+            <div style="display:flex; gap:3px;">
+              <button class="btn-sm-action copy-vector-btn" data-payload="${this.escape(v.payload)}">Copy</button>
+            </div>
+          </div>
+        `).join('')}
+      `;
+
+      box.querySelectorAll('.copy-vector-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const payload = e.target.getAttribute('data-payload');
+          navigator.clipboard.writeText(payload);
+          e.target.innerText = 'Copied!';
+          setTimeout(() => { e.target.innerText = 'Copy'; }, 1000);
+        });
+      });
+    } catch (e) {
+      box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async auditSRI() {
+    const box = document.getElementById('auditPlusBox');
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Scanning DOM for external scripts lacking Subresource Integrity...</div>';
+
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tabId = tabs && tabs[0] ? tabs[0].id : null;
+      if (!tabId) return;
+
+      try {
+        const res = await chrome.tabs.sendMessage(tabId, { action: 'auditSRI' });
+        if (!res || !res.success) {
+          if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ Failed to inspect scripts on active page.</div>';
+          return;
+        }
+
+        if (box) {
+          box.innerHTML = `
+            <div style="font-weight:800; color:var(--accent-purple); margin-bottom:4px;">
+              🛡️ Subresource Integrity (SRI) Report
+            </div>
+            <div style="margin-bottom:6px; color:var(--text-muted);">
+              Total External Resources: ${res.externalCount} | Missing SRI Hashes: ${res.missingSriCount}
+            </div>
+            ${res.missingSri.length === 0 ? `
+              <div style="color:var(--accent-emerald); font-weight:700;">✅ Safe: All external script & stylesheet dependencies enforce Subresource Integrity!</div>
+            ` : res.missingSri.map(item => `
+              <div style="background:var(--bg-glass); border-left:2px solid var(--accent-amber); padding:4px 6px; margin-bottom:4px;">
+                <div style="color:var(--accent-amber); font-weight:700;">⚠️ Missing SRI Hash</div>
+                <div style="font-family:var(--font-mono); font-size:7px; word-break:break-all;">${this.escape(item.src || item.href)}</div>
+              </div>
+            `).join('')}
+          `;
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async probeCRLF() {
+    const box = document.getElementById('auditPlusBox');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+      if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Testing parameter reflection for CRLF response splitting...</div>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'probeCRLF', url: activeUrl });
+        const r = res?.result;
+        if (r && box) {
+          box.innerHTML = `
+            <div style="font-weight:800; color:${r.isVulnerable ? 'var(--accent-rose)' : 'var(--accent-emerald)'}; margin-bottom:4px;">
+              ${r.isVulnerable ? '🚨 CRLF Header Injection Confirmed!' : '✅ CRLF Sanitization Verified'}
+            </div>
+            <div style="color:var(--text-muted); font-size:7.5px; margin-bottom:4px;">${this.escape(r.details)}</div>
+            <div style="font-family:var(--font-mono); font-size:7px; color:var(--text-faint);">Tested: ${this.escape(r.testedUrl)}</div>
+          `;
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async harvestForms() {
+    const box = document.getElementById('auditPlusBox');
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Harvesting forms & verifying anti-CSRF protection...</div>';
+
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tabId = tabs && tabs[0] ? tabs[0].id : null;
+      if (!tabId) return;
+
+      try {
+        const res = await chrome.tabs.sendMessage(tabId, { action: 'harvestHiddenFields' });
+        if (!res || !res.success) {
+          if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ Failed to inspect forms.</div>';
+          return;
+        }
+
+        if (box) {
+          box.innerHTML = `
+            <div style="font-weight:800; color:var(--accent-purple); margin-bottom:4px;">
+              📥 Form & CSRF Token Posture
+            </div>
+            <div style="margin-bottom:6px; color:var(--text-muted);">
+              Total Forms: ${res.totalForms} | Forms Lacking CSRF Tokens: ${res.formsWithIssues}
+            </div>
+            ${res.forms.map(f => `
+              <div style="background:var(--bg-glass); border-left:2px solid ${f.csrfWarning ? 'var(--accent-rose)' : 'var(--accent-emerald)'}; padding:4px 6px; margin-bottom:4px;">
+                <div style="font-weight:700;">
+                  Form #${f.formIndex} [${f.method}] -> ${this.escape(f.action)}
+                  ${f.csrfWarning ? '<span class="badge" style="background:var(--accent-rose); color:#000; margin-left:4px;">NO CSRF TOKEN</span>' : ''}
+                </div>
+                <div style="color:var(--text-muted); font-size:7px;">Hidden inputs: ${f.hiddenCount}</div>
+                ${f.hiddenInputs.map(inp => `
+                  <div style="font-family:var(--font-mono); font-size:7px; color:var(--cyan);">
+                    • ${this.escape(inp.name)} = "${this.escape(inp.value.slice(0, 30))}${inp.value.length > 30 ? '...' : ''}"
+                  </div>
+                `).join('')}
+              </div>
+            `).join('')}
+          `;
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async auditCrypto() {
+    const box = document.getElementById('auditPlusBox');
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Auditing loaded scripts for weak client-side cryptography...</div>';
+
+    try {
+      const endpoints = this.endpoints || [];
+      const jsUrls = endpoints.filter(e => e.url.endsWith('.js')).slice(0, 5).map(e => e.url);
+      
+      const scriptTexts = [];
+      for (const url of jsUrls) {
+        try {
+          const resp = await fetch(url);
+          if (resp.ok) scriptTexts.push(await resp.text());
+        } catch (e) {}
+      }
+
+      const res = await chrome.runtime.sendMessage({ action: 'auditClientCrypto', scripts: scriptTexts });
+      const r = res?.result;
+
+      if (r && box) {
+        box.innerHTML = `
+          <div style="font-weight:800; color:var(--accent-purple); margin-bottom:4px;">
+            🔐 Client-Side Cryptographic Audit
+          </div>
+          <div style="margin-bottom:6px; color:var(--text-muted);">
+            Scripts Analyzed: ${r.totalScriptsAnalyzed} | Cryptographic Weaknesses: ${r.vulnerabilityCount}
+          </div>
+          ${r.findings.length === 0 ? `
+            <div style="color:var(--accent-emerald); font-weight:700;">✅ Clean: No Math.random tokens, weak MD5/SHA-1, or hardcoded AES keys detected!</div>
+          ` : r.findings.map(f => `
+            <div style="background:var(--bg-glass); border-left:2px solid var(--accent-rose); padding:4px 6px; margin-bottom:4px;">
+              <div style="color:var(--accent-rose); font-weight:700;">${this.escape(f.type)}</div>
+              <div style="font-family:var(--font-mono); font-size:7px; color:var(--text-main);">${this.escape(f.snippet)}</div>
+              <div style="color:var(--text-muted); font-size:7px;">Recommendation: ${this.escape(f.recommendation)}</div>
+            </div>
+          `).join('')}
+        `;
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async harvestDeepLinks() {
+    const box = document.getElementById('auditPlusBox');
+    if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Searching for mobile deep link schemes & universal links...</div>';
+
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tabId = tabs && tabs[0] ? tabs[0].id : null;
+      if (!tabId) return;
+
+      try {
+        const res = await chrome.tabs.sendMessage(tabId, { action: 'harvestDeepLinksDOM' });
+        if (!res || !res.success) {
+          if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ Failed to harvest deep links.</div>';
+          return;
+        }
+
+        if (box) {
+          box.innerHTML = `
+            <div style="font-weight:800; color:var(--accent-purple); margin-bottom:4px;">
+              📱 Discovered Mobile Deep Link Schemes
+            </div>
+            <div style="margin-bottom:6px; color:var(--text-muted);">
+              Total Deep Links: ${res.totalDeepLinks}
+            </div>
+            ${res.deepLinks.length === 0 ? `
+              <div style="color:var(--text-muted);">No custom deep link schemes (slack://, intent://) found in DOM anchors.</div>
+            ` : res.deepLinks.map(dl => `
+              <div style="background:var(--bg-glass); border-left:2px solid var(--cyan); padding:4px 6px; margin-bottom:4px;">
+                <div style="font-weight:700; color:var(--cyan);">Scheme: ${this.escape(dl.scheme)}://</div>
+                <div style="font-family:var(--font-mono); font-size:7px; word-break:break-all;">${this.escape(dl.raw)}</div>
+              </div>
+            `).join('')}
+          `;
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async probeEnvLeaks() {
+    const box = document.getElementById('auditPlusBox');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+      if (box) box.innerHTML = '<div style="color:var(--cyan);">⏳ Probing .env, .git/config, docker-compose on origin...</div>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'probeEnvLeaks', url: activeUrl });
+        const r = res?.result;
+        if (r && box) {
+          box.innerHTML = `
+            <div style="font-weight:800; color:${r.exposedCount > 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)'}; margin-bottom:4px;">
+              📁 Configuration & Environment File Prober
+            </div>
+            <div style="margin-bottom:6px; color:var(--text-muted);">
+              Total Probed: ${r.totalProbed} | Verified Leaks: ${r.exposedCount}
+            </div>
+            ${r.findings.length === 0 ? `
+              <div style="color:var(--accent-emerald); font-weight:700;">✅ Clean: No exposed .env, .git/config, or docker-compose files discovered!</div>
+            ` : r.findings.map(f => `
+              <div style="background:var(--bg-glass); border-left:2px solid var(--accent-rose); padding:4px 6px; margin-bottom:4px;">
+                <div style="color:var(--accent-rose); font-weight:700;">🚨 EXPOSED: ${this.escape(f.type)}</div>
+                <div style="font-family:var(--font-mono); font-size:7px; word-break:break-all;">URL: ${this.escape(f.url)} [Status: ${f.statusCode}]</div>
+                <div style="font-family:var(--font-mono); font-size:6.5px; color:var(--text-muted);">Snippet: ${this.escape(f.snippet)}</div>
+              </div>
+            `).join('')}
+          `;
+        }
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async switchSessionProfile(roleName) {
+    const badge = document.getElementById('activeProfileBadge');
+    const textarea = document.getElementById('profileHeadersTextarea');
+    try {
+      await chrome.runtime.sendMessage({ action: 'setActiveSessionProfile', name: roleName });
+      const res = await chrome.runtime.sendMessage({ action: 'getSessionProfiles' });
+      const p = res?.result?.profiles?.[roleName];
+      if (badge) badge.innerText = 'Active: ' + roleName;
+      if (textarea && p) {
+        textarea.value = JSON.stringify(p.headers, null, 2);
+      }
+      this.log('👥 Switched active session profile to: ' + roleName, 'info');
+    } catch (e) {
+      this.log('❌ Switch session error: ' + e.message, 'error');
+    }
+  }
+
+  async saveSessionProfile() {
+    const badge = document.getElementById('activeProfileBadge');
+    const textarea = document.getElementById('profileHeadersTextarea');
+    const roleName = badge?.innerText.replace('Active: ', '').trim() || 'Admin';
+
+    try {
+      let headers = {};
+      try {
+        headers = JSON.parse(textarea.value);
+      } catch (e) {
+        textarea.value.split('\n').forEach(line => {
+          const parts = line.split(':');
+          if (parts.length >= 2) headers[parts[0].trim()] = parts.slice(1).join(':').trim();
+        });
+      }
+
+      await chrome.runtime.sendMessage({
+        action: 'setSessionProfile',
+        name: roleName,
+        headers,
+        description: 'Custom profile for ' + roleName
+      });
+      this.log('💾 Saved profile headers for: ' + roleName, 'success');
+    } catch (e) {
+      this.log('❌ Save profile error: ' + e.message, 'error');
+    }
+  }
+
+  async applySessionProfileToRepeater() {
+    const textarea = document.getElementById('profileHeadersTextarea');
+    const repeaterHeaders = document.getElementById('repeaterHeaders');
+    if (textarea && repeaterHeaders) {
+      repeaterHeaders.value = textarea.value;
+      this.log('🧪 Applied active session headers to Mini-Repeater', 'success');
+    }
+  }
 
   // ================================================================
   // 📖 V7.0 EXPORT WORDLIST & NUCLEI TEMPLATE

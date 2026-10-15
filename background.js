@@ -3506,6 +3506,355 @@ const ENDPOINT_PATTERNS = {
 // 🕷️ CRAWL ENGINE (OLD - PRESERVED + UPGRADED WITH STEALTH/BYPASS)
 // ================================================================
 
+
+// ================================================================
+// 📐 APISchemaFuzzer (v9.0) - BOUNDARY & EDGE-CASE GENERATOR
+// ================================================================
+class APISchemaFuzzer {
+  generateBoundaryVectors(paramName = 'id', paramType = 'string') {
+    const vectors = [];
+    const type = (paramType || 'string').toLowerCase();
+    
+    vectors.push({ name: 'Null Byte Injection', payload: '%00', rationale: 'String termination & file extension bypass', risk: 'HIGH' });
+    vectors.push({ name: 'CRLF Splitter', payload: '%0d%0aInjected-Header:%201', rationale: 'HTTP Response Splitting / Header Injection', risk: 'HIGH' });
+    vectors.push({ name: 'Unicode Normalization', payload: '\uFEFF\u200B\u202E', rationale: 'Bidi override & zero-width character parsing anomalies', risk: 'MEDIUM' });
+
+    if (type === 'integer' || type === 'number') {
+      vectors.push({ name: 'Zero Value', payload: '0', rationale: 'Division by zero / falsy checks', risk: 'LOW' });
+      vectors.push({ name: 'Negative Minimum', payload: '-1', rationale: 'Underflow / unauthorized index access', risk: 'MEDIUM' });
+      vectors.push({ name: 'Max Signed 32-bit Int', payload: '2147483647', rationale: 'Integer overflow boundary', risk: 'HIGH' });
+      vectors.push({ name: 'Signed 32-bit Int Overflow', payload: '2147483648', rationale: 'Signed 32-bit integer overflow', risk: 'HIGH' });
+      vectors.push({ name: 'Max Signed 64-bit Int', payload: '9223372036854775807', rationale: 'BigInt overflow boundary', risk: 'HIGH' });
+      vectors.push({ name: 'Float Precision Limit', payload: '1.7976931348623157e+308', rationale: 'IEEE-754 double precision limit (Infinity)', risk: 'MEDIUM' });
+      vectors.push({ name: 'Scientific Notation Zero', payload: '1e-324', rationale: 'Subnormal floating point underflow', risk: 'LOW' });
+      vectors.push({ name: 'NaN String', payload: 'NaN', rationale: 'Type conversion fault', risk: 'LOW' });
+    } else if (type === 'boolean') {
+      vectors.push({ name: 'True Literal', payload: 'true', rationale: 'Explicit affirmative state', risk: 'LOW' });
+      vectors.push({ name: 'False Literal', payload: 'false', rationale: 'Explicit negative state', risk: 'LOW' });
+      vectors.push({ name: 'Numeric One', payload: '1', rationale: 'Truthiness coercion test', risk: 'LOW' });
+      vectors.push({ name: 'Numeric Zero', payload: '0', rationale: 'Falsiness coercion test', risk: 'LOW' });
+      vectors.push({ name: 'Empty String', payload: '""', rationale: 'Blank boolean coercion fault', risk: 'MEDIUM' });
+    } else if (type === 'array' || type === 'object') {
+      vectors.push({ name: 'Empty Array', payload: '[]', rationale: 'Collection empty boundary check', risk: 'LOW' });
+      vectors.push({ name: 'Empty Object', payload: '{}', rationale: 'Empty dictionary boundary check', risk: 'LOW' });
+      vectors.push({ name: 'Oversized Array', payload: JSON.stringify(new Array(100).fill(paramName)), rationale: 'DoS / excessive iteration test', risk: 'HIGH' });
+      vectors.push({ name: 'Type Confused Object', payload: '{"__proto__":{"polluted":true}}', rationale: 'Prototype pollution attempt', risk: 'CRITICAL' });
+    } else {
+      vectors.push({ name: 'Empty String', payload: '', rationale: 'Required field & validation bypass', risk: 'LOW' });
+      vectors.push({ name: 'Whitespace Padding', payload: '   ', rationale: 'Untrimmed string input handling', risk: 'LOW' });
+      vectors.push({ name: 'Long Buffer (4KB)', payload: 'A'.repeat(4096), rationale: 'Buffer allocation & memory exhaustion check', risk: 'HIGH' });
+      vectors.push({ name: 'Long Buffer (64KB)', payload: 'B'.repeat(65536), rationale: 'Payload length limit & DoS check', risk: 'HIGH' });
+      vectors.push({ name: 'Special XML/HTML Chars', payload: '<>\\\'"&', rationale: 'Encoding & escaping sanitization test', risk: 'HIGH' });
+      vectors.push({ name: 'SQL Meta-characters', payload: "' OR '1'='1", rationale: 'SQL dialect boundary test', risk: 'HIGH' });
+      vectors.push({ name: 'Path Traversal Segment', payload: '../../../../etc/passwd', rationale: 'Filesystem boundary check', risk: 'HIGH' });
+    }
+
+    return {
+      param: paramName,
+      type,
+      totalVectors: vectors.length,
+      vectors
+    };
+  }
+}
+
+// ================================================================
+// ✈️ CORSPreflightSimulator (v9.0) - OPTIONS PREFLIGHT AUDITOR
+// ================================================================
+class CORSPreflightSimulator {
+  async simulatePreflight(targetUrl, testOrigin = 'https://evil-hacker.com', reqMethod = 'PUT', reqHeaders = 'X-Custom-Auth, Content-Type') {
+    try {
+      const resp = await fetch(targetUrl, {
+        method: 'OPTIONS',
+        headers: {
+          'Origin': testOrigin,
+          'Access-Control-Request-Method': reqMethod,
+          'Access-Control-Request-Headers': reqHeaders
+        }
+      });
+
+      const headers = {};
+      resp.headers.forEach((val, key) => { headers[key.toLowerCase()] = val; });
+
+      const acao = headers['access-control-allow-origin'] || 'Not Set';
+      const acac = headers['access-control-allow-credentials'] || 'false';
+      const acam = headers['access-control-allow-methods'] || 'Not Set';
+      const acah = headers['access-control-allow-headers'] || 'Not Set';
+      const maxAge = headers['access-control-max-age'] || 'Not Set';
+
+      const issues = [];
+      let severity = 'INFO';
+
+      if (acao === '*' && acac === 'true') {
+        issues.push('CRITICAL: Access-Control-Allow-Origin: * combined with Allow-Credentials: true violates CORS spec but may indicate unsafe parser');
+        severity = 'CRITICAL';
+      } else if (acao === testOrigin && acac === 'true') {
+        issues.push('CRITICAL: Arbitrary Origin reflected with Allow-Credentials: true! Full CSRF/data exfiltration risk.');
+        severity = 'CRITICAL';
+      } else if (acao === testOrigin) {
+        issues.push('HIGH: Arbitrary Origin reflected without credentials. Unauthenticated data read risk.');
+        severity = 'HIGH';
+      } else if (acao === 'null') {
+        issues.push('HIGH: Origin "null" is allowed! Sandboxed iframes can access data.');
+        severity = 'HIGH';
+      }
+
+      return {
+        targetUrl,
+        statusCode: resp.status,
+        testedOrigin: testOrigin,
+        acao,
+        acac,
+        acam,
+        acah,
+        maxAge,
+        issues,
+        severity,
+        isVulnerable: issues.length > 0
+      };
+    } catch (e) {
+      return { targetUrl, error: e.message, isVulnerable: false };
+    }
+  }
+}
+
+// ================================================================
+// 💉 CRLFInjectionDetector (v9.0) - CANARY HEADER SPLITTING PROBER
+// ================================================================
+class CRLFInjectionDetector {
+  async probeCRLF(targetUrl) {
+    try {
+      const canaryHeader = 'x-eh-canary';
+      const canaryValue = 'InjectedCrlfValue1337';
+      const encodedPayload = '%0d%0a' + canaryHeader + ':%20' + canaryValue;
+      
+      const testUrl = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 'redirect=' + encodedPayload;
+      const resp = await fetch(testUrl, { method: 'GET', redirect: 'manual' });
+      
+      const hasInjectedHeader = resp.headers.has(canaryHeader) && resp.headers.get(canaryHeader) === canaryValue;
+      
+      return {
+        testedUrl: testUrl,
+        statusCode: resp.status,
+        hasInjectedHeader,
+        isVulnerable: hasInjectedHeader,
+        details: hasInjectedHeader 
+          ? 'CRITICAL: CRLF response splitting confirmed! Arbitrary HTTP response headers can be injected.'
+          : 'SECURE: Canary header was not reflected in response headers.'
+      };
+    } catch (e) {
+      return { testedUrl: targetUrl, error: e.message, isVulnerable: false };
+    }
+  }
+}
+
+// ================================================================
+// 🔐 ClientSideCryptoAuditor (v9.0) - CLIENT CRYPTO WEAKNESS AUDITOR
+// ================================================================
+class ClientSideCryptoAuditor {
+  auditScripts(scriptTexts = []) {
+    const findings = [];
+    scriptTexts.forEach((code, idx) => {
+      if (!code || typeof code !== 'string') return;
+
+      const mathRandomMatches = code.match(/(token|session|auth|key|id|secret|nonce)\s*[:=]\s*.*Math\.random\(\)/gi);
+      if (mathRandomMatches) {
+        findings.push({
+          scriptIndex: idx + 1,
+          type: 'Insecure PRNG (Math.random)',
+          snippet: mathRandomMatches[0].slice(0, 100),
+          severity: 'HIGH',
+          recommendation: 'Use window.crypto.getRandomValues() for cryptographically secure pseudo-random numbers.'
+        });
+      }
+
+      const weakHashMatches = code.match(/(CryptoJS\.(MD5|SHA1)|createHash\(['"](md5|sha1)['"]\))/gi);
+      if (weakHashMatches) {
+        findings.push({
+          scriptIndex: idx + 1,
+          type: 'Weak Hashing Algorithm (MD5/SHA-1)',
+          snippet: weakHashMatches[0],
+          severity: 'MEDIUM',
+          recommendation: 'Upgrade to SHA-256, SHA-384, or Argon2/bcrypt for password/integrity hashing.'
+        });
+      }
+
+      const hardcodedKeys = code.match(/(AES|DES|crypto)\.encrypt\([^,]+,\s*['"][a-zA-Z0-9+=/]{8,}['"]/gi);
+      if (hardcodedKeys) {
+        findings.push({
+          scriptIndex: idx + 1,
+          type: 'Hardcoded Encryption Key',
+          snippet: hardcodedKeys[0].slice(0, 80),
+          severity: 'CRITICAL',
+          recommendation: 'Do not embed symmetric keys directly in client-side JavaScript.'
+        });
+      }
+    });
+
+    return {
+      totalScriptsAnalyzed: scriptTexts.length,
+      vulnerabilityCount: findings.length,
+      findings
+    };
+  }
+}
+
+// ================================================================
+// 📱 DeepLinkExtractor (v9.0) - CUSTOM MOBILE SCHEME HARVESTER
+// ================================================================
+class DeepLinkExtractor {
+  extractDeepLinks(sources = []) {
+    const schemeRegex = /((?:slack|intent|tg|twitter|fb|market|whatsapp|mailto|tel|sms|zoommtg|spotify|discord|steam|[a-z0-9+.-]+):\/\/[^\s"'<>]+)/gi;
+
+    sources.forEach(src => {
+      if (!src || typeof src !== 'string') return;
+      let match;
+      while ((match = schemeRegex.exec(src)) !== null) {
+        const urlStr = match[1];
+        if (urlStr.startsWith('http://') || urlStr.startsWith('https://')) continue;
+        if (!results.has(urlStr)) {
+          try {
+            const scheme = urlStr.split(':')[0];
+            const hasParams = urlStr.includes('?');
+            results.set(urlStr, {
+              url: urlStr,
+              scheme,
+              hasParams,
+              paramCount: hasParams ? urlStr.split('?')[1].split('&').length : 0
+            });
+          } catch (e) {}
+        }
+      }
+    });
+
+    return Array.from(results.values());
+  }
+}
+
+// ================================================================
+// 📁 EnvFileExposeProber (v9.0) - CONFIG & ENV LEAK PROBER
+// ================================================================
+class EnvFileExposeProber {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+  }
+
+  async probeOrigin(baseUrl) {
+    const origin = new URL(baseUrl).origin;
+    const targets = [
+      { path: '/.env', sig: /DB_|AWS_|SECRET|APP_KEY|API_KEY|PASSWORD|TOKEN/i, type: 'Environment Config' },
+      { path: '/.env.local', sig: /DB_|AWS_|SECRET|APP_KEY|API_KEY/i, type: 'Local Environment Config' },
+      { path: '/.env.production', sig: /DB_|AWS_|SECRET|APP_KEY|API_KEY/i, type: 'Production Environment Config' },
+      { path: '/.git/config', sig: /\[core\]|\[remote\s+".+"\]/i, type: 'Git Repository Config' },
+      { path: '/.git/HEAD', sig: /^ref:\s+refs\/heads\//i, type: 'Git HEAD Pointer' },
+      { path: '/docker-compose.yml', sig: /version:|services:|networks:/i, type: 'Docker Compose Config' },
+      { path: '/.well-known/security.txt', sig: /Contact:\s*(mailto:|https:)/i, type: 'Security Disclosure Policy' }
+    ];
+
+    const findings = [];
+    for (const t of targets) {
+      try {
+        const targetUrl = origin + t.path;
+        const resp = await fetch(targetUrl, { method: 'GET' });
+        if (!resp.ok) continue;
+
+        const contentType = (resp.headers.get('content-type') || '').toLowerCase();
+        if (contentType.includes('text/html') && !t.path.includes('security.txt')) continue;
+
+        const text = await resp.text();
+        if (text && t.sig.test(text)) {
+          findings.push({
+            url: targetUrl,
+            type: t.type,
+            statusCode: resp.status,
+            snippet: text.slice(0, 150).replace(/\r?\n/g, ' '),
+            isExposed: true
+          });
+        }
+      } catch (e) {}
+      if (this.stealth) await this.stealth.delay(80);
+    }
+
+    return {
+      origin,
+      totalProbed: targets.length,
+      exposedCount: findings.length,
+      findings
+    };
+  }
+}
+
+// ================================================================
+// 👥 AdvancedSessionManager (v9.0) - MULTI-ROLE RECON PROFILES
+// ================================================================
+class AdvancedSessionManager {
+  constructor() {
+    this.profiles = {
+      'Admin': { headers: { 'Authorization': 'Bearer ADMIN_TOKEN_EXAMPLE' }, description: 'High Privilege Administrator' },
+      'UserB': { headers: { 'Authorization': 'Bearer USER_B_TOKEN_EXAMPLE' }, description: 'Low Privilege Standard User' },
+      'Guest': { headers: {}, description: 'Unauthenticated Anonymous' }
+    };
+    this.activeProfile = 'Admin';
+  }
+
+  setProfile(name, headers, description = '') {
+    this.profiles[name] = { headers, description };
+  }
+
+  setActive(name) {
+    if (this.profiles[name]) {
+      this.activeProfile = name;
+      return true;
+    }
+    return false;
+  }
+
+  getActiveHeaders() {
+    return this.profiles[this.activeProfile]?.headers || {};
+  }
+
+  getAllProfiles() {
+    return {
+      active: this.activeProfile,
+      profiles: this.profiles
+    };
+  }
+}
+
+// ================================================================
+// 🌐 PostmanEnvironmentExporter (v9.0) - POSTMAN ENV SPEC EXPORTER
+// ================================================================
+class PostmanEnvironmentExporter {
+  generateEnvironment(baseDomain, endpoints = [], secrets = []) {
+    const env = {
+      id: 'eh-env-' + Date.now(),
+      name: 'Endpoint Hunter - ' + (baseDomain || 'API Environment'),
+      values: [
+        { key: 'baseUrl', value: 'https://' + (baseDomain || 'api.target.com'), enabled: true, type: 'default' }
+      ],
+      _postman_variable_scope: 'environment',
+      _postman_exported_at: new Date().toISOString(),
+      _postman_exported_using: 'Endpoint Hunter v9.0'
+    };
+
+    const tokenSecret = secrets.find(s => s.type && (s.type.toLowerCase().includes('bearer') || s.type.toLowerCase().includes('jwt') || s.type.toLowerCase().includes('token')));
+    if (tokenSecret) {
+      env.values.push({ key: 'bearerToken', value: tokenSecret.value, enabled: true, type: 'secret' });
+    } else {
+      env.values.push({ key: 'bearerToken', value: 'INSERT_BEARER_TOKEN_HERE', enabled: true, type: 'secret' });
+    }
+
+    const apiKeySecret = secrets.find(s => s.type && (s.type.toLowerCase().includes('api_key') || s.type.toLowerCase().includes('secret')));
+    if (apiKeySecret) {
+      env.values.push({ key: 'apiKey', value: apiKeySecret.value, enabled: true, type: 'secret' });
+    } else {
+      env.values.push({ key: 'apiKey', value: 'INSERT_API_KEY_HERE', enabled: true, type: 'secret' });
+    }
+
+    return JSON.stringify(env, null, 2);
+  }
+}
+
 class CrawlEngine {
   constructor() {
     // ===== OLD PROPERTIES (PRESERVED) =====
@@ -3597,6 +3946,14 @@ class CrawlEngine {
     this.robotsParser = new RobotsSitemapParser(this);
     this.gqlExtended = new GraphQLExtendedMapper();
     this.execSummaryExporter = new MarkdownExecutiveSummaryExporter();
+    this.schemaFuzzer = new APISchemaFuzzer();
+    this.preflightSimulator = new CORSPreflightSimulator();
+    this.crlfDetector = new CRLFInjectionDetector();
+    this.clientCryptoAuditor = new ClientSideCryptoAuditor();
+    this.deepLinkExtractor = new DeepLinkExtractor();
+    this.envProber = new EnvFileExposeProber(this.stealthEngine);
+    this.sessionManager = new AdvancedSessionManager();
+    this.postmanEnvExporter = new PostmanEnvironmentExporter();
     this.discoveredPII = [];
     this.wsFrames = [];
     this.unpackedSourceMaps = new Map();
@@ -4459,6 +4816,25 @@ class CrawlEngine {
       this.addLog('📦 Exported Burp Suite Site Map XML (burp_sitemap.xml)', 'success');
     } catch (e) {
       this.addLog('❌ Burp XML Export Error: ' + e.message, 'error');
+    }
+  }
+
+  exportPostmanEnvironment() {
+    try {
+      const json = this.postmanEnvExporter.generateEnvironment(this.baseDomain, this.discoveredEndpoints, this.discoveredSecrets);
+      const blob = new Blob([json], { type: 'application/json' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        chrome.downloads.download({
+          url: reader.result,
+          filename: 'postman_environment_' + (this.baseDomain || 'export') + '.json',
+          saveAs: true
+        });
+      };
+      reader.readAsDataURL(blob);
+      this.addLog('🌐 Exported Postman Environment JSON', 'success');
+    } catch (e) {
+      this.addLog('❌ Postman Environment Export Error: ' + e.message, 'error');
     }
   }
 

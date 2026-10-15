@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Endpoint Hunter v8.0 — Side Panel & DevTools</title>
+<title>Endpoint Hunter v9.0 — Side Panel & DevTools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     🔗 ENDPOINT HUNTER v8.0 - RESPONSIVE OBSIDIAN RECON SIDE PANEL
+     🔗 ENDPOINT HUNTER v9.0 - RESPONSIVE OBSIDIAN RECON SIDE PANEL
      Author: Pratik Khairnar (https://github.com/pratik-khairnar-sec)
      ============================================================ */
   :root {
@@ -591,7 +591,7 @@
     <img src="icon48.png" alt="Endpoint Hunter Logo" class="brand-logo">
     <div class="brand-info">
       <div class="brand-title">Endpoint Hunter</div>
-      <div class="brand-sub">Persistent Side Panel • v8.0.0</div>
+      <div class="brand-sub">Persistent Side Panel • v9.0.0</div>
     </div>
   </div>
   <div class="header-actions">
@@ -670,6 +670,7 @@
     <button class="btn btn-export" id="nucleiBtn" title="Export Automated Nuclei YAML Template">🧬 NUCLEI</button>
     <button class="btn btn-export" id="burpXmlBtn" title="Export Burp Suite Site Map XML (burp_sitemap.xml)">📦 BURP XML</button>
     <button class="btn btn-export" id="execSummaryBtn" title="Export Markdown Executive Summary Report">📝 SUMMARY</button>
+    <button class="btn btn-export" id="postmanEnvBtn" title="Export Postman Environment JSON (postman_environment.json)">🌐 POSTMAN ENV</button>
     <button class="btn btn-export" id="exportBtn" title="Export full JSON report">💾 JSON</button>
   </div>
 </div>
@@ -694,6 +695,9 @@
   <div class="tab-pill tab" data-tab="ssrf">🌐 SSRF</div>
   <div class="tab-pill tab" data-tab="playground">🔬 Lab</div>
   <div class="tab-pill tab" data-tab="fingerprint">🏗️ Stack</div>
+      <div class="tab-pill tab" data-tab="fuzzschema">📐 Schema Fuzz</div>
+      <div class="tab-pill tab" data-tab="auditplus">🛡️ Audit+</div>
+      <div class="tab-pill tab" data-tab="sessions">👥 Sessions</div>
   <div class="tab-pill tab" data-tab="paths">📁 Paths</div>
   <div class="tab-pill tab" data-tab="logs">📝 Logs</div>
   <div class="tab-pill tab" data-tab="settings">⚙️ Settings</div>
@@ -758,7 +762,7 @@
     </div>
   </section>
 
-  <!-- TAB 4: WEBSOCKET & SSE (v8.0) -->
+  <!-- TAB 4: WEBSOCKET & SSE (v9.0) -->
   <section class="tab-pane tab-content" id="wsTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid var(--border);">
       <span style="font-size:8.5px; color:var(--text-muted); font-weight:700;">Bi-Directional WebSocket & SSE Stream</span>
@@ -870,7 +874,7 @@
 
   <!-- TAB 9: DISCOVERED PATHS -->
   
-  <!-- TAB: SECURITY (v8.0) -->
+  <!-- TAB: SECURITY (v9.0) -->
   <section class="tab-pane tab-content" id="securityTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--accent-rose); text-transform:uppercase;">🛡️ Active Security Assessment</span>
@@ -914,7 +918,7 @@
     </div>
   </section>
 
-  <!-- TAB: JWT INSPECTOR (v8.0) -->
+  <!-- TAB: JWT INSPECTOR (v9.0) -->
   <section class="tab-pane tab-content" id="jwtTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🔑 Real-Time JWT Inspector & Alg:None Generator</span>
@@ -941,7 +945,7 @@
     </div>
   </section>
 
-  <!-- TAB: SWAGGER / OPENAPI (v8.0) -->
+  <!-- TAB: SWAGGER / OPENAPI (v9.0) -->
   <section class="tab-pane tab-content" id="swaggerTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">📜 Swagger 2.0 & OpenAPI 3.0 Live Importer</span>
@@ -956,7 +960,7 @@
     <div id="swaggerImportStatus" style="margin-top:6px; font-size:8px;"></div>
   </section>
 
-  <!-- TAB: CLOUD BUCKETS (v8.0) -->
+  <!-- TAB: CLOUD BUCKETS (v9.0) -->
   <section class="tab-pane tab-content" id="cloudTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-purple); text-transform:uppercase;">☁️ Discovered Cloud Storage Buckets</span>
@@ -968,7 +972,7 @@
   </section>
   
   
-  <!-- TAB: ADVANCED RECON ENGINES (v8.0) -->
+  <!-- TAB: ADVANCED RECON ENGINES (v9.0) -->
   <section class="tab-pane tab-content" id="advancedTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">⚡ Advanced Threat & Vulnerability Engines</span>
@@ -1028,7 +1032,7 @@
     </div>
   </section>
 
-  <!-- TAB: RECON DORKS GENERATOR (v8.0) -->
+  <!-- TAB: RECON DORKS GENERATOR (v9.0) -->
   <section class="tab-pane tab-content" id="dorksTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🕵️ Automated GitHub & Google Recon Dorks</span>
@@ -1043,7 +1047,7 @@
   </section>
   
   
-  <!-- TAB: ROUTE DIFF & CHANGELOG (v8.0) -->
+  <!-- TAB: ROUTE DIFF & CHANGELOG (v9.0) -->
   <section class="tab-pane tab-content" id="changelogTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">📊 API Changelog & Route Exposure Diff</span>
@@ -1057,7 +1061,7 @@
     </div>
   </section>
 
-  <!-- TAB: SSRF CANDIDATE HARVESTER (v8.0) -->
+  <!-- TAB: SSRF CANDIDATE HARVESTER (v9.0) -->
   <section class="tab-pane tab-content" id="ssrfTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🌐 SSRF Parameter Harvester & Payloads</span>
@@ -1069,7 +1073,7 @@
   </section>
   
   
-  <!-- TAB: SECURITY PLAYGROUND & ENTROPY LAB (v8.0) -->
+  <!-- TAB: SECURITY PLAYGROUND & ENTROPY LAB (v9.0) -->
   <section class="tab-pane tab-content" id="playgroundTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">🔬 Regex Playground & Shannon Entropy</span>
@@ -1094,7 +1098,7 @@
     </div>
   </section>
 
-  <!-- TAB: TECH STACK, CSP BYPASS & COOKIE AUDITOR (v8.0) -->
+  <!-- TAB: TECH STACK, CSP BYPASS & COOKIE AUDITOR (v9.0) -->
   <section class="tab-pane tab-content" id="fingerprintTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
       <span style="font-size:9px; font-weight:800; color:var(--accent-emerald); text-transform:uppercase;">🏗️ Stack Fingerprint & Policy Evaluator</span>
@@ -1109,6 +1113,72 @@
     </div>
   </section>
   
+    <!-- TAB: API SCHEMA FUZZER (v9.0) -->
+  <section class="tab-pane tab-content" id="fuzzschemaTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+      <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">📐 Schema Boundary & Type Fuzz Generator</span>
+      <button class="btn-sm-action" id="generateVectorsBtn" style="color:var(--cyan); font-weight:700;">Generate Fuzz Vectors</button>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:7.5px; color:var(--text-muted); display:block; margin-bottom:2px;">Target Parameter Name:</label>
+        <input type="text" id="schemaParamInput" class="search-input" value="userId" style="width:100%;">
+      </div>
+      <div>
+        <label style="font-size:7.5px; color:var(--text-muted); display:block; margin-bottom:2px;">Expected Schema Type:</label>
+        <select id="schemaTypeSelect" class="search-input" style="width:100%; height:24px; padding:0 4px;">
+          <option value="string">String (Text, Email, Path)</option>
+          <option value="integer">Integer (ID, Counter, Offset)</option>
+          <option value="boolean">Boolean (Status, Flag)</option>
+          <option value="array">Array (List, Collection)</option>
+          <option value="object">Object (JSON Dictionary)</option>
+        </select>
+      </div>
+    </div>
+    <div id="schemaVectorsBox" style="max-height:220px; overflow-y:auto; font-size:8px;">
+      <div class="empty">Click "Generate Fuzz Vectors" to inspect boundary edge-cases for this parameter type.</div>
+    </div>
+  </section>
+
+  <!-- TAB: ADVANCED AUDIT PLUS (v9.0) -->
+  <section class="tab-pane tab-content" id="auditplusTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+      <span style="font-size:9px; font-weight:800; color:var(--accent-purple); text-transform:uppercase;">🛡️ Deep Audits & Surface Probers</span>
+      <div style="display:flex; gap:3px; flex-wrap:wrap;">
+        <button class="btn-sm-action" id="auditSriBtn">SRI</button>
+        <button class="btn-sm-action" id="probeCrlfBtn">CRLF</button>
+        <button class="btn-sm-action" id="harvestFormsBtn">Forms</button>
+        <button class="btn-sm-action" id="auditCryptoBtn">Crypto</button>
+        <button class="btn-sm-action" id="deepLinksBtn">DeepLinks</button>
+        <button class="btn-sm-action" id="probeEnvBtn" style="color:var(--accent-amber);">Env Leaks</button>
+      </div>
+    </div>
+    <div id="auditPlusBox" style="max-height:240px; overflow-y:auto; font-size:8px;">
+      <div class="empty">Select an audit module above to scan Subresource Integrity (SRI), CRLF response splitting, hidden forms/CSRF, client crypto, deep links, or .env leaks.</div>
+    </div>
+  </section>
+
+  <!-- TAB: MULTI-ROLE SESSION PROFILES (v9.0) -->
+  <section class="tab-pane tab-content" id="sessionsTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+      <span style="font-size:9px; font-weight:800; color:var(--accent-emerald); text-transform:uppercase;">👥 Multi-Role Authorization Profiles</span>
+      <span class="badge" id="activeProfileBadge" style="background:var(--accent-emerald); color:#000;">Active: Admin</span>
+    </div>
+    <div style="display:flex; gap:4px; margin-bottom:8px;">
+      <button class="btn-sm-action" id="selectAdminRoleBtn" style="flex:1;">👑 Admin</button>
+      <button class="btn-sm-action" id="selectUserBRoleBtn" style="flex:1;">👤 User B (Low Priv)</button>
+      <button class="btn-sm-action" id="selectGuestRoleBtn" style="flex:1;">🎭 Guest (Unauth)</button>
+    </div>
+    <div style="margin-bottom:8px;">
+      <label style="font-size:7.5px; color:var(--text-muted); display:block; margin-bottom:2px;">Profile Headers (JSON or Key: Value):</label>
+      <textarea id="profileHeadersTextarea" class="search-input" style="width:100%; height:60px; font-family:var(--font-mono); font-size:7.5px;"></textarea>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button class="btn-sm-action" id="saveProfileBtn" style="flex:1;">Save Headers to Profile</button>
+      <button class="btn-sm-action" id="applyProfileToRepeaterBtn" style="flex:1; color:var(--accent-emerald);">Apply Active to Repeater</button>
+    </div>
+  </section>
+
   <section class="tab-pane tab-content" id="pathsTab">
     <div style="font-size:8.5px; color:var(--text-muted); font-weight:700; margin-bottom:6px;">Normalized URL Paths Discovered Across Origin</div>
     <div id="pathList">

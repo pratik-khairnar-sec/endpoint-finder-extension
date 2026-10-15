@@ -2,15 +2,15 @@
   <img src="icon128.png" width="96" height="96" alt="Endpoint Hunter Logo">
 </p>
 
-<h1 align="center">Endpoint Hunter v8.0</h1>
+<h1 align="center">Endpoint Hunter v9.0</h1>
 
 <p align="center">
   <b>Enterprise API Reconnaissance &amp; Vulnerability Assessment Suite for Chromium Browsers (Manifest V3)</b><br>
-  <i>Shannon Entropy • Stack Fingerprinter • Burp XML Exporter • CSP Bypass • Regex Lab • Cookie Auditor • Robots Parser • GraphQL Operations • Executive Summary • WS Mutator</i>
+  <i>Schema Fuzzer • CORS Preflight Simulator • SRI Auditor • CRLF Detector • Form CSRF Harvester • Client Crypto • Deep Links • Env Leak Prober • Multi-Role Sessions • Postman Env Exporter</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-8.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 8.0.0"></a>
+  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-9.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 9.0.0"></a>
   <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"></a>
   <a href="#-manual-trigger-policy-zero-auto-scanning"><img src="https://img.shields.io/badge/Auto--Start-DISABLED%20(Manual%20Only)-red?style=for-the-badge&logo=power" alt="Zero Auto-Scan"></a>
@@ -42,7 +42,7 @@
 
 Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hundreds of internal REST routes, administrative gateways, hidden microservices, WebSocket channels, and GraphQL schemas into minified JavaScript bundles. Manually finding these with proxy interceptors or grep CLI tools is noisy, slow, and full of false positives (XML schemas, broken HTML tags, SVG paths).
 
-**Endpoint Hunter v8.0** runs directly inside Chromium browsers under **Manifest V3**. It expands your reconnaissance arsenal with mathematical information theory and industry interoperability: Shannon entropy calculation to unearth high-randomness cryptographic secrets, multi-layer technology stack fingerprinting (Express, Django, Rails, PHP, Spring, Next.js, Nuxt), Burp Suite Site Map XML exporting, CDN-based CSP bypass detection, custom regex extraction playground, cookie security hygiene auditing (`HttpOnly`, `SameSite`, `__Host-`), recursive robots.txt and sitemap parser, GraphQL mock operation synthesizers, and C-Suite **Markdown Executive Summary** reports.
+**Endpoint Hunter v9.0** runs directly inside Chromium browsers under **Manifest V3**. It introduces API schema boundary value generation, active CORS preflight simulation, Subresource Integrity (SRI) posture auditing, canary CRLF response splitting detection, hidden form field and CSRF token auditing, client-side cryptographic weakness scanning, mobile deep link extraction, strict zero-false-positive environment file leak probing, multi-role session switching for BOLA/IDOR testing, and native Postman Environment JSON export.
 
 ---
 
@@ -58,6 +58,16 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 
 ## ⚡ Key Features
 
+- **📐 API Schema Boundary Fuzzer**: Computes typed RFC edge-case fuzz vectors for string, integer, boolean, array, and object parameters (32/64-bit limits, IEEE-754 limits, null bytes, unicode normalization, oversized buffers).
+- **✈️ CORS Preflight Simulator**: Simulates OPTIONS requests with custom origins and headers, flagging unsafe reflection and credential disclosures.
+- **🛡️ Subresource Integrity (SRI) Auditor**: Scans scripts and styles loaded from external CDNs that lack `integrity="sha..."` hashes.
+- **💉 CRLF Response Splitting Detector**: Tests redirect parameters with canary encoded CRLF characters (`%0d%0a`), confirming vulnerabilities only upon response header injection.
+- **📥 Hidden Form Field & Anti-CSRF Harvester**: Discovers all `<form>` elements and hidden inputs, flagging state-changing forms lacking anti-CSRF protection.
+- **🔐 Client-Side Crypto Auditor**: Audits loaded scripts for `Math.random()` token generation, weak MD5/SHA-1 hashing, and hardcoded symmetric keys.
+- **📱 Deep Link & Mobile Scheme Harvester**: Extracts custom schemes (`slack://`, `intent://`, `market://`, `fb://`) and universal links from DOM anchors and JavaScript.
+- **📁 Environment & Config Leak Prober**: Probes `/.env`, `/.git/config`, `/.git/HEAD`, and `/docker-compose.yml` with strict zero-false-positive signature matching (rejecting SPA HTML fallbacks).
+- **👥 Multi-Role Authorization Profile Switcher**: Switch between Admin, Low-Privilege, and Guest roles with 1-click header synchronization to the Mini-Repeater for BOLA testing.
+- **🌐 Postman Environment Spec Exporter**: Generates `postman_environment.json` matching Postman v2.1 schema with captured tokens and baseUrl variables.
 - **🎲 Shannon Entropy Calculation Lab**: Computes information theory entropy on 0.0 to 8.0 scale to identify leaked high-randomness credentials, crypto keys, and distinguish encrypted payloads from plain text.
 - **🏗️ Multi-Layer Tech Stack Fingerprinter**: Identifies backend engines (Express.js, Django, Spring Boot, Ruby on Rails, PHP, ASP.NET) and modern frontend frameworks (Next.js, Nuxt, React, Angular) from headers, cookies, and structures.
 - **📦 Burp Suite Target Site Map XML Exporter**: Serializes all discovered endpoints, methods, and status codes into standard Burp XML format (`burp_sitemap.xml`) for direct import into Burp Suite.
