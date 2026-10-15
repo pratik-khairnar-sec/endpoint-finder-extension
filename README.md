@@ -2,15 +2,15 @@
   <img src="icon128.png" width="96" height="96" alt="Endpoint Hunter Logo">
 </p>
 
-<h1 align="center">Endpoint Hunter v4.0</h1>
+<h1 align="center">Endpoint Hunter v5.0</h1>
 
 <p align="center">
-  <b>Enterprise API &amp; Route Reconnaissance Suite for Chromium Browsers (Manifest V3)</b><br>
-  <i>WebSocket/SSE Interceptor • Parameter Miner • SPA DOM Walker • HAR 1.2 Exporter • Mini-Repeater • GraphQL Introspector • Source-Map Unpacker • Secrets Harvester</i>
+  <b>Enterprise API Reconnaissance &amp; Vulnerability Assessment Suite for Chromium Browsers (Manifest V3)</b><br>
+  <i>CORS Auditor • JWT Inspector • Security Headers • Swagger Importer • Verb Tamper Matrix • IDOR Sequencer • Cloud Buckets • Bash Exporter • WS/SSE Interceptor • Parameter Miner</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-4.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 4.0.0"></a>
+  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-5.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 5.0.0"></a>
   <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"></a>
   <a href="#-manual-trigger-policy-zero-auto-scanning"><img src="https://img.shields.io/badge/Auto--Start-DISABLED%20(Manual%20Only)-red?style=for-the-badge&logo=power" alt="Zero Auto-Scan"></a>
@@ -42,7 +42,7 @@
 
 Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hundreds of internal REST routes, administrative gateways, hidden microservices, WebSocket channels, and GraphQL schemas into minified JavaScript bundles. Manually finding these with proxy interceptors or grep CLI tools is noisy, slow, and full of false positives (XML schemas, broken HTML tags, SVG paths).
 
-**Endpoint Hunter v4.0** runs directly inside Chromium browsers under **Manifest V3**. It mines client-side scripts, intercepts bi-directional WebSocket and SSE communications, discovers hidden query parameters (Arjun-style), walks SPA DOM hierarchies to trigger dynamic endpoints, unbundles production source maps (`.map`), introspects live GraphQL schemas, and exports industry-standard **HAR 1.2** archives for Burp Suite and Caido.
+**Endpoint Hunter v5.0** runs directly inside Chromium browsers under **Manifest V3**. It combines advanced endpoint discovery with active defensive auditing: CORS origin reflection probing, dual-pane JWT decoding with `alg: "none"` attack vectors, letter-grade HTTP security headers analysis (A+ to F), live Swagger/OpenAPI spec importing, client storage & unflagged cookie auditing, Luhn-verified PII leak detection, 7-verb tampering authentication bypass matrix, numeric IDOR sequencing, AWS/GCP/Azure bucket harvesting, and executable **Bash curl** script generation.
 
 ---
 
@@ -58,6 +58,16 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 
 ## ⚡ Key Features
 
+- **🌐 Active CORS Origin Reflection Auditor**: Probes preflight OPTIONS and GET requests with arbitrary attacker origins (`https://evil-attacker.com`) and `null` origins, detecting dangerous `Access-Control-Allow-Credentials: true` combinations with instant reproducible `curl` commands.
+- **🔑 Dual-Pane JWT Inspector & Attack Generator**: Decodes header and payload in real time, audits for weak algorithms and expired tokens (`exp`), and generates ready-to-test `Alg: None` bypass tokens.
+- **📊 Security Headers Analyzer & Letter Grade**: Evaluates CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy, calculating a letter grade (A+ to F) and providing hardening recommendations.
+- **📜 Live Swagger 2.0 & OpenAPI 3.0 Spec Importer**: Ingests live API docs URLs or pasted JSON, automatically importing paths, HTTP methods, parameters, and tags directly into the database.
+- **🗄️ Runtime Storage & Cookie Security Auditor**: Audits `localStorage`, `sessionStorage`, and readable cookies for sensitive credentials, JWTs, and cookies missing the `HttpOnly` security flag.
+- **💳 PII Data Leakage Detector**: Scans response bodies using the Luhn algorithm for valid Credit Cards (Visa, MC, Amex, Discover), US SSNs, and email addresses with masked previews.
+- **⚡ HTTP Verb Tampering Matrix**: 1-click test of 7 HTTP verbs (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`, `OPTIONS`) to detect authentication bypasses where GET returns 401/403 but alternative verbs return 200/204.
+- **🎯 Numeric IDOR Differential Sequencer**: Detects numeric IDs in paths or parameters, sequentially testing neighboring records and flagging differential response length anomalies.
+- **☁️ Multi-Cloud Storage Bucket Harvester**: Detects AWS S3, Google Cloud Storage, and Azure Blob storage buckets in source code and traffic, with 1-click public listable and read accessibility checks.
+- **🐚 Executable Recon Bash Script Exporter**: Exports `recon_audit.sh` with ANSI terminal colors, automated rate-limiting loops, and authorization headers.
 - **🔌 Real-Time WebSocket & SSE Interceptor**: In-browser frame capture of `window.WebSocket` (`send`/`message`) and `window.EventSource` streams with direction markers and formatted payload previews.
 - **🔍 In-Browser Parameter Miner (Arjun-style)**: Active probe engine testing top 30 sensitive query parameters against response length and status code baselines, with 1-click injection into the Mini-Repeater.
 - **🤖 SPA Headless DOM Walker**: Safely fires synthetic user interactions across non-destructive navigation tabs, accordions, and dropdowns to trigger hidden lazy-loaded API calls.

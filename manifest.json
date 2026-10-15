@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Endpoint Hunter — API & Route Reconnaissance",
-  "version": "4.0.0",
-  "description": "Enterprise API reconnaissance suite: WebSocket/SSE interceptor, parameter miner, SPA DOM walker, HAR 1.2 exporter, GraphQL introspector, source-map unpacker & micro-fuzzer.",
+  "version": "5.0.0",
+  "description": "Enterprise API reconnaissance & vulnerability auditor: CORS reflection auditor, JWT inspector, security headers analyzer, OpenAPI/Swagger importer, verb tampering matrix, IDOR sequencer, cloud bucket harvester & Bash curl script exporter.",
   "author": "Pratik Khairnar <pratik-khairnar-sec@users.noreply.github.com>",
   "homepage_url": "https://github.com/pratik-khairnar-sec/endpoint-finder-extension",
   "permissions": [

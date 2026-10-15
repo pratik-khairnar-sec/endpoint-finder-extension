@@ -1349,6 +1349,842 @@ class ParameterMiner {
 
 
 
+
+// ================================================================
+// 🛡️ CORSAuditor (v5.0) - ACTIVE ORIGIN REFLECTION & CREDENTIAL AUDITOR
+// ================================================================
+class CORSAuditor {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+  }
+
+  async auditCORS(targetUrl, testOrigin = 'https://evil-attacker.com') {
+    try {
+      const parsed = new URL(targetUrl);
+      const isHttps = parsed.protocol === 'https:';
+      
+      const headers = {
+        'Origin': testOrigin,
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'X-Custom-Header, Authorization'
+      };
+
+      const resp = await fetch(targetUrl, {
+        method: 'OPTIONS',
+        headers
+      }).catch(async () => {
+        return await fetch(targetUrl, {
+          method: 'GET',
+          headers: { 'Origin': testOrigin }
+        });
+      });
+
+      const acao = resp.headers.get('access-control-allow-origin') || null;
+      const acac = resp.headers.get('access-control-allow-credentials') || null;
+      const acam = resp.headers.get('access-control-allow-methods') || null;
+      const acah = resp.headers.get('access-control-allow-headers') || null;
+
+      let isVulnerable = false;
+      let severity = 'INFO';
+      let title = 'CORS Secure / Strict';
+      let details = 'No arbitrary origin reflection or credential exposure detected.';
+
+      if (acao === testOrigin && acac === 'true') {
+        isVulnerable = true;
+        severity = 'CRITICAL';
+        title = 'Arbitrary Origin Reflection with Credentials (ACAC: true)';
+        details = 'The server reflects arbitrary Origin (' + testOrigin + ') AND allows credentials. An attacker can perform authenticated cross-origin data theft!';
+      } else if (acao === 'null' && acac === 'true') {
+        isVulnerable = true;
+        severity = 'HIGH';
+        title = 'Null Origin Trusted with Credentials';
+        details = 'The server trusts Origin: null with credentials. Sandboxed iframes can exploit this.';
+      } else if (acao === '*') {
+        if (acac === 'true') {
+          isVulnerable = true;
+          severity = 'HIGH';
+          title = 'Wildcard ACAO with Credentials';
+          details = 'Wildcard origin with credentials requested (blocked by modern browsers, but indicates serious server misconfiguration).';
+        } else {
+          severity = 'LOW';
+          title = 'Public Wildcard ACAO';
+          details = 'Resource is publicly accessible to any origin without credentials.';
+        }
+      } else if (acao === testOrigin) {
+        isVulnerable = true;
+        severity = 'MEDIUM';
+        title = 'Origin Reflection (No ACAC)';
+        details = 'Arbitrary origin ' + testOrigin + ' reflected, but credentials are not explicitly allowed. Unauthenticated data leakage may still occur.';
+      }
+
+      const curlProof = 'curl -i -X OPTIONS "' + targetUrl + '" -H "Origin: ' + testOrigin + '" -H "Access-Control-Request-Method: GET"';
+
+      return {
+        url: targetUrl,
+        testedOrigin: testOrigin,
+        status: resp.status,
+        acao,
+        acac,
+        acam,
+        acah,
+        isVulnerable,
+        severity,
+        title,
+        details,
+        curlProof
+      };
+    } catch (e) {
+      return {
+        url: targetUrl,
+        error: e.message,
+        isVulnerable: false,
+        severity: 'ERROR',
+        title: 'CORS Probe Failed',
+        details: e.message
+      };
+    }
+  }
+}
+
+// ================================================================
+// 🔑 JWTInspector (v5.0) - REAL-TIME BASE64URL DECODER & WEAK CLAIM AUDITOR
+// ================================================================
+class JWTInspector {
+  decodeBase64Url(str) {
+    try {
+      let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      return decodeURIComponent(escape(atob(base64)));
+    } catch (e) {
+      return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+    }
+  }
+
+  inspect(token) {
+    if (!token || typeof token !== 'string') {
+      return { valid: false, error: 'Empty or invalid token string' };
+    }
+    const cleanToken = token.trim().replace(/^Bearer\s+/i, '');
+    const parts = cleanToken.split('.');
+    if (parts.length < 2) {
+      return { valid: false, error: 'Not a valid JWT (requires at least Header.Payload)' };
+    }
+
+    try {
+      const headerStr = this.decodeBase64Url(parts[0]);
+      const payloadStr = this.decodeBase64Url(parts[1]);
+      const header = JSON.parse(headerStr);
+      const payload = JSON.parse(payloadStr);
+
+      const alg = header.alg || 'unknown';
+      const issues = [];
+
+      if (['none', 'None', 'NONE'].includes(alg)) {
+        issues.push({
+          severity: 'CRITICAL',
+          message: 'Algorithm is "none"! Signatures are not enforced.'
+        });
+      }
+
+      if (alg.toUpperCase() === 'HS256' || alg.toUpperCase() === 'HS384' || alg.toUpperCase() === 'HS512') {
+        issues.push({
+          severity: 'INFO',
+          message: 'HMAC Symmetric Algorithm (' + alg + ') used. Weak secrets can be cracked offline with Hashcat/John.'
+        });
+      }
+
+      let isExpired = false;
+      let expDate = null;
+      if (payload.exp) {
+        expDate = new Date(payload.exp * 1000).toISOString();
+        if (Date.now() / 1000 > payload.exp) {
+          isExpired = true;
+          issues.push({
+            severity: 'WARNING',
+            message: 'Token has expired on ' + expDate
+          });
+        }
+      } else {
+        issues.push({
+          severity: 'MEDIUM',
+          message: 'Token does not have an "exp" (expiration) claim! It may never expire.'
+        });
+      }
+
+      const sensitiveKeys = ['role', 'roles', 'admin', 'is_admin', 'superuser', 'privileges', 'scopes', 'email', 'user_id', 'id'];
+      const foundClaims = {};
+      sensitiveKeys.forEach(k => {
+        if (k in payload) foundClaims[k] = payload[k];
+      });
+
+      const noneHeader = btoa(JSON.stringify({ ...header, alg: 'none' })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      const algNoneVector = noneHeader + '.' + parts[1] + '.';
+      const nullSigVector = parts[0] + '.' + parts[1] + '.';
+
+      return {
+        valid: true,
+        alg,
+        isExpired,
+        expDate,
+        header,
+        payload,
+        foundClaims,
+        issues,
+        attackVectors: [
+          { name: 'Alg: None Bypass', token: algNoneVector, description: 'Token with header alg="none" and stripped signature.' },
+          { name: 'Empty Signature', token: nullSigVector, description: 'Token with original header/payload and signature removed.' }
+        ]
+      };
+    } catch (e) {
+      return { valid: false, error: 'JWT Parse Error: ' + e.message };
+    }
+  }
+}
+
+// ================================================================
+// 🛡️ SecurityHeadersAnalyzer (v5.0) - CLICKJACKING, CSP & MIME AUDITOR
+// ================================================================
+class SecurityHeadersAnalyzer {
+  analyzeHeaders(url, headerMap) {
+    const headers = {};
+    for (const [k, v] of Object.entries(headerMap || {})) {
+      headers[k.toLowerCase()] = v;
+    }
+
+    let score = 100;
+    const findings = [];
+    const missing = [];
+
+    const csp = headers['content-security-policy'];
+    if (!csp) {
+      score -= 25;
+      missing.push('Content-Security-Policy');
+      findings.push({
+        severity: 'HIGH',
+        header: 'Content-Security-Policy',
+        issue: 'Missing CSP allows Cross-Site Scripting (XSS) and data injection attacks.',
+        recommendation: "Implement a strict CSP e.g. default-src 'self'; script-src 'self' 'nonce-...';"
+      });
+    } else {
+      if (csp.includes("'unsafe-inline'")) {
+        score -= 10;
+        findings.push({
+          severity: 'MEDIUM',
+          header: 'Content-Security-Policy',
+          issue: "CSP allows 'unsafe-inline', weakening protection against XSS.",
+          recommendation: "Remove 'unsafe-inline' and adopt nonces or hashes for scripts."
+        });
+      }
+      if (csp.includes("'unsafe-eval'")) {
+        score -= 8;
+        findings.push({
+          severity: 'LOW',
+          header: 'Content-Security-Policy',
+          issue: "CSP allows 'unsafe-eval' (eval(), Function() execution).",
+          recommendation: "Avoid string-to-code execution APIs."
+        });
+      }
+      if (csp.includes('*') && !csp.includes('https://*')) {
+        score -= 10;
+        findings.push({
+          severity: 'MEDIUM',
+          header: 'Content-Security-Policy',
+          issue: 'CSP contains wildcard (*) source directive.',
+          recommendation: 'Restricted explicit origin allowlist is recommended.'
+        });
+      }
+    }
+
+    const hsts = headers['strict-transport-security'];
+    if (url.startsWith('https://')) {
+      if (!hsts) {
+        score -= 20;
+        missing.push('Strict-Transport-Security');
+        findings.push({
+          severity: 'HIGH',
+          header: 'Strict-Transport-Security',
+          issue: 'Missing HSTS header leaves users susceptible to SSL stripping and downgrade attacks.',
+          recommendation: 'Add Strict-Transport-Security: max-age=31536000; includeSubDomains; preload'
+        });
+      } else {
+        const maxAgeMatch = hsts.match(/max-age=(\d+)/i);
+        const maxAge = maxAgeMatch ? parseInt(maxAgeMatch[1], 10) : 0;
+        if (maxAge < 10368000) {
+          score -= 5;
+          findings.push({
+            severity: 'LOW',
+            header: 'Strict-Transport-Security',
+            issue: 'HSTS max-age (' + maxAge + 's) is shorter than recommended 120 days.',
+            recommendation: 'Set max-age to at least 31536000 (1 year).'
+          });
+        }
+      }
+    }
+
+    const xfo = headers['x-frame-options'];
+    if (!xfo && (!csp || !csp.includes('frame-ancestors'))) {
+      score -= 15;
+      missing.push('X-Frame-Options');
+      findings.push({
+        severity: 'MEDIUM',
+        header: 'X-Frame-Options',
+        issue: 'Missing X-Frame-Options allows UI Redressing / Clickjacking attacks.',
+        recommendation: "Set X-Frame-Options: DENY or SAMEORIGIN (or CSP frame-ancestors 'self')."
+      });
+    }
+
+    const xcto = headers['x-content-type-options'];
+    if (!xcto || xcto.toLowerCase() !== 'nosniff') {
+      score -= 15;
+      missing.push('X-Content-Type-Options');
+      findings.push({
+        severity: 'MEDIUM',
+        header: 'X-Content-Type-Options',
+        issue: 'Missing nosniff flag permits browsers to MIME-sniff responses into executable formats.',
+        recommendation: 'Add X-Content-Type-Options: nosniff'
+      });
+    }
+
+    const ref = headers['referrer-policy'];
+    if (!ref) {
+      score -= 10;
+      missing.push('Referrer-Policy');
+      findings.push({
+        severity: 'LOW',
+        header: 'Referrer-Policy',
+        issue: 'Missing Referrer-Policy may leak path and query parameters to third-party domains.',
+        recommendation: 'Add Referrer-Policy: strict-origin-when-cross-origin'
+      });
+    }
+
+    const perm = headers['permissions-policy'] || headers['feature-policy'];
+    if (!perm) {
+      score -= 5;
+      missing.push('Permissions-Policy');
+      findings.push({
+        severity: 'INFO',
+        header: 'Permissions-Policy',
+        issue: 'Missing Permissions-Policy leaves browser hardware/sensor APIs unconstrained.',
+        recommendation: 'Add Permissions-Policy: camera=(), microphone=(), geolocation=()'
+      });
+    }
+
+    score = Math.max(0, Math.min(100, score));
+    let grade = 'F';
+    if (score >= 90) grade = 'A+';
+    else if (score >= 80) grade = 'A';
+    else if (score >= 70) grade = 'B';
+    else if (score >= 55) grade = 'C';
+    else if (score >= 40) grade = 'D';
+
+    return {
+      url,
+      score,
+      grade,
+      missing,
+      findings,
+      rawHeaders: headers
+    };
+  }
+}
+
+// ================================================================
+// 📜 SwaggerImporter (v5.0) - LIVE SWAGGER 2.0 / OPENAPI 3.0 PARSER
+// ================================================================
+class SwaggerImporter {
+  constructor(hunterInstance) {
+    this.hunter = hunterInstance;
+  }
+
+  async importFromUrl(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' when fetching spec');
+    const json = await res.json();
+    return this.importFromJson(json, url);
+  }
+
+  importFromJson(spec, sourceUrl = 'swagger-spec') {
+    if (!spec || typeof spec !== 'object') {
+      throw new Error('Invalid OpenAPI/Swagger object');
+    }
+
+    let title = (spec.info && spec.info.title) || 'API Specification';
+    let version = (spec.info && spec.info.version) || '1.0';
+    let basePath = '';
+
+    if (Array.isArray(spec.servers) && spec.servers.length > 0 && spec.servers[0].url) {
+      basePath = spec.servers[0].url;
+    } else if (spec.basePath) {
+      basePath = (spec.schemes ? spec.schemes[0] + '://' : 'https://') + (spec.host || '') + spec.basePath;
+    }
+
+    const discovered = [];
+    const paths = spec.paths || {};
+
+    for (const [pathKey, pathObj] of Object.entries(paths)) {
+      if (!pathObj || typeof pathObj !== 'object') continue;
+
+      const methods = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'];
+      for (const method of methods) {
+        if (pathObj[method]) {
+          const op = pathObj[method];
+          const fullEndpoint = basePath ? (basePath.replace(/\/$/, '') + '/' + pathKey.replace(/^\//, '')) : pathKey;
+          const category = (op.tags && op.tags[0]) || 'api';
+          const summary = op.summary || op.description || (method.toUpperCase() + ' ' + pathKey);
+
+          const params = [];
+          if (Array.isArray(op.parameters)) {
+            op.parameters.forEach(p => {
+              if (p && p.name) {
+                params.push({ name: p.name, in: p.in || 'query', required: !!p.required });
+                if (this.hunter && this.hunter.discoveredParams) {
+                  this.hunter.discoveredParams.add(p.name);
+                }
+              }
+            });
+          }
+
+          discovered.push({
+            url: fullEndpoint,
+            method: method.toUpperCase(),
+            type: category,
+            source: 'swagger-spec',
+            summary,
+            params
+          });
+
+          if (this.hunter) {
+            this.hunter.addEndpoint({
+              url: fullEndpoint,
+              method: method.toUpperCase(),
+              type: category,
+              source: 'swagger-spec',
+              foundOn: sourceUrl
+            });
+            if (this.hunter.discoveredPaths) {
+              this.hunter.discoveredPaths.add(pathKey);
+            }
+          }
+        }
+      }
+    }
+
+    if (this.hunter) {
+      this.hunter.totalEndpoints = this.hunter.discoveredEndpoints.length;
+      this.hunter.totalPaths = this.hunter.discoveredPaths.size;
+      this.hunter.totalParams = this.hunter.discoveredParams.size;
+      this.hunter.addLog('📜 Imported ' + discovered.length + ' endpoints from ' + title + ' v' + version, 'success');
+    }
+
+    return {
+      title,
+      version,
+      count: discovered.length,
+      endpoints: discovered
+    };
+  }
+}
+
+// ================================================================
+// 💳 PIIHeuristicDetector (v5.0) - CREDIT CARDS, SSNs, EMAILS & PHONES
+// ================================================================
+class PIIHeuristicDetector {
+  checkLuhn(value) {
+    const sanitized = value.replace(/[\s-]/g, '');
+    if (!/^\d{13,19}$/.test(sanitized)) return false;
+    let sum = 0;
+    let shouldDouble = false;
+    for (let i = sanitized.length - 1; i >= 0; i--) {
+      let digit = parseInt(sanitized.charAt(i), 10);
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    return sum % 10 === 0;
+  }
+
+  scan(text, sourceUrl = '') {
+    if (!text || typeof text !== 'string') return [];
+    const results = [];
+    const seen = new Set();
+
+    const ccRegex = /\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|2(?:22[1-9]|2[3-9][0-9]|[3-6][0-9]{2}|7[01][0-9]|720)[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12})\b/g;
+    let match;
+    while ((match = ccRegex.exec(text)) !== null) {
+      const num = match[0];
+      if (this.checkLuhn(num) && !seen.has(num)) {
+        seen.add(num);
+        const masked = num.substring(0, 4) + '-XXXX-XXXX-' + num.substring(num.length - 4);
+        results.push({
+          type: 'Credit Card',
+          preview: masked,
+          source: sourceUrl,
+          severity: 'CRITICAL',
+          timestamp: new Date().toLocaleTimeString()
+        });
+      }
+    }
+
+    const ssnRegex = /\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b/g;
+    while ((match = ssnRegex.exec(text)) !== null) {
+      const ssn = match[0];
+      if (!seen.has(ssn)) {
+        seen.add(ssn);
+        results.push({
+          type: 'US SSN',
+          preview: 'XXX-XX-' + ssn.substring(ssn.length - 4),
+          source: sourceUrl,
+          severity: 'CRITICAL',
+          timestamp: new Date().toLocaleTimeString()
+        });
+      }
+    }
+
+    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,7}\b/g;
+    while ((match = emailRegex.exec(text)) !== null) {
+      const email = match[0];
+      if (!email.endsWith('.png') && !email.endsWith('.jpg') && !email.endsWith('.svg') && !seen.has(email)) {
+        seen.add(email);
+        results.push({
+          type: 'Email Address',
+          preview: email,
+          source: sourceUrl,
+          severity: 'MEDIUM',
+          timestamp: new Date().toLocaleTimeString()
+        });
+      }
+    }
+
+    return results;
+  }
+}
+
+// ================================================================
+// ⚡ VerbTamperMatrix (v5.0) - HTTP METHOD AUTHENTICATION BYPASS MATRIX
+// ================================================================
+class VerbTamperMatrix {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+  }
+
+  async testEndpoint(targetUrl, headers = {}) {
+    const verbs = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+    const results = [];
+
+    for (const method of verbs) {
+      try {
+        const resp = await fetch(targetUrl, {
+          method,
+          headers
+        });
+        const len = resp.headers.get('content-length') || '0';
+        results.push({
+          method,
+          status: resp.status,
+          statusText: resp.statusText,
+          length: len,
+          contentType: resp.headers.get('content-type') || 'none'
+        });
+      } catch (e) {
+        results.push({
+          method,
+          status: 0,
+          statusText: e.message,
+          length: 0,
+          contentType: 'error'
+        });
+      }
+      await new Promise(r => setTimeout(r, 120));
+    }
+
+    const getRes = results.find(r => r.method === 'GET');
+    const anomalies = [];
+    let bypassDetected = false;
+
+    if (getRes && (getRes.status === 401 || getRes.status === 403)) {
+      results.forEach(r => {
+        if (r.method !== 'GET' && (r.status === 200 || r.status === 201 || r.status === 204)) {
+          bypassDetected = true;
+          anomalies.push('Potential Auth Bypass: GET returned ' + getRes.status + ', but ' + r.method + ' returned ' + r.status + '!');
+        }
+      });
+    }
+
+    return {
+      targetUrl,
+      results,
+      bypassDetected,
+      anomalies
+    };
+  }
+}
+
+// ================================================================
+// 🎯 IDORSequencer (v5.0) - NUMERIC IDOR DIFFERENTIAL PROBER
+// ================================================================
+class IDORSequencer {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+  }
+
+  extractNumericId(urlStr) {
+    try {
+      const u = new URL(urlStr);
+      const qMatch = u.search.match(/(?:^|[?&])(id|user_id|uid|order_id|account_id|doc_id)=(\d+)/i);
+      if (qMatch) {
+        return {
+          type: 'query',
+          param: qMatch[1],
+          originalId: parseInt(qMatch[2], 10),
+          baseUrl: urlStr
+        };
+      }
+      const pMatch = u.pathname.match(/(.*\/)(\d+)(\/?.*)$/);
+      if (pMatch) {
+        return {
+          type: 'path',
+          prefix: pMatch[1],
+          originalId: parseInt(pMatch[2], 10),
+          suffix: pMatch[3],
+          baseUrl: urlStr
+        };
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  async testIDOR(urlStr, offsets = [-2, -1, 1, 2], delay = 200) {
+    const extracted = this.extractNumericId(urlStr);
+    if (!extracted) {
+      throw new Error('No numeric identifier found in URL query or path.');
+    }
+
+    let baselineResp;
+    try {
+      const bRes = await fetch(urlStr);
+      const text = await bRes.text();
+      baselineResp = {
+        id: extracted.originalId,
+        status: bRes.status,
+        length: text.length
+      };
+    } catch (e) {
+      baselineResp = { id: extracted.originalId, status: 0, length: 0 };
+    }
+
+    const sequencedResults = [];
+    let potentialVulnerability = false;
+
+    for (const offset of offsets) {
+      const testId = extracted.originalId + offset;
+      if (testId <= 0) continue;
+
+      let testUrl;
+      if (extracted.type === 'query') {
+        const u = new URL(urlStr);
+        u.searchParams.set(extracted.param, testId.toString());
+        testUrl = u.toString();
+      } else {
+        const u = new URL(urlStr);
+        u.pathname = extracted.prefix + testId + extracted.suffix;
+        testUrl = u.toString();
+      }
+
+      try {
+        const res = await fetch(testUrl);
+        const body = await res.text();
+        const item = {
+          id: testId,
+          url: testUrl,
+          status: res.status,
+          length: body.length,
+          deltaFromBaseline: body.length - baselineResp.length
+        };
+
+        if (res.status === 200 && baselineResp.status === 200 && body.length > 50) {
+          potentialVulnerability = true;
+        }
+
+        sequencedResults.push(item);
+      } catch (e) {
+        sequencedResults.push({ id: testId, url: testUrl, status: 0, error: e.message });
+      }
+
+      await new Promise(r => setTimeout(r, delay));
+    }
+
+    return {
+      originalUrl: urlStr,
+      baseline: baselineResp,
+      sequencedResults,
+      potentialVulnerability
+    };
+  }
+}
+
+// ================================================================
+// ☁️ CloudBucketCollector (v5.0) - S3, GCP & AZURE STORAGE AUDITOR
+// ================================================================
+class CloudBucketCollector {
+  constructor(stealthEngine) {
+    this.stealth = stealthEngine;
+    this.buckets = new Map();
+  }
+
+  scanText(text, sourceUrl = '') {
+    if (!text || typeof text !== 'string') return [];
+    const discovered = [];
+
+    const s3Regex = /(?:https?:\/\/)?([a-z0-9.\-_]{3,63})\.s3(?:[.-][a-z0-9-]+)?\.amazonaws\.com/gi;
+    let m;
+    while ((m = s3Regex.exec(text)) !== null) {
+      const name = m[1];
+      if (!this.buckets.has(name) && !name.includes('...') && name.length >= 3) {
+        const obj = {
+          name,
+          provider: 'AWS S3',
+          url: 'https://' + name + '.s3.amazonaws.com',
+          source: sourceUrl,
+          status: 'UNPROBED',
+          discoveredAt: new Date().toLocaleTimeString()
+        };
+        this.buckets.set(name, obj);
+        discovered.push(obj);
+      }
+    }
+
+    const gcpRegex = /(?:https?:\/\/)?storage\.googleapis\.com\/([a-z0-9.\-_]{3,63})/gi;
+    while ((m = gcpRegex.exec(text)) !== null) {
+      const name = m[1];
+      if (!this.buckets.has(name)) {
+        const obj = {
+          name,
+          provider: 'Google Cloud Storage',
+          url: 'https://storage.googleapis.com/' + name,
+          source: sourceUrl,
+          status: 'UNPROBED',
+          discoveredAt: new Date().toLocaleTimeString()
+        };
+        this.buckets.set(name, obj);
+        discovered.push(obj);
+      }
+    }
+
+    const azRegex = /(?:https?:\/\/)?([a-z0-9]{3,24})\.blob\.core\.windows\.net(?:\/([a-z0-9-_]+))?/gi;
+    while ((m = azRegex.exec(text)) !== null) {
+      const account = m[1];
+      const container = m[2] || '';
+      const key = account + '/' + container;
+      if (!this.buckets.has(key)) {
+        const obj = {
+          name: key,
+          provider: 'Azure Blob Storage',
+          url: 'https://' + account + '.blob.core.windows.net/' + container,
+          source: sourceUrl,
+          status: 'UNPROBED',
+          discoveredAt: new Date().toLocaleTimeString()
+        };
+        this.buckets.set(key, obj);
+        discovered.push(obj);
+      }
+    }
+
+    return discovered;
+  }
+
+  async probeBucket(bucketUrl) {
+    try {
+      const res = await fetch(bucketUrl, { method: 'GET' });
+      const text = await res.text();
+
+      if (text.includes('<ListBucketResult>') || text.includes('<EnumerationResults>')) {
+        return { status: 'PUBLIC_LISTABLE', severity: 'CRITICAL', message: 'Bucket is PUBLICLY LISTABLE! Files and directories are exposed.' };
+      }
+      if (res.status === 200) {
+        return { status: 'PUBLIC_READ', severity: 'HIGH', message: 'Bucket responds with HTTP 200 (Public Read).' };
+      }
+      if (res.status === 403 || text.includes('AccessDenied')) {
+        return { status: 'ACCESS_DENIED', severity: 'INFO', message: 'Bucket exists but access is restricted (403 Access Denied).' };
+      }
+      if (res.status === 404 || text.includes('NoSuchBucket')) {
+        return { status: 'DANGLING_BUCKET', severity: 'HIGH', message: 'Bucket does not exist (Potential Subdomain/Bucket Takeover!).' };
+      }
+      return { status: 'HTTP_' + res.status, severity: 'LOW', message: 'Returned HTTP ' + res.status };
+    } catch (e) {
+      return { status: 'ERROR', severity: 'LOW', message: e.message };
+    }
+  }
+}
+
+// ================================================================
+// 🐚 BashCurlExporter (v5.0) - RECON SHELL SCRIPT GENERATOR
+// ================================================================
+class BashCurlExporter {
+  generateScript(endpoints, globalAuth = {}, domain = 'target.com') {
+    const lines = [
+      '#!/usr/bin/env bash',
+      '# =====================================================================',
+      '# 🎯 ENDPOINT HUNTER - AUTOMATED RECON AUDIT SCRIPT',
+      '# Target Domain: ' + domain,
+      '# Generated: ' + new Date().toUTCString(),
+      '# Total Endpoints: ' + endpoints.length,
+      '# =====================================================================',
+      '',
+      'GREEN="\\033[0;32m"',
+      'RED="\\033[0;31m"',
+      'YELLOW="\\033[1;33m"',
+      'BLUE="\\033[0;34m"',
+      'CYAN="\\033[0;36m"',
+      'NC="\\033[0m"',
+      '',
+      'DELAY=0.15',
+      'TOTAL=' + endpoints.length,
+      'COUNT=0',
+      '',
+      'echo -e "${CYAN}====================================================${NC}"',
+      'echo -e "${CYAN}🚀 Starting Endpoint Hunter Audit on: ' + domain + '${NC}"',
+      'echo -e "${CYAN}Total endpoints to probe: $TOTAL${NC}"',
+      'echo -e "${CYAN}====================================================${NC}\\n"',
+      ''
+    ];
+
+    let authHeaderPart = '';
+    if (globalAuth && globalAuth.token) {
+      authHeaderPart = '-H "Authorization: Bearer ' + globalAuth.token + '" ';
+    } else if (globalAuth && globalAuth.apiKey) {
+      authHeaderPart = '-H "X-API-Key: ' + globalAuth.apiKey + '" ';
+    }
+
+    endpoints.forEach(ep => {
+      const url = ep.url;
+      const method = ep.method || 'GET';
+      lines.push('echo -ne "[PROBING] ' + method + ' ' + url + ' ... "');
+      lines.push(
+        'STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" -X "' + method + '" ' + authHeaderPart + '"' + url + '")'
+      );
+      lines.push('COUNT=$((COUNT + 1))');
+      lines.push('if [ "$STATUS" -eq 200 ]; then');
+      lines.push('  echo -e "${GREEN}[$STATUS OK]${NC} (${COUNT}/$TOTAL)"');
+      lines.push('elif [ "$STATUS" -eq 401 ] || [ "$STATUS" -eq 403 ]; then');
+      lines.push('  echo -e "${RED}[$STATUS FORBIDDEN]${NC} (${COUNT}/$TOTAL)"');
+      lines.push('elif [ "$STATUS" -ge 300 ] && [ "$STATUS" -lt 400 ]; then');
+      lines.push('  echo -e "${YELLOW}[$STATUS REDIRECT]${NC} (${COUNT}/$TOTAL)"');
+      lines.push('else');
+      lines.push('  echo -e "${BLUE}[$STATUS]${NC} (${COUNT}/$TOTAL)"');
+      lines.push('fi');
+      lines.push('sleep $DELAY');
+      lines.push('');
+    });
+
+    lines.push('echo -e "\\n${GREEN}✅ Audit Complete! Checked $TOTAL endpoints.${NC}"');
+    return lines.join('\n');
+  }
+}
+
+
 const ENDPOINT_PATTERNS = {
   api: [
     '/api/', '/v1/', '/v2/', '/v3/', '/v4/', '/v5/',
@@ -1492,11 +2328,23 @@ class CrawlEngine {
     this.miniRepeater = new MiniRepeater();
     this.microFuzzer = new MicroFuzzer(this.stealthEngine);
     this.parameterMiner = new ParameterMiner(this.stealthEngine);
+    this.corsAuditor = new CORSAuditor(this.stealthEngine);
+    this.jwtInspector = new JWTInspector();
+    this.securityHeadersAnalyzer = new SecurityHeadersAnalyzer();
+    this.swaggerImporter = new SwaggerImporter(this);
+    this.piiDetector = new PIIHeuristicDetector();
+    this.verbTamperMatrix = new VerbTamperMatrix(this.stealthEngine);
+    this.idorSequencer = new IDORSequencer(this.stealthEngine);
+    this.cloudBucketCollector = new CloudBucketCollector(this.stealthEngine);
+    this.bashCurlExporter = new BashCurlExporter();
+    this.discoveredPII = [];
     this.wsFrames = [];
     this.unpackedSourceMaps = new Map();
     this.fuzzerResults = [];
     this.statusProber = new StatusProber(this.stealthEngine);
     this.discoveredSecrets = [];
+    this.discoveredPII = [];
+    if (this.cloudBucketCollector) this.cloudBucketCollector.buckets.clear();
     this.sniffedRequests = [];
     this.isSniffing = false;
     this.isProbing = false;
@@ -2263,6 +3111,20 @@ class CrawlEngine {
         foundOn: reqData.url
       });
     }
+    if (this.cloudBucketCollector && reqData.url) {
+      this.cloudBucketCollector.scanText(reqData.url, reqData.url);
+      if (reqData.responseBody) this.cloudBucketCollector.scanText(reqData.responseBody, reqData.url);
+    }
+    if (this.piiDetector && reqData.responseBody) {
+      const piiHits = this.piiDetector.scan(reqData.responseBody, reqData.url);
+      if (piiHits && piiHits.length > 0) {
+        piiHits.forEach(hit => {
+          this.discoveredPII.push(hit);
+          this.addLog(`🚨 PII Leaked on [${reqData.method || 'GET'}] ${reqData.url}: ${hit.type} (${hit.preview})`, 'warning');
+        });
+        this.sendMessageToPopup('piiDetected', { hits: piiHits });
+      }
+    }
     this.sendMessageToPopup('networkRequestSniffed', reqData);
   }
 
@@ -2320,6 +3182,29 @@ class CrawlEngine {
   // ================================================================
   // 📦 HAR (HTTP ARCHIVE 1.2) EXPORT (v4.0)
   // ================================================================
+
+  exportBashScript() {
+    try {
+      const script = this.bashCurlExporter.generateScript(
+        this.discoveredEndpoints,
+        GLOBAL_AUTH,
+        this.baseDomain || 'target.com'
+      );
+      const blob = new Blob([script], { type: 'text/x-sh' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        chrome.downloads.download({
+          url: reader.result,
+          filename: 'recon_audit_' + (this.baseDomain || 'endpoints').replace(/[^a-zA-Z0-9_-]/g, '_') + '.sh',
+          saveAs: true
+        });
+      };
+      reader.readAsDataURL(blob);
+      this.addLog('🐚 Exported executable Recon Bash script (recon_audit.sh)', 'success');
+    } catch (e) {
+      this.addLog('❌ Bash Export Error: ' + e.message, 'error');
+    }
+  }
 
   exportHAR() {
     try {

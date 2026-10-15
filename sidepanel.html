@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Endpoint Hunter v4.0 — Side Panel & DevTools</title>
+<title>Endpoint Hunter v5.0 — Side Panel & DevTools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     🔗 ENDPOINT HUNTER v4.0 - RESPONSIVE OBSIDIAN RECON SIDE PANEL
+     🔗 ENDPOINT HUNTER v5.0 - RESPONSIVE OBSIDIAN RECON SIDE PANEL
      Author: Pratik Khairnar (https://github.com/pratik-khairnar-sec)
      ============================================================ */
   :root {
@@ -591,7 +591,7 @@
     <img src="icon48.png" alt="Endpoint Hunter Logo" class="brand-logo">
     <div class="brand-info">
       <div class="brand-title">Endpoint Hunter</div>
-      <div class="brand-sub">Persistent Side Panel • v4.0.0</div>
+      <div class="brand-sub">Persistent Side Panel • v5.0.0</div>
     </div>
   </div>
   <div class="header-actions">
@@ -664,6 +664,7 @@
     <button class="btn btn-export" id="openapiBtn" title="Export OpenAPI 3.0 specification">📜 OPENAPI</button>
     <button class="btn btn-export" id="pdfBtn" title="Export HTML / Print report">📄 PDF</button>
     <button class="btn btn-export" id="txtBtn" title="Export clean list for ffuf/nuclei">📋 TXT</button>
+    <button class="btn btn-export" id="bashBtn" title="Export Executable Recon Bash Script (recon_audit.sh)">🐚 BASH</button>
     <button class="btn btn-export" id="exportBtn" title="Export full JSON report">💾 JSON</button>
   </div>
 </div>
@@ -678,6 +679,10 @@
   <div class="tab-pill tab" data-tab="graphql">🌸 GraphQL</div>
   <div class="tab-pill tab" data-tab="sourcemaps">🗺️ SourceMaps</div>
   <div class="tab-pill tab" data-tab="fuzzer">🕷️ Fuzzer</div>
+  <div class="tab-pill tab" data-tab="security">🛡️ Security <span class="tab-chip" id="secBadge">0</span></div>
+  <div class="tab-pill tab" data-tab="jwt">🔑 JWT</div>
+  <div class="tab-pill tab" data-tab="swagger">📜 Swagger</div>
+  <div class="tab-pill tab" data-tab="cloud">☁️ Cloud <span class="tab-chip" id="cloudBadge">0</span></div>
   <div class="tab-pill tab" data-tab="paths">📁 Paths</div>
   <div class="tab-pill tab" data-tab="logs">📝 Logs</div>
   <div class="tab-pill tab" data-tab="settings">⚙️ Settings</div>
@@ -741,7 +746,7 @@
     </div>
   </section>
 
-  <!-- TAB 4: WEBSOCKET & SSE (v4.0) -->
+  <!-- TAB 4: WEBSOCKET & SSE (v5.0) -->
   <section class="tab-pane tab-content" id="wsTab">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid var(--border);">
       <span style="font-size:8.5px; color:var(--text-muted); font-weight:700;">Bi-Directional WebSocket & SSE Stream</span>
@@ -766,6 +771,8 @@
       </select>
       <input type="text" id="repeaterUrl" class="search-input" placeholder="https://api.target.com/v1/user">
       <button class="btn-sm-action" id="mineParamsBtn" style="color:var(--accent-amber); border-color:rgba(251,191,36,0.4);" title="Actively probe for hidden query parameters (Arjun-style)">🔍 MINE PARAMS</button>
+      <button class="btn-sm-action" id="verbTamperBtn" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.4);" title="Test GET/POST/PUT/DELETE/PATCH/HEAD/OPTIONS for Auth Bypass">⚡ VERB TAMPER</button>
+      <button class="btn-sm-action" id="idorSeqBtn" style="color:var(--accent-purple); border-color:rgba(192,132,252,0.4);" title="Sequentially probe numeric IDs to detect potential IDOR">🎯 IDOR SEQ</button>
       <button class="btn-sm-action" id="repeaterSendBtn" style="color:#000; background:var(--cyan); border:none; font-weight:800;">🚀 SEND</button>
     </div>
 
@@ -847,6 +854,104 @@
   </section>
 
   <!-- TAB 9: DISCOVERED PATHS -->
+  
+  <!-- TAB: SECURITY (v5.0) -->
+  <section class="tab-pane tab-content" id="securityTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+      <span style="font-size:9px; font-weight:800; color:var(--accent-rose); text-transform:uppercase;">🛡️ Active Security Assessment</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-sm-action" id="auditStorageBtn" title="Inspect localStorage, sessionStorage and cookies">🗄️ Audit Storage</button>
+        <button class="btn-sm-action" id="analyzeHeadersBtn" title="Probe & grade server security headers">📊 Analyze Headers</button>
+      </div>
+    </div>
+
+    <!-- CORS Auditor Box -->
+    <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:8px; margin-bottom:8px;">
+      <div style="font-size:8.5px; font-weight:800; color:var(--cyan); margin-bottom:4px;">🌐 Origin Reflection & Credential Auditor (CORS)</div>
+      <div style="display:grid; grid-template-columns: 1fr 140px auto; gap:6px; align-items:center;">
+        <input type="text" id="corsTargetUrl" class="search-input" placeholder="https://api.target.com/endpoint">
+        <input type="text" id="corsOriginInput" class="search-input" value="https://evil-attacker.com" placeholder="Test Origin">
+        <button class="btn-sm-action" id="runCorsAuditBtn" style="background:rgba(56,189,248,0.15); color:var(--cyan);">AUDIT CORS</button>
+      </div>
+      <div id="corsAuditResult" style="margin-top:6px; font-size:8px; display:none;"></div>
+    </div>
+
+    <!-- Security Headers Grading Box -->
+    <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:8px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <div style="font-size:8.5px; font-weight:800; color:var(--accent-emerald);">🛡️ HTTP Security Headers & Scorecard</div>
+        <div id="headerScoreBadge" style="font-size:10px; font-weight:800; font-family:var(--font-mono); color:var(--text-muted);">GRADE: --</div>
+      </div>
+      <div id="headerFindingsList" style="font-size:8px; max-height:100px; overflow-y:auto;">
+        <div class="empty">Click "Analyze Headers" to evaluate CSP, HSTS, XFO, MIME & Permissions-Policy.</div>
+      </div>
+    </div>
+
+    <!-- Storage & PII Leaks Box -->
+    <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <div style="font-size:8.5px; font-weight:800; color:var(--accent-amber);">🗄️ Storage Findings & PII Leak Scanner</div>
+        <span id="storageCountBadge" class="badge">0 ITEMS</span>
+      </div>
+      <div id="storageFindingsList" style="font-size:8px; max-height:120px; overflow-y:auto;">
+        <div class="empty">Storage and PII scanner idle. Click "Audit Storage" or enable Sniffer to capture live data.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: JWT INSPECTOR (v5.0) -->
+  <section class="tab-pane tab-content" id="jwtTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-size:9px; font-weight:800; color:var(--accent-amber); text-transform:uppercase;">🔑 Real-Time JWT Inspector & Alg:None Generator</span>
+      <button class="btn-sm-action" id="inspectJwtBtn" style="color:#000; background:var(--accent-amber); border:none; font-weight:800;">DECODE & AUDIT</button>
+    </div>
+    <textarea id="jwtInputArea" class="code-area" style="height:55px; margin-bottom:6px;" placeholder="Paste raw JSON Web Token (Bearer eyJhbGci...)"></textarea>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+      <div>
+        <label style="font-size:7.5px; font-weight:700; color:var(--cyan); text-transform:uppercase;">Decoded Header</label>
+        <pre id="jwtDecodedHeader" class="code-area" style="height:70px; margin:2px 0 0 0; white-space:pre-wrap;"></pre>
+      </div>
+      <div>
+        <label style="font-size:7.5px; font-weight:700; color:var(--accent-emerald); text-transform:uppercase;">Decoded Claims Payload</label>
+        <pre id="jwtDecodedPayload" class="code-area" style="height:70px; margin:2px 0 0 0; white-space:pre-wrap;"></pre>
+      </div>
+    </div>
+
+    <!-- Security Findings & Attack Vectors -->
+    <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px;">
+      <div style="font-size:8px; font-weight:800; color:var(--accent-rose); margin-bottom:4px;">⚡ Audit Findings & Crafted Test Tokens</div>
+      <div id="jwtAuditIssues" style="font-size:8px; margin-bottom:4px;"></div>
+      <div id="jwtAttackVectors" style="display:flex; flex-direction:column; gap:4px;"></div>
+    </div>
+  </section>
+
+  <!-- TAB: SWAGGER / OPENAPI (v5.0) -->
+  <section class="tab-pane tab-content" id="swaggerTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-size:9px; font-weight:800; color:var(--cyan); text-transform:uppercase;">📜 Swagger 2.0 & OpenAPI 3.0 Live Importer</span>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; margin-bottom:6px;">
+      <input type="text" id="swaggerUrlInput" class="search-input" placeholder="https://api.target.com/v2/swagger.json or /openapi.json">
+      <button class="btn-sm-action" id="importSwaggerUrlBtn" style="color:var(--cyan); border-color:rgba(56,189,248,0.4);">Fetch URL</button>
+    </div>
+    <label style="font-size:7.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Or Paste Raw OpenAPI / Swagger JSON Specification:</label>
+    <textarea id="swaggerJsonArea" class="code-area" style="height:70px; margin:2px 0 6px 0;" placeholder='{"openapi": "3.0.0", "info": {...}, "paths": {...}}'></textarea>
+    <button class="btn-sm-action" id="importSwaggerJsonBtn" style="width:100%; color:#000; background:var(--cyan); border:none; font-weight:800; padding:6px 0;">⚡ PARSE SPEC & AUTO-POPULATE ENDPOINTS</button>
+    <div id="swaggerImportStatus" style="margin-top:6px; font-size:8px;"></div>
+  </section>
+
+  <!-- TAB: CLOUD BUCKETS (v5.0) -->
+  <section class="tab-pane tab-content" id="cloudTab">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-size:9px; font-weight:800; color:var(--accent-purple); text-transform:uppercase;">☁️ Discovered Cloud Storage Buckets</span>
+      <button class="btn-sm-action" id="probeAllBucketsBtn" style="color:var(--accent-purple); border-color:rgba(192,132,252,0.4);">Probe All Buckets</button>
+    </div>
+    <div id="cloudBucketList" style="max-height:220px; overflow-y:auto;">
+      <div class="empty">No AWS S3, GCP, or Azure blob storage buckets discovered yet.<br>Buckets are automatically harvested from page source and API traffic.</div>
+    </div>
+  </section>
+  
   <section class="tab-pane tab-content" id="pathsTab">
     <div style="font-size:8.5px; color:var(--text-muted); font-weight:700; margin-bottom:6px;">Normalized URL Paths Discovered Across Origin</div>
     <div id="pathList">

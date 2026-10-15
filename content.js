@@ -206,7 +206,100 @@
       }
       return true;
     }
+
+    // ================================================================
+    // 🗄️ RUNTIME STORAGE & COOKIE SECURITY AUDITOR (v5.0)
+    // ================================================================
+    if (request.action === 'auditStorage') {
+      try {
+        const findings = [];
+        const sensitiveKeywords = [
+          'token', 'auth', 'jwt', 'api_key', 'apikey', 'secret', 'password',
+          'session', 'id_token', 'access_token', 'refresh_token', 'user', 'admin',
+          'credential', 'private', 'bearer', 'oauth'
+        ];
+
+        // 1. Audit localStorage
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const val = localStorage.getItem(key) || '';
+            const keyLower = key.toLowerCase();
+            const isSensitiveKey = sensitiveKeywords.some(k => keyLower.includes(k));
+            const isJWT = /^ey[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/.test(val.trim());
+
+            if (isSensitiveKey || isJWT || val.length > 20) {
+              findings.push({
+                storageType: 'localStorage',
+                key,
+                valueLength: val.length,
+                isJWT,
+                isSensitive: isSensitiveKey,
+                preview: val.length > 60 ? val.substring(0, 30) + '...' + val.substring(val.length - 10) : val,
+                rawVal: val
+              });
+            }
+          }
+        } catch (e) {}
+
+        // 2. Audit sessionStorage
+        try {
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            const val = sessionStorage.getItem(key) || '';
+            const keyLower = key.toLowerCase();
+            const isSensitiveKey = sensitiveKeywords.some(k => keyLower.includes(k));
+            const isJWT = /^ey[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/.test(val.trim());
+
+            if (isSensitiveKey || isJWT || val.length > 20) {
+              findings.push({
+                storageType: 'sessionStorage',
+                key,
+                valueLength: val.length,
+                isJWT,
+                isSensitive: isSensitiveKey,
+                preview: val.length > 60 ? val.substring(0, 30) + '...' + val.substring(val.length - 10) : val,
+                rawVal: val
+              });
+            }
+          }
+        } catch (e) {}
+
+        // 3. Audit document.cookie (Check for sensitive cookies accessible to JS without HttpOnly)
+        try {
+          if (document.cookie) {
+            const cookiePairs = document.cookie.split(';');
+            cookiePairs.forEach(pair => {
+              const parts = pair.trim().split('=');
+              const name = parts[0];
+              const val = parts.slice(1).join('=');
+              const nameLower = name.toLowerCase();
+              const isSensitive = sensitiveKeywords.some(k => nameLower.includes(k));
+              const isJWT = /^ey[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/.test(val.trim());
+
+              if (isSensitive || isJWT) {
+                findings.push({
+                  storageType: 'document.cookie (No HttpOnly!)',
+                  key: name,
+                  valueLength: val.length,
+                  isJWT,
+                  isSensitive: true,
+                  preview: val.length > 50 ? val.substring(0, 20) + '...' + val.substring(val.length - 8) : val,
+                  rawVal: val,
+                  warning: 'Cookie lacks HttpOnly flag! Accessible to XSS attacks.'
+                });
+              }
+            });
+          }
+        } catch (e) {}
+
+        sendResponse({ success: true, count: findings.length, findings });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
   });
 
-  console.log('[ENDPOINT_HUNTER] ✅ Content script v4.0 ready');
+  console.log('[ENDPOINT_HUNTER] ✅ Content script v5.0 ready');
 })();

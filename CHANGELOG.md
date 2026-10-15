@@ -5,6 +5,55 @@ All notable changes to **Endpoint Hunter** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-10-16
+
+### 🛡️ Enterprise Vulnerability Assessment & Cloud Recon Suite (v5.0)
+
+#### 🌐 Active CORS Origin Reflection & Credential Auditor (`CORSAuditor`)
+- **Arbitrary Origin Probing**: Tests target endpoints against attacker origins (`https://evil-attacker.com`) and `null` origins via preflight OPTIONS and GET probes.
+- **ACAC Credential Verification**: Detects critical misconfigurations where `Access-Control-Allow-Origin` reflects the request origin while `Access-Control-Allow-Credentials: true` is asserted.
+- **One-Click cURL Proof Generator**: Generates an exact reproducible terminal command to immediately demonstrate findings in vulnerability reports.
+
+#### 🔑 Real-Time JWT Inspector & Alg:None Generator (`JWTInspector`)
+- **Dual-Pane Base64URL Decoder**: Instantly decodes and syntax-highlights both JWT Header and Claims Payload directly in the UI.
+- **Automated Security Heuristics**: Detects unverified tokens, `alg: "none"`, symmetric HMAC secrets vulnerable to offline dictionary cracking, expired timestamp checks (`exp`), and sensitive claim extraction (`admin`, `role`, `email`).
+- **One-Click Exploit Vectors**: Automatically synthesizes `Alg: None Bypass` tokens and `Null Signature` test vectors ready for immediate clipboard copying.
+
+#### 📊 HTTP Security Headers Analyzer & Grading Engine (`SecurityHeadersAnalyzer`)
+- **Letter Grade Scorecard (A+ to F)**: Mathematically scores target application posture from 0 to 100 based on defensive header coverage.
+- **Deep Policy Inspection**: Audits `Content-Security-Policy` (`'unsafe-inline'`, `'unsafe-eval'`, wildcards), `Strict-Transport-Security` (`max-age`, `preload`), `X-Frame-Options` (Clickjacking), `X-Content-Type-Options` (MIME confusion), `Referrer-Policy`, and `Permissions-Policy`.
+- **Actionable Remediation**: Provides concise security headers recommendations for hardening the target server.
+
+#### 📜 Live Swagger 2.0 & OpenAPI 3.0 Spec Importer (`SwaggerImporter`)
+- **URL & Raw JSON Parsing**: Ingests live API documentation URLs (`/swagger.json`, `/openapi.json`) or pasted JSON objects.
+- **Automatic Endpoint Population**: Seamlessly extracts all paths, HTTP methods, operation descriptions, parameter dictionaries, and tags, populating the database in one click.
+
+#### 🗄️ Runtime Client Storage & Cookie Auditor (`StorageAuditor`)
+- **Multi-Store Audit**: Reads `window.localStorage`, `window.sessionStorage`, and `document.cookie` directly from the active page context.
+- **XSS & Hijack Exposure Flags**: Highlights sensitive auth tokens stored in client storage and flags session cookies missing the critical `HttpOnly` security flag.
+
+#### 💳 PII Data Leakage Detector (`PIIHeuristicDetector`)
+- **Luhn Algorithm Validation**: Accurately detects Visa, MasterCard, Amex, and Discover card numbers with zero false positives.
+- **Identity Leak Scanner**: Harvesters US Social Security Numbers (SSN), email addresses, and phone numbers in HTTP bodies.
+- **Zero-Exposure Masking**: Displays preview tokens (`4111-XXXX-XXXX-1111`) to prevent sensitive data display on test screens.
+
+#### ⚡ HTTP Verb Tampering Matrix (`VerbTamperMatrix`)
+- **Multi-Method Probing**: 1-click test of 7 HTTP verbs (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`, `OPTIONS`) against any target endpoint.
+- **Authorization Bypass Heuristic**: Flags differential anomalies where protected GET routes return 401/403 while alternative verbs return 200/204.
+
+#### 🎯 Numeric IDOR Differential Sequencer (`IDORSequencer`)
+- **Identifier Extraction**: Automatically isolates numeric object identifiers in URL paths (`/users/100`) and query parameters (`?id=100`).
+- **Differential Variance Engine**: Sequentially probes neighboring identifiers, comparing status codes and byte lengths against the baseline to highlight potential Insecure Direct Object References.
+
+#### ☁️ Multi-Cloud Storage Bucket Harvester (`CloudBucketCollector`)
+- **Cloud Service Harvester**: Scans source code and network traffic for AWS S3, Google Cloud Storage, and Azure Blob storage buckets.
+- **1-Click Public Access Prober**: Probes bucket root endpoints, classifying results into `PUBLIC_LISTABLE` (Critical), `PUBLIC_READ`, `ACCESS_DENIED`, or `DANGLING_BUCKET` (Subdomain Takeover risk).
+
+#### 🐚 Executable Recon Bash Script Exporter (`BashCurlExporter`)
+- **Colorized Shell Script**: Generates a self-contained `recon_audit.sh` bash script configured with ANSI terminal colors, automated timing loops, status categorization, and authorization token headers.
+
+---
+
 ## [4.0.0] - 2026-10-16
 
 ### 🦅 Next-Gen Cyber Reconnaissance Suite (v4.0)

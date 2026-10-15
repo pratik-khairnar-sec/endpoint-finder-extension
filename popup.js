@@ -114,6 +114,16 @@ class PopupController {
     this.fuzzerBaseUrl = document.getElementById('fuzzerBaseUrl');
     this.fuzzerCategory = document.getElementById('fuzzerCategory');
     this.startFuzzerBtn = document.getElementById('startFuzzerBtn');
+    this.bashBtn = document.getElementById('bashBtn');
+    this.auditStorageBtn = document.getElementById('auditStorageBtn');
+    this.analyzeHeadersBtn = document.getElementById('analyzeHeadersBtn');
+    this.runCorsAuditBtn = document.getElementById('runCorsAuditBtn');
+    this.inspectJwtBtn = document.getElementById('inspectJwtBtn');
+    this.importSwaggerUrlBtn = document.getElementById('importSwaggerUrlBtn');
+    this.importSwaggerJsonBtn = document.getElementById('importSwaggerJsonBtn');
+    this.probeAllBucketsBtn = document.getElementById('probeAllBucketsBtn');
+    this.verbTamperBtn = document.getElementById('verbTamperBtn');
+    this.idorSeqBtn = document.getElementById('idorSeqBtn');
     this.stopFuzzerBtn = document.getElementById('stopFuzzerBtn');
     this.fuzzerPill = document.getElementById('fuzzerPill');
     this.fuzzerCountLabel = document.getElementById('fuzzerCountLabel');
@@ -170,6 +180,16 @@ class PopupController {
     if (this.domWalkBtn) this.domWalkBtn.addEventListener('click', () => this.walkDOM());
     if (this.mineParamsBtn) this.mineParamsBtn.addEventListener('click', () => this.mineParameters());
     if (this.clearWsBtn) this.clearWsBtn.addEventListener('click', () => this.clearWsFrames());
+    if (this.bashBtn) this.bashBtn.addEventListener('click', () => this.exportBash());
+    if (this.auditStorageBtn) this.auditStorageBtn.addEventListener('click', () => this.auditStorage());
+    if (this.analyzeHeadersBtn) this.analyzeHeadersBtn.addEventListener('click', () => this.analyzeSecurityHeaders());
+    if (this.runCorsAuditBtn) this.runCorsAuditBtn.addEventListener('click', () => this.runCorsAudit());
+    if (this.inspectJwtBtn) this.inspectJwtBtn.addEventListener('click', () => this.inspectJwt());
+    if (this.importSwaggerUrlBtn) this.importSwaggerUrlBtn.addEventListener('click', () => this.importSwaggerUrl());
+    if (this.importSwaggerJsonBtn) this.importSwaggerJsonBtn.addEventListener('click', () => this.importSwaggerJson());
+    if (this.probeAllBucketsBtn) this.probeAllBucketsBtn.addEventListener('click', () => this.probeAllBuckets());
+    if (this.verbTamperBtn) this.verbTamperBtn.addEventListener('click', () => this.runVerbTamperMatrix());
+    if (this.idorSeqBtn) this.idorSeqBtn.addEventListener('click', () => this.runIdorSequence());
 
     // Bind Repeater
     if (this.repeaterSendBtn) this.repeaterSendBtn.addEventListener('click', () => this.sendRepeaterRequest());
@@ -235,6 +255,10 @@ class PopupController {
         if (tabId === 'repeater') this.initRepeaterTab();
         if (tabId === 'graphql') this.initGraphQLTab();
         if (tabId === 'fuzzer') this.initFuzzerTab();
+        if (tabId === 'security') this.initSecurityTab();
+        if (tabId === 'jwt') this.initJwtTab();
+        if (tabId === 'swagger') this.initSwaggerTab();
+        if (tabId === 'cloud') this.loadCloudBuckets();
       });
     });
 
@@ -1814,6 +1838,509 @@ class PopupController {
     d.textContent = t;
     return d.innerHTML;
   }
+
+  // ================================================================
+  // 🐚 V5.0 EXPORT BASH SCRIPT
+  // ================================================================
+  async exportBash() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportBashScript' });
+      this.log('🐚 Exporting executable Recon Bash script (recon_audit.sh)...', 'info');
+    } catch (e) {
+      this.log('❌ Bash export error: ' + e.message, 'error');
+    }
+  }
+
+  // ================================================================
+  // 🛡️ V5.0 SECURITY AUDITOR CONTROLLER
+  // ================================================================
+  initSecurityTab() {
+    const corsTarget = document.getElementById('corsTargetUrl');
+    if (corsTarget && !corsTarget.value) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].url) {
+          corsTarget.value = tabs[0].url;
+        }
+      });
+    }
+  }
+
+  async runCorsAudit() {
+    const targetUrl = (document.getElementById('corsTargetUrl')?.value || '').trim();
+    const origin = (document.getElementById('corsOriginInput')?.value || 'https://evil-attacker.com').trim();
+    const resBox = document.getElementById('corsAuditResult');
+    if (!targetUrl) {
+      alert('Please specify a target URL to audit for CORS.');
+      return;
+    }
+
+    if (resBox) {
+      resBox.style.display = 'block';
+      resBox.innerHTML = '<div style="color:var(--cyan);">⏳ Probing CORS preflight & origin reflection...</div>';
+    }
+
+    try {
+      const res = await chrome.runtime.sendMessage({
+        action: 'auditCORS',
+        url: targetUrl,
+        origin
+      });
+
+      if (!res || !res.success || !res.result) {
+        throw new Error(res?.error || 'Failed to probe CORS');
+      }
+
+      const r = res.result;
+      const secColor = r.severity === 'CRITICAL' ? 'var(--accent-rose)' :
+                       r.severity === 'HIGH' ? 'var(--accent-amber)' :
+                       r.severity === 'MEDIUM' ? 'var(--accent-purple)' : 'var(--accent-emerald)';
+
+      if (resBox) {
+        resBox.innerHTML = `
+          <div style="background:var(--bg-glass); border:1px solid ${secColor}; border-radius:var(--radius-xs); padding:6px; margin-top:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-weight:800; color:${secColor}; font-size:9px;">[${r.severity}] ${r.title}</span>
+              <span style="font-family:var(--font-mono); color:var(--text-muted);">HTTP ${r.status || '0'}</span>
+            </div>
+            <div style="color:var(--text-main); font-size:8px; margin-bottom:4px;">${r.details}</div>
+            <div style="font-family:var(--font-mono); font-size:7.5px; color:var(--text-muted); background:var(--bg-elevated); padding:4px; border-radius:2px; margin-bottom:4px;">
+              <div>ACAO: <span style="color:${r.acao ? 'var(--accent-rose)' : 'var(--text-muted)'};">${r.acao || '(none)'}</span></div>
+              <div>ACAC: <span style="color:${r.acac === 'true' ? 'var(--accent-rose)' : 'var(--text-muted)'};">${r.acac || '(none)'}</span></div>
+            </div>
+            <button class="btn-sm-action" style="font-size:7.5px; width:100%;" id="copyCorsCurlBtn">📋 Copy cURL Proof Command</button>
+          </div>
+        `;
+
+        document.getElementById('copyCorsCurlBtn')?.addEventListener('click', () => {
+          navigator.clipboard.writeText(r.curlProof || '');
+          alert('Copied cURL command to clipboard!');
+        });
+      }
+    } catch (e) {
+      if (resBox) {
+        resBox.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    }
+  }
+
+  async analyzeSecurityHeaders() {
+    const list = document.getElementById('headerFindingsList');
+    const badge = document.getElementById('headerScoreBadge');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl || !activeUrl.startsWith('http')) {
+        alert('Active tab is not an HTTP/HTTPS URL.');
+        return;
+      }
+
+      if (list) list.innerHTML = '<div style="color:var(--cyan); padding:4px;">⏳ Analyzing security headers...</div>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({
+          action: 'analyzeSecurityHeaders',
+          url: activeUrl
+        });
+
+        if (!res || !res.success || !res.result) {
+          throw new Error(res?.error || 'Failed to inspect headers');
+        }
+
+        const r = res.result;
+        if (badge) {
+          const gColor = r.grade.startsWith('A') ? 'var(--accent-emerald)' :
+                         r.grade === 'B' ? 'var(--cyan)' :
+                         r.grade === 'C' ? 'var(--accent-amber)' : 'var(--accent-rose)';
+          badge.style.color = gColor;
+          badge.textContent = 'GRADE: ' + r.grade + ' (' + r.score + '/100)';
+        }
+
+        if (list) {
+          if (!r.findings || r.findings.length === 0) {
+            list.innerHTML = '<div style="color:var(--accent-emerald); padding:4px;">✅ Outstanding! All critical security headers are configured.</div>';
+            return;
+          }
+
+          list.innerHTML = r.findings.map(f => {
+            const fColor = f.severity === 'HIGH' ? 'var(--accent-rose)' :
+                           f.severity === 'MEDIUM' ? 'var(--accent-amber)' : 'var(--text-muted)';
+            return `
+              <div style="background:var(--bg-glass); border-left:2px solid ${fColor}; padding:4px 6px; margin-bottom:4px; border-radius:2px;">
+                <div style="font-weight:700; color:${fColor};">${f.header}: ${f.issue}</div>
+                <div style="color:var(--text-muted); font-size:7.5px;">💡 Recommendation: ${f.recommendation}</div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (e) {
+        if (list) list.innerHTML = '<div style="color:var(--accent-rose); padding:4px;">❌ ' + e.message + '</div>';
+      }
+    });
+  }
+
+  async auditStorage() {
+    const list = document.getElementById('storageFindingsList');
+    const badge = document.getElementById('storageCountBadge');
+    const secBadge = document.getElementById('secBadge');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs && tabs[0];
+      if (!activeTab || !activeTab.id) {
+        alert('No active web page found.');
+        return;
+      }
+
+      if (list) list.innerHTML = '<div style="color:var(--cyan); padding:4px;">⏳ Scanning localStorage, sessionStorage & cookies...</div>';
+
+      chrome.tabs.sendMessage(activeTab.id, { action: 'auditStorage' }, (res) => {
+        if (chrome.runtime.lastError || !res || !res.success) {
+          if (list) list.innerHTML = '<div style="color:var(--accent-rose); padding:4px;">❌ Could not audit storage. Refresh page and try again.</div>';
+          return;
+        }
+
+        const items = res.findings || [];
+        if (badge) badge.textContent = items.length + ' ITEMS';
+        if (secBadge) secBadge.textContent = items.length;
+
+        if (items.length === 0) {
+          if (list) list.innerHTML = '<div style="color:var(--accent-emerald); padding:4px;">✅ No sensitive auth tokens or exposed cookies detected in client storage.</div>';
+          return;
+        }
+
+        if (list) {
+          list.innerHTML = items.map(item => {
+            const isWarn = item.warning || item.isJWT;
+            const bColor = isWarn ? 'var(--accent-rose)' : 'var(--accent-amber)';
+            return `
+              <div style="background:var(--bg-glass); border-left:2px solid ${bColor}; padding:4px 6px; margin-bottom:4px; border-radius:2px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight:700; color:var(--text-main); font-family:var(--font-mono);">${item.key}</span>
+                  <span style="font-size:7px; color:${bColor}; font-weight:800;">${item.isJWT ? '⚡ JWT DETECTED' : item.storageType}</span>
+                </div>
+                <div style="font-family:var(--font-mono); font-size:7.5px; color:var(--text-muted); word-break:break-all;">${item.preview}</div>
+                ${item.warning ? `<div style="color:var(--accent-rose); font-size:7px; font-weight:700;">⚠️ ${item.warning}</div>` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+      });
+    });
+  }
+
+  // ================================================================
+  // 🔑 V5.0 JWT INSPECTOR CONTROLLER
+  // ================================================================
+  initJwtTab() {
+    const input = document.getElementById('jwtInputArea');
+    if (input && !input.value) {
+      const foundJwt = (this.secrets || []).find(s => s.type && s.type.toLowerCase().includes('jwt'));
+      if (foundJwt && foundJwt.value) {
+        input.value = foundJwt.value;
+        this.inspectJwt();
+      }
+    }
+  }
+
+  async inspectJwt() {
+    const input = document.getElementById('jwtInputArea');
+    const headerBox = document.getElementById('jwtDecodedHeader');
+    const payloadBox = document.getElementById('jwtDecodedPayload');
+    const issuesBox = document.getElementById('jwtAuditIssues');
+    const vectorsBox = document.getElementById('jwtAttackVectors');
+
+    const token = (input?.value || '').trim();
+    if (!token) {
+      alert('Please paste a JWT token to decode and audit.');
+      return;
+    }
+
+    try {
+      const res = await chrome.runtime.sendMessage({
+        action: 'inspectJWT',
+        token
+      });
+
+      if (!res || !res.valid) {
+        throw new Error(res?.error || 'Invalid JWT structure');
+      }
+
+      if (headerBox) headerBox.textContent = JSON.stringify(res.header, null, 2);
+      if (payloadBox) payloadBox.textContent = JSON.stringify(res.payload, null, 2);
+
+      if (issuesBox) {
+        if (!res.issues || res.issues.length === 0) {
+          issuesBox.innerHTML = '<span style="color:var(--accent-emerald);">✅ Standard algorithm and valid expiration.</span>';
+        } else {
+          issuesBox.innerHTML = res.issues.map(iss => {
+            const col = iss.severity === 'CRITICAL' ? 'var(--accent-rose)' :
+                        iss.severity === 'WARNING' ? 'var(--accent-amber)' : 'var(--cyan)';
+            return `<div style="color:${col}; margin-bottom:2px;">• [${iss.severity}] ${iss.message}</div>`;
+          }).join('');
+        }
+      }
+
+      if (vectorsBox && res.attackVectors) {
+        vectorsBox.innerHTML = res.attackVectors.map((vec, i) => `
+          <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:2px; padding:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+              <span style="font-weight:700; color:var(--accent-amber); font-size:7.5px;">⚡ ${vec.name}</span>
+              <button class="btn-sm-action" style="font-size:7px;" id="copyVecBtn_${i}">Copy Token</button>
+            </div>
+            <div style="font-size:7px; color:var(--text-muted); margin-bottom:2px;">${vec.description}</div>
+            <div style="font-family:var(--font-mono); font-size:7px; color:var(--cyan); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${vec.token}</div>
+          </div>
+        `).join('');
+
+        res.attackVectors.forEach((vec, i) => {
+          document.getElementById('copyVecBtn_' + i)?.addEventListener('click', () => {
+            navigator.clipboard.writeText(vec.token);
+            alert('Copied attack token: ' + vec.name);
+          });
+        });
+      }
+    } catch (e) {
+      if (issuesBox) issuesBox.innerHTML = '<span style="color:var(--accent-rose);">❌ ' + e.message + '</span>';
+    }
+  }
+
+  // ================================================================
+  // 📜 V5.0 SWAGGER / OPENAPI IMPORTER CONTROLLER
+  // ================================================================
+  initSwaggerTab() {}
+
+  async importSwaggerUrl() {
+    const input = document.getElementById('swaggerUrlInput');
+    const statusBox = document.getElementById('swaggerImportStatus');
+    const url = (input?.value || '').trim();
+    if (!url) {
+      alert('Please specify an OpenAPI / Swagger JSON URL.');
+      return;
+    }
+
+    if (statusBox) statusBox.innerHTML = '<div style="color:var(--cyan);">⏳ Fetching and parsing spec...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({
+        action: 'importSwagger',
+        url
+      });
+
+      if (!res || !res.success || !res.result) {
+        throw new Error(res?.error || 'Failed to import spec');
+      }
+
+      const r = res.result;
+      if (statusBox) {
+        statusBox.innerHTML = `<div style="color:var(--accent-emerald); font-weight:700;">✅ Successfully imported ${r.count} endpoints from ${r.title} v${r.version}!</div>`;
+      }
+      this.load();
+    } catch (e) {
+      if (statusBox) statusBox.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async importSwaggerJson() {
+    const area = document.getElementById('swaggerJsonArea');
+    const statusBox = document.getElementById('swaggerImportStatus');
+    const jsonStr = (area?.value || '').trim();
+    if (!jsonStr) {
+      alert('Please paste raw OpenAPI / Swagger JSON.');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (statusBox) statusBox.innerHTML = '<div style="color:var(--cyan);">⏳ Parsing specification JSON...</div>';
+
+      const res = await chrome.runtime.sendMessage({
+        action: 'importSwagger',
+        json: parsed,
+        source: 'pasted-json'
+      });
+
+      if (!res || !res.success || !res.result) {
+        throw new Error(res?.error || 'Failed to import spec');
+      }
+
+      const r = res.result;
+      if (statusBox) {
+        statusBox.innerHTML = `<div style="color:var(--accent-emerald); font-weight:700;">✅ Successfully loaded ${r.count} endpoints into database!</div>`;
+      }
+      this.load();
+    } catch (e) {
+      if (statusBox) statusBox.innerHTML = '<div style="color:var(--accent-rose);">❌ Invalid JSON: ' + e.message + '</div>';
+    }
+  }
+
+  // ================================================================
+  // ☁️ V5.0 CLOUD BUCKET CONTROLLER
+  // ================================================================
+  async loadCloudBuckets() {
+    const list = document.getElementById('cloudBucketList');
+    const badge = document.getElementById('cloudBadge');
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'getCloudBuckets' });
+      const buckets = (res && res.buckets) || [];
+      if (badge) badge.textContent = buckets.length;
+
+      if (!list) return;
+      if (buckets.length === 0) {
+        list.innerHTML = '<div class="empty">No AWS S3, GCP, or Azure blob storage buckets discovered yet.<br>Buckets are automatically harvested from page source and API traffic.</div>';
+        return;
+      }
+
+      list.innerHTML = buckets.map((b, i) => `
+        <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px; margin-bottom:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span class="badge" style="background:rgba(192,132,252,0.15); color:var(--accent-purple);">${b.provider}</span>
+              <span style="font-family:var(--font-mono); font-weight:700; color:var(--cyan); font-size:8.5px;">${b.name}</span>
+            </div>
+            <button class="btn-sm-action" style="font-size:7px;" id="probeBucketBtn_${i}">Probe Access</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:7px; color:var(--text-muted);">
+            <span>${b.url}</span>
+            <span id="bucketStatus_${i}" style="font-weight:800; color:${b.status === 'UNPROBED' ? 'var(--text-muted)' : 'var(--accent-amber)'};">${b.status}</span>
+          </div>
+        </div>
+      `).join('');
+
+      buckets.forEach((b, i) => {
+        document.getElementById('probeBucketBtn_' + i)?.addEventListener('click', async () => {
+          const sLabel = document.getElementById('bucketStatus_' + i);
+          if (sLabel) sLabel.innerHTML = '<span style="color:var(--cyan);">Probing...</span>';
+          try {
+            const pRes = await chrome.runtime.sendMessage({ action: 'probeCloudBucket', url: b.url });
+            if (pRes && pRes.result && sLabel) {
+              const r = pRes.result;
+              const pColor = r.severity === 'CRITICAL' ? 'var(--accent-rose)' :
+                             r.severity === 'HIGH' ? 'var(--accent-amber)' : 'var(--accent-emerald)';
+              sLabel.innerHTML = `<span style="color:${pColor}; font-weight:800;">${r.status}</span>`;
+              alert(`[${r.status}] ${r.message}`);
+            }
+          } catch (e) {
+            if (sLabel) sLabel.textContent = 'ERR';
+          }
+        });
+      });
+    } catch (e) {}
+  }
+
+  async probeAllBuckets() {
+    this.log('☁️ Batch probing all discovered cloud storage buckets...', 'info');
+    const buttons = document.querySelectorAll('[id^="probeBucketBtn_"]');
+    buttons.forEach(btn => btn.click());
+  }
+
+  // ================================================================
+  // ⚡ V5.0 VERB TAMPERING MATRIX
+  // ================================================================
+  async runVerbTamperMatrix() {
+    const url = (document.getElementById('repeaterUrl')?.value || '').trim();
+    const box = document.getElementById('repeaterResponseBox');
+    if (!url) {
+      alert('Please specify a URL in the Repeater tab.');
+      return;
+    }
+
+    if (box) box.innerHTML = '<div style="color:var(--accent-rose); font-weight:700;">⏳ Testing HTTP Verbs (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS) for Auth Bypass...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({
+        action: 'testVerbTampering',
+        url
+      });
+
+      if (!res || !res.success || !res.result) {
+        throw new Error(res?.error || 'Verb tampering probe failed');
+      }
+
+      const r = res.result;
+      let html = '<div style="font-family:var(--font-mono); font-size:8px;">';
+      html += '<div style="font-weight:800; color:var(--cyan); margin-bottom:4px;">⚡ HTTP VERB TAMPERING AUDIT MATRIX</div>';
+
+      if (r.bypassDetected) {
+        html += '<div style="background:rgba(244,63,94,0.15); border:1px solid var(--accent-rose); color:var(--accent-rose); font-weight:800; padding:4px; border-radius:2px; margin-bottom:6px;">🚨 POTENTIAL AUTHENTICATION BYPASS DETECTED! ' + (r.anomalies.join(' | ')) + '</div>';
+      }
+
+      html += '<table style="width:100%; border-collapse:collapse; margin-top:4px;">';
+      html += '<tr style="color:var(--text-muted); border-bottom:1px solid var(--border);"><th style="text-align:left; padding:2px;">Method</th><th style="text-align:left; padding:2px;">Status</th><th style="text-align:left; padding:2px;">Bytes</th><th style="text-align:left; padding:2px;">Type</th></tr>';
+
+      r.results.forEach(row => {
+        const sColor = row.status === 200 || row.status === 201 || row.status === 204 ? 'var(--accent-emerald)' :
+                       row.status === 401 || row.status === 403 ? 'var(--accent-rose)' :
+                       row.status >= 300 && row.status < 400 ? 'var(--accent-amber)' : 'var(--text-muted)';
+        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="font-weight:800; color:var(--cyan); padding:2px;">${row.method}</td>
+          <td style="color:${sColor}; font-weight:700; padding:2px;">${row.status} ${row.statusText}</td>
+          <td style="color:var(--text-muted); padding:2px;">${row.length}</td>
+          <td style="color:var(--text-muted); font-size:7px; padding:2px;">${row.contentType}</td>
+        </tr>`;
+      });
+      html += '</table></div>';
+
+      if (box) box.innerHTML = html;
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  // ================================================================
+  // 🎯 V5.0 NUMERIC IDOR SEQUENCER
+  // ================================================================
+  async runIdorSequence() {
+    const url = (document.getElementById('repeaterUrl')?.value || '').trim();
+    const box = document.getElementById('repeaterResponseBox');
+    if (!url) {
+      alert('Please specify a URL in the Repeater tab containing a numeric ID (e.g. /users/100 or ?id=100).');
+      return;
+    }
+
+    if (box) box.innerHTML = '<div style="color:var(--accent-purple); font-weight:700;">⏳ Sequentially probing numeric IDs to detect potential IDOR vulnerabilities...</div>';
+
+    try {
+      const res = await chrome.runtime.sendMessage({
+        action: 'sequenceIDOR',
+        url,
+        offsets: [-2, -1, 1, 2],
+        delay: 200
+      });
+
+      if (!res || !res.success || !res.result) {
+        throw new Error(res?.error || 'IDOR sequencing failed');
+      }
+
+      const r = res.result;
+      let html = '<div style="font-family:var(--font-mono); font-size:8px;">';
+      html += '<div style="font-weight:800; color:var(--accent-purple); margin-bottom:4px;">🎯 NUMERIC IDOR SEQUENCER RESULTS</div>';
+
+      if (r.potentialVulnerability) {
+        html += '<div style="background:rgba(192,132,252,0.15); border:1px solid var(--accent-purple); color:var(--accent-purple); font-weight:800; padding:4px; border-radius:2px; margin-bottom:6px;">⚠️ POTENTIAL IDOR: Neighboring IDs returned HTTP 200 OK with distinct payload lengths!</div>';
+      }
+
+      html += `<div style="color:var(--text-muted); font-size:7.5px; margin-bottom:4px;">Baseline ID ${r.baseline.id} -> Status ${r.baseline.status} (${r.baseline.length} bytes)</div>`;
+
+      html += '<table style="width:100%; border-collapse:collapse; margin-top:4px;">';
+      html += '<tr style="color:var(--text-muted); border-bottom:1px solid var(--border);"><th style="text-align:left; padding:2px;">Test ID</th><th style="text-align:left; padding:2px;">Status</th><th style="text-align:left; padding:2px;">Length</th><th style="text-align:left; padding:2px;">Δ Delta</th></tr>';
+
+      r.sequencedResults.forEach(item => {
+        const sColor = item.status === 200 ? 'var(--accent-emerald)' : 'var(--text-muted)';
+        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="font-weight:800; color:var(--cyan); padding:2px;">#${item.id}</td>
+          <td style="color:${sColor}; font-weight:700; padding:2px;">${item.status}</td>
+          <td style="color:var(--text-muted); padding:2px;">${item.length || 0}</td>
+          <td style="color:${item.deltaFromBaseline === 0 ? 'var(--text-muted)' : 'var(--accent-amber)'}; padding:2px;">${item.deltaFromBaseline > 0 ? '+' : ''}${item.deltaFromBaseline || 0}</td>
+        </tr>`;
+      });
+      html += '</table></div>';
+
+      if (box) box.innerHTML = html;
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
 }
 
 // Launch on DOM ready
