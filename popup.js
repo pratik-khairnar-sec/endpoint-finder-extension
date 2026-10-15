@@ -164,6 +164,12 @@ class PopupController {
     this.selectGuestRoleBtn = document.getElementById('selectGuestRoleBtn');
     this.saveProfileBtn = document.getElementById('saveProfileBtn');
     this.applyProfileToRepeaterBtn = document.getElementById('applyProfileToRepeaterBtn');
+    this.complianceBtn = document.getElementById('complianceBtn');
+    this.cliPipelineBtn = document.getElementById('cliPipelineBtn');
+    this.refreshScorecardBtn = document.getElementById('refreshScorecardBtn');
+    this.refreshMitreBtn = document.getElementById('refreshMitreBtn');
+    this.drawTopologyBtn = document.getElementById('drawTopologyBtn');
+    this.runOrchestratorBtn = document.getElementById('runOrchestratorBtn');
     this.stopFuzzerBtn = document.getElementById('stopFuzzerBtn');
     this.fuzzerPill = document.getElementById('fuzzerPill');
     this.fuzzerCountLabel = document.getElementById('fuzzerCountLabel');
@@ -270,6 +276,12 @@ class PopupController {
     if (this.selectGuestRoleBtn) this.selectGuestRoleBtn.addEventListener('click', () => this.switchSessionProfile('Guest'));
     if (this.saveProfileBtn) this.saveProfileBtn.addEventListener('click', () => this.saveSessionProfile());
     if (this.applyProfileToRepeaterBtn) this.applyProfileToRepeaterBtn.addEventListener('click', () => this.applySessionProfileToRepeater());
+    if (this.complianceBtn) this.complianceBtn.addEventListener('click', () => this.exportComplianceReport());
+    if (this.cliPipelineBtn) this.cliPipelineBtn.addEventListener('click', () => this.exportCLIPipelineScript());
+    if (this.refreshScorecardBtn) this.refreshScorecardBtn.addEventListener('click', () => this.renderScorecard());
+    if (this.refreshMitreBtn) this.refreshMitreBtn.addEventListener('click', () => this.renderMitreMatrix());
+    if (this.drawTopologyBtn) this.drawTopologyBtn.addEventListener('click', () => this.drawTopologyGraph());
+    if (this.runOrchestratorBtn) this.runOrchestratorBtn.addEventListener('click', () => this.runZeroDayOrchestrator());
 
     // Bind Repeater
     if (this.repeaterSendBtn) this.repeaterSendBtn.addEventListener('click', () => this.sendRepeaterRequest());
@@ -2466,6 +2478,239 @@ class PopupController {
       repeaterHeaders.value = textarea.value;
       this.log('🧪 Applied active session headers to Mini-Repeater', 'success');
     }
+  }
+
+  // ================================================================
+  // 🎖️ V10.0 ENTERPRISE SCORECARD, MITRE, TOPOLOGY & ORCHESTRATOR
+  // ================================================================
+
+  async exportComplianceReport() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportComplianceReport' });
+      this.log('📋 Exporting Enterprise Compliance Audit Report...', 'info');
+    } catch (e) {
+      this.log('❌ Compliance export error: ' + e.message, 'error');
+    }
+  }
+
+  async exportCLIPipelineScript() {
+    try {
+      await chrome.runtime.sendMessage({ action: 'exportCLIPipelineScript' });
+      this.log('💻 Exporting CLI Automation Pipeline (recon_pipeline.sh)...', 'info');
+    } catch (e) {
+      this.log('❌ CLI Pipeline export error: ' + e.message, 'error');
+    }
+  }
+
+  async renderScorecard() {
+    const box = document.getElementById('scorecardFindingsBox');
+    const gradeDisplay = document.getElementById('scorecardGradeDisplay');
+    const pointsDisplay = document.getElementById('scorecardPointsDisplay');
+    const statusBadge = document.getElementById('scorecardStatusBadge');
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'getSecurityScorecard' });
+      const r = res?.result;
+      if (!r) return;
+
+      if (gradeDisplay) {
+        gradeDisplay.innerText = r.grade;
+        gradeDisplay.style.color = r.gradeColor;
+      }
+      if (pointsDisplay) {
+        pointsDisplay.innerText = `${r.totalRiskPoints} / 100`;
+      }
+      if (statusBadge) {
+        statusBadge.innerText = r.postureStatus;
+        statusBadge.style.background = r.gradeColor;
+      }
+
+      if (box) {
+        if (r.findings.length === 0) {
+          box.innerHTML = '<div style="color:var(--accent-emerald); font-weight:700;">✅ Pristine Attack Surface: No high-risk CVEs or exposed credentials detected.</div>';
+        } else {
+          box.innerHTML = r.findings.map(f => `
+            <div style="background:var(--bg-glass); border-left:2px solid ${f.severity === 'CRITICAL' ? 'var(--accent-rose)' : 'var(--accent-amber)'}; padding:4px 6px; margin-bottom:4px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:var(--text-main);">${this.escape(f.name)}</span>
+                <span class="badge" style="background:${f.severity === 'CRITICAL' ? 'var(--accent-rose)' : 'var(--accent-amber)'}; color:#000;">${f.severity}</span>
+              </div>
+              <div style="font-family:var(--font-mono); font-size:7px; color:var(--cyan); margin-top:2px;">${this.escape(f.cvss)}</div>
+              <div style="font-size:7px; color:var(--text-muted);">Occurrences: ${f.count} | Impact: +${f.points} risk points</div>
+            </div>
+          `).join('');
+        }
+      }
+    } catch (e) {
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async renderMitreMatrix() {
+    const box = document.getElementById('mitreMatrixBox');
+    if (!box) return;
+
+    box.innerHTML = '<div style="color:var(--cyan);">⏳ Correlating findings against MITRE ATT&CK Enterprise Matrix...</div>';
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'getMitreMatrix' });
+      const r = res?.result;
+      if (!r || !r.techniques) return;
+
+      box.innerHTML = `
+        <div style="color:var(--accent-purple); font-weight:700; margin-bottom:6px;">
+          Mapped ${r.totalTechniques} Techniques to MITRE ATT&CK Enterprise Matrix
+        </div>
+        ${r.techniques.map(t => `
+          <div style="background:var(--bg-glass); border-left:2px solid var(--accent-purple); padding:4px 6px; margin-bottom:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:700; color:var(--text-main);">${t.id}: ${this.escape(t.name)}</span>
+              <span class="badge" style="background:var(--accent-purple); color:#000;">${t.status}</span>
+            </div>
+            <div style="font-size:7px; color:var(--cyan); margin-top:2px;">${this.escape(t.tactic)}</div>
+            <div style="font-size:7px; color:var(--text-muted); margin-top:1px;">${this.escape(t.details)}</div>
+          </div>
+        `).join('')}
+      `;
+    } catch (e) {
+      box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+    }
+  }
+
+  async drawTopologyGraph() {
+    const canvas = document.getElementById('topologyCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'getEndpointTopology' });
+      const r = res?.result;
+      const endpoints = r?.endpoints || [];
+      const origin = r?.origin || 'target.com';
+
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      // Central Origin Node
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Draw cluster categories
+      const categories = ['/api', '/auth', '/admin', '/static', '/users', '/v1', '/v2'];
+      const catCount = categories.length;
+
+      // Group endpoints by category
+      categories.forEach((cat, idx) => {
+        const angle = (idx / catCount) * Math.PI * 2;
+        const catRadius = 65;
+        const catX = centerX + Math.cos(angle) * catRadius;
+        const catY = centerY + Math.sin(angle) * catRadius;
+
+        // Draw line from center to category
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(catX, catY);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw category node
+        ctx.beginPath();
+        ctx.arc(catX, catY, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#0e2238';
+        ctx.fill();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '7px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(cat, catX, catY + 18);
+
+        // Draw leaf nodes around category
+        const leafCount = 3;
+        for (let j = 0; j < leafCount; j++) {
+          const leafAngle = angle + ((j - 1) * 0.35);
+          const leafRadius = 32;
+          const leafX = catX + Math.cos(leafAngle) * leafRadius;
+          const leafY = catY + Math.sin(leafAngle) * leafRadius;
+
+          ctx.beginPath();
+          ctx.moveTo(catX, catY);
+          ctx.lineTo(leafX, leafY);
+          ctx.strokeStyle = 'rgba(45, 212, 191, 0.18)';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(leafX, leafY, 4, 0, Math.PI * 2);
+          ctx.fillStyle = j === 0 ? '#34d399' : j === 1 ? '#38bdf8' : '#fbbf24';
+          ctx.fill();
+        }
+      });
+
+      // Draw Center Origin Node
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+      ctx.fillStyle = '#061325';
+      ctx.fill();
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#00f0ff';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(origin.slice(0, 14), centerX, centerY + 3);
+
+      this.log('🌐 Rendered attack surface topology graph (' + endpoints.length + ' indexed nodes)', 'success');
+    } catch (e) {
+      this.log('❌ Topology render error: ' + e.message, 'error');
+    }
+  }
+
+  async runZeroDayOrchestrator() {
+    const box = document.getElementById('orchestratorResultsBox');
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeUrl = tabs && tabs[0] ? tabs[0].url : '';
+      if (!activeUrl) return;
+
+      if (box) box.innerHTML = '<div style="color:var(--accent-rose); font-weight:800;">🚀 Executing unified multi-layer mission audit... (CORS, CRLF, Env files, Tech stack, CSP bypasses)</div>';
+
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'runZeroDayOrchestrator', url: activeUrl });
+        const r = res?.result;
+        if (!r || !box) return;
+
+        const m = r.modules;
+        box.innerHTML = `
+          <div style="font-weight:800; color:var(--cyan); margin-bottom:6px;">
+            🎖️ Mission Audit Complete for: ${this.escape(r.origin)}
+          </div>
+          
+          <div style="background:var(--bg-glass); border-left:2px solid var(--accent-emerald); padding:4px 6px; margin-bottom:4px;">
+            <b>📁 Sensitive Config Prober:</b> ${m.envLeaks?.exposedCount > 0 ? '<span style="color:var(--accent-rose); font-weight:700;">' + m.envLeaks.exposedCount + ' Leaks Found</span>' : '<span style="color:var(--accent-emerald);">Secure</span>'}
+          </div>
+
+          <div style="background:var(--bg-glass); border-left:2px solid var(--accent-emerald); padding:4px 6px; margin-bottom:4px;">
+            <b>✈️ CORS Preflight Simulator:</b> ${m.corsPreflight?.isVulnerable ? '<span style="color:var(--accent-rose); font-weight:700;">CORS Issue Detected</span>' : '<span style="color:var(--accent-emerald);">Origin Hardened</span>'}
+          </div>
+
+          <div style="background:var(--bg-glass); border-left:2px solid var(--accent-emerald); padding:4px 6px; margin-bottom:4px;">
+            <b>💉 CRLF Response Splitting:</b> ${m.crlf?.isVulnerable ? '<span style="color:var(--accent-rose); font-weight:700;">Vulnerable</span>' : '<span style="color:var(--accent-emerald);">Sanitized</span>'}
+          </div>
+
+          <div style="background:var(--bg-glass); border-left:2px solid var(--accent-emerald); padding:4px 6px; margin-bottom:4px;">
+            <b>🛡️ CSP Whitelist Bypasses:</b> ${m.cspBypass?.bypassFound ? '<span style="color:var(--accent-amber); font-weight:700;">CDN Whitelist Risk</span>' : '<span style="color:var(--accent-emerald);">No Bypass Known</span>'}
+          </div>
+        `;
+        this.log('🎖️ Full mission audit completed successfully', 'success');
+      } catch (e) {
+        if (box) box.innerHTML = '<div style="color:var(--accent-rose);">❌ ' + e.message + '</div>';
+      }
+    });
   }
 
   // ================================================================

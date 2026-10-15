@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Endpoint Hunter — API & Route Reconnaissance",
-  "version": "9.0.0",
-  "description": "Enterprise API reconnaissance & vulnerability auditor: API schema fuzzer, CORS preflight simulator, Subresource Integrity (SRI) auditor, CRLF response splitting detector, hidden form CSRF harvester, client crypto auditor, deep link extractor, .env leak prober, multi-role session switcher, Postman environment exporter, Burp Suite XML exporter & Markdown executive summaries.",
+  "version": "10.0.0",
+  "description": "The Ultimate Enterprise API Reconnaissance & Vulnerability Suite: Zero-day recon orchestrator, CVSS v3.1 security scorecard, MITRE ATT&CK enterprise mapper, live topology graph visualizer, custom rules engine, memory dump inspector, compliance exporter (OWASP/SOC2/ISO), CLI pipeline bridge, and API schema boundary fuzzer.",
   "author": "Pratik Khairnar <pratik-khairnar-sec@users.noreply.github.com>",
   "homepage_url": "https://github.com/pratik-khairnar-sec/endpoint-finder-extension",
   "permissions": [

@@ -2,15 +2,15 @@
   <img src="icon128.png" width="96" height="96" alt="Endpoint Hunter Logo">
 </p>
 
-<h1 align="center">Endpoint Hunter v9.0</h1>
+<h1 align="center">Endpoint Hunter v10.0</h1>
 
 <p align="center">
-  <b>Enterprise API Reconnaissance &amp; Vulnerability Assessment Suite for Chromium Browsers (Manifest V3)</b><br>
-  <i>Schema Fuzzer • CORS Preflight Simulator • SRI Auditor • CRLF Detector • Form CSRF Harvester • Client Crypto • Deep Links • Env Leak Prober • Multi-Role Sessions • Postman Env Exporter</i>
+  <b>The Ultimate Enterprise API Reconnaissance &amp; Vulnerability Suite for Chromium Browsers (Manifest V3)</b><br>
+  <i>Zero-Day Orchestrator • CVSS v3.1 Scorecard • MITRE ATT&CK Matrix • Topology Graph • Custom Rules • Memory Dump • Compliance (OWASP/SOC2/ISO) • CLI Pipeline • Schema Fuzzer</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-9.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 9.0.0"></a>
+  <a href="https://github.com/pratik-khairnar-sec/endpoint-finder-extension/releases"><img src="https://img.shields.io/badge/version-10.0.0-38bdf8?style=for-the-badge&logo=tag" alt="Version 10.0.0"></a>
   <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"></a>
   <a href="#-manual-trigger-policy-zero-auto-scanning"><img src="https://img.shields.io/badge/Auto--Start-DISABLED%20(Manual%20Only)-red?style=for-the-badge&logo=power" alt="Zero Auto-Scan"></a>
@@ -42,7 +42,7 @@
 
 Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hundreds of internal REST routes, administrative gateways, hidden microservices, WebSocket channels, and GraphQL schemas into minified JavaScript bundles. Manually finding these with proxy interceptors or grep CLI tools is noisy, slow, and full of false positives (XML schemas, broken HTML tags, SVG paths).
 
-**Endpoint Hunter v9.0** runs directly inside Chromium browsers under **Manifest V3**. It introduces API schema boundary value generation, active CORS preflight simulation, Subresource Integrity (SRI) posture auditing, canary CRLF response splitting detection, hidden form field and CSRF token auditing, client-side cryptographic weakness scanning, mobile deep link extraction, strict zero-false-positive environment file leak probing, multi-role session switching for BOLA/IDOR testing, and native Postman Environment JSON export.
+**Endpoint Hunter v10.0** is the definitive, industry-standard client-side reconnaissance and vulnerability assessment platform for Chromium under **Manifest V3**. It culminates in the Zero-Day Recon Orchestrator (running automated multi-layer posture audits across CORS, headers, environment files, and CRLF in one non-blocking pass), a real-time CVSS v3.1 Security Scorecard with weighted posture grades (`A+` to `F`), an Enterprise MITRE ATT&CK Matrix mapping all assets to threat actor TTPs, an interactive HTML5 Canvas attack surface topology graph, an extensible custom rules engine, browser memory dump state inspection, compliance report exports (OWASP Top 10, SOC 2 Type II, ISO/IEC 27001), and a 1-click CLI bridge generating automated `ffuf`, `httpx`, and `nuclei` orchestration pipelines (`recon_pipeline.sh`).
 
 ---
 
@@ -58,6 +58,14 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 
 ## ⚡ Key Features
 
+- **🎖️ Zero-Day Recon Orchestrator**: Automated multi-layer mission coordinator running non-blocking posture checks across CORS, headers, environment files, CRLF, and CSP bypasses with consolidated pass/fail executive timelines.
+- **📊 Security Scorecard & CVSS v3.1 Engine**: Computes exact CVSS v3.1 vector strings and numeric scores (0.0 to 10.0) for every confirmed finding, rendering a cumulative posture grade (`A+` to `F`) with status indicators (`HARDENED` vs `ACTION REQUIRED`).
+- **🛡️ Enterprise MITRE ATT&CK Matrix Mapper**: Automatically maps all discovered routes, secrets, and behaviors to official MITRE ATT&CK techniques (T1592, T1595, T1552, T1190, T1530).
+- **🌐 Interactive Attack Surface Topology Graph**: Real-time HTML5 Canvas network graph rendering origin, major cluster hubs (`/api`, `/auth`, `/admin`), and leaf status nodes.
+- **⚙️ User-Configurable Custom Rules Engine**: Define custom regex rules to discover proprietary token formats, internal hostnames (`*.corp.internal`), and unlinked debug profilers.
+- **🧠 Browser Memory Dump & State Inspector**: Safely audits `window.__NEXT_DATA__`, `window.__NUXT__`, and Redux stores for unmasked user PII, internal IDs, and tokens in browser memory.
+- **📋 Enterprise Compliance Report Exporter**: Exports `compliance_report.json` mapping posture directly to OWASP Top 10 (2021/2025), SOC 2 Type II, and ISO/IEC 27001:2022.
+- **💻 Hunter Ultimate CLI Orchestration Bridge**: Generates `recon_pipeline.sh` orchestrating `ffuf`, `httpx`, and `nuclei` with discovered parameters, wordlists, and status codes.
 - **📐 API Schema Boundary Fuzzer**: Computes typed RFC edge-case fuzz vectors for string, integer, boolean, array, and object parameters (32/64-bit limits, IEEE-754 limits, null bytes, unicode normalization, oversized buffers).
 - **✈️ CORS Preflight Simulator**: Simulates OPTIONS requests with custom origins and headers, flagging unsafe reflection and credential disclosures.
 - **🛡️ Subresource Integrity (SRI) Auditor**: Scans scripts and styles loaded from external CDNs that lack `integrity="sha..."` hashes.

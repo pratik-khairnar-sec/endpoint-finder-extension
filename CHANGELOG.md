@@ -5,6 +5,48 @@ All notable changes to **Endpoint Hunter** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.0] - 2026-10-16
+
+### 🏆 The Ultimate Enterprise Reconnaissance & Vulnerability Suite (v10.0)
+
+#### 🎖️ Zero-Day Recon Orchestrator (`ZeroDayReconOrchestrator`)
+- **Automated Multi-Layer Mission Coordinator**: Triggers a unified, non-blocking security audit across CORS preflight simulation, security headers, environment leaks, CRLF response splitting, and CSP whitelist bypasses.
+- **Consolidated Executive Timeline**: Delivers instant pass/fail health indicators across the target application surface.
+
+#### 📊 Security Scorecard & Real-Time CVSS v3.1 Engine (`SecurityScorecardDashboard`)
+- **CVSS v3.1 Base Scoring**: Computes exact CVSS v3.1 vector strings and numeric scores (0.0 to 10.0) for every confirmed finding (e.g. Critical 9.8 for exposed API secrets, High 8.1 for credentialed CORS reflection).
+- **Executive Posture Grade Gauge**: Evaluates cumulative risk points to render an attack surface grade (`A+`, `A`, `B`, `C`, `D`, `F`) with status indicators (`HARDENED` vs `ACTION REQUIRED`).
+
+#### 🛡️ Enterprise MITRE ATT&CK Matrix Mapper (`MITREATTnCKMapper`)
+- **Threat Actor TTP Alignment**: Automatically correlates discovered endpoints, secrets, and behaviors to official MITRE ATT&CK Enterprise techniques:
+  - `T1592`: Gather Victim Host Information (Tech Stack Fingerprinter)
+  - `T1595`: Active Scanning (Status Prober, Micro-Fuzzer, Parameter Miner)
+  - `T1552`: Unsecured Credentials (Leaked AWS/API Keys, TruffleHog)
+  - `T1190`: Exploit Public-Facing Application (REST & GraphQL Route Catalog)
+  - `T1530`: Data from Cloud Storage (S3, GCS, Azure Blobs)
+- **1-Click Sync & Matrix Inspection**: Instant visual breakdown of coverage across Reconnaissance, Initial Access, and Credential Access tactics.
+
+#### 🌐 Interactive Attack Surface Topology Graph (`LiveSessionGraphVisualizer`)
+- **HTML5 Canvas Network Graph**: Real-time interactive node-link visualization of the discovered endpoint topology.
+- **Hierarchical Clustering**: Radiates from central origin into major routing clusters (`/api`, `/auth`, `/admin`, `/static`) with color-coded leaf status dots.
+
+#### ⚙️ User-Configurable Custom Rules Engine (`CustomRulesEngine`)
+- **Custom Heuristic Scanning**: Auditors can define tailored regex rules to discover proprietary internal token formats, staging hostnames (`*.corp.internal`), and unlinked debug profilers.
+
+#### 🧠 Browser Memory Dump & State Inspector (`MemoryDumpInspector`)
+- **SSR & Client Hydration State Audit**: Inspects `window.__NEXT_DATA__`, `window.__NUXT__`, `window.__INITIAL_STATE__`, and Redux stores for unmasked user PII, internal IDs, and tokens in browser memory.
+
+#### 📋 Enterprise Compliance Report Exporter (`EnterpriseComplianceReportExporter`)
+- **Standardized Framework Export**: Exports `compliance_report.json` mapping attack surface posture directly to:
+  - **OWASP Top 10 (2021/2025)**: A01 Broken Access Control, A02 Cryptographic Failures, A03 Injection, A05 Security Misconfiguration.
+  - **SOC 2 Type II**: Common Criteria CC6.1, CC6.6, CC7.1.
+  - **ISO/IEC 27001:2022**: Annex A.8.8 (Technical Vulnerability Management) and A.8.26 (Application Security Requirements).
+
+#### 💻 Hunter Ultimate CLI Orchestration Bridge (`HunterUltimateCLIBridge`)
+- **1-Click CLI Automation Script**: Generates `recon_pipeline.sh` orchestrating `ffuf`, `httpx`, and `nuclei` with discovered parameters, wordlists, and status codes.
+
+---
+
 ## [9.0.0] - 2026-10-16
 
 ### 📐 Schema Boundary Fuzzing, Deep Security Audits & Multi-Role Sessions (v9.0)

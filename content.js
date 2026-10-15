@@ -490,12 +490,46 @@
     // ================================================================
     // 📱 DEEP LINK & CUSTOM MOBILE SCHEME HARVESTER (v9.0)
     // ================================================================
+    // ================================================================
+    // 🧠 MEMORY DUMP & STATE OBJECT INSPECTOR (v10.0)
+    // ================================================================
+    if (request.action === 'inspectMemoryScope') {
+      try {
+        const stateObjects = [];
+        const scripts = Array.from(document.querySelectorAll('script:not([src])'));
+        
+        // Scan inline state scripts (Next.js, Nuxt, Redux)
+        scripts.forEach((s, idx) => {
+          const text = s.innerText || '';
+          if (text.includes('__NEXT_DATA__') || text.includes('__INITIAL_STATE__') || text.includes('__PRELOADED_STATE__') || text.includes('__NUXT__')) {
+            const matches = text.match(/(?:token|auth|key|secret|password|email|userId|role|admin)\s*[:=]\s*["'][^"']+["']/gi) || [];
+            stateObjects.push({
+              scriptIndex: idx + 1,
+              source: text.includes('__NEXT_DATA__') ? 'Next.js __NEXT_DATA__' : text.includes('__NUXT__') ? 'Nuxt __NUXT__' : 'SSR State Hydration',
+              snippet: text.slice(0, 160).replace(/\s+/g, ' '),
+              leakedTokens: matches.slice(0, 6)
+            });
+          }
+        });
+
+        sendResponse({
+          success: true,
+          foundStateObjects: stateObjects.length,
+          stateObjects
+        });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+      return true;
+    }
+
     if (request.action === 'harvestDeepLinksDOM') {
       try {
         const customSchemes = /^(slack|intent|tg|twitter|fb|market|whatsapp|mailto|tel|sms|zoommtg|spotify|discord|steam):/i;
         const deepLinks = [];
 
         Array.from(document.querySelectorAll('a[href]')).forEach(a => {
+          const href = a.getAttribute('href') || '';
           if (customSchemes.test(href) || (/^[a-z0-9+.-]+:\/\//i.test(href) && !/^https?:\/\//i.test(href))) {
             deepLinks.push({
               scheme: href.split(':')[0],
@@ -519,5 +553,5 @@
 
   });
 
-  console.log('[ENDPOINT_HUNTER] ✅ Content script v9.0 ready');
+  console.log('[ENDPOINT_HUNTER] ✅ Content script v10.0 ready');
 })();
