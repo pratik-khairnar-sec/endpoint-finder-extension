@@ -81,7 +81,7 @@ class PopupController {
     this.paramMinerList = document.getElementById('paramMinerList');
     this.clearWsBtn = document.getElementById('clearWsBtn');
     this.wsList = document.getElementById('wsList');
-    this.wsCount = document.getElementById('wsCount');
+    this.wsCount = document.getElementById('wsBadge') || document.getElementById('wsCount');
 
     // Filter inputs
     this.endpointSearch = document.getElementById('endpointSearch');
