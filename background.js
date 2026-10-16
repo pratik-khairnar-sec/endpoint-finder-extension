@@ -22,6 +22,13 @@ let WEBHOOK_CONFIG = {
   slackEnabled: false
 };
 
+
+let SENTINEL_CONFIG = {
+  enabled: false,
+  badgeCounter: true,
+  notifySecrets: false
+};
+
 let CRAWL_CONFIG = {
   maxPages: 999999,
   maxDepth: 999,
@@ -5574,6 +5581,95 @@ class CrawlEngine {
   // ⚡ HANDLE SNIFFED RUNTIME REQUEST (v2.0)
   // ================================================================
 
+
+  // ================================================================
+  // 🛡️ BACKGROUND SENTINEL PASSIVE PROCESSOR (v10.0)
+  // ================================================================
+
+  handlePassiveSentinelFindings(data, tab) {
+    if (!data) return;
+    const pageUrl = data.url || (tab ? tab.url : '');
+    let newEndpointsCount = 0;
+    let newSecretsCount = 0;
+
+    // Process endpoints
+    if (Array.isArray(data.endpoints)) {
+      for (const ep of data.endpoints) {
+        if (!ep || !ep.url) continue;
+        const normalized = this.normalizeEndpoint(ep.url, pageUrl);
+        if (normalized && !this.deepScanner.isFalsePositive(normalized)) {
+          const exists = this.discoveredEndpoints.some(e => e.url === normalized && e.method === (ep.method || 'GET'));
+          if (!exists) {
+            this.addEndpoint({
+              url: normalized,
+              method: ep.method || 'GET',
+              type: ep.type || this.classifyEndpoint(normalized),
+              source: ep.source || 'sentinel-passive',
+              foundOn: pageUrl
+            });
+            newEndpointsCount++;
+          }
+        }
+      }
+    }
+
+    // Process secrets
+    if (Array.isArray(data.secrets)) {
+      for (const sec of data.secrets) {
+        if (!sec || !sec.value) continue;
+        const exists = this.discoveredSecrets.some(s => (s.value === sec.value || s.raw === sec.value));
+        if (!exists) {
+          const secretObj = {
+            name: sec.name || 'API Secret',
+            type: sec.type || 'credential',
+            value: sec.value,
+            raw: sec.value,
+            severity: sec.severity || 'high',
+            location: pageUrl,
+            foundOn: pageUrl,
+            entropy: 4.5,
+            vulnerabilityVerdict: 'PASSIVE_DETECTION',
+            verdictDetails: 'Captured passively in background without disrupting browser'
+          };
+          if (this.secretVerifier) {
+            this.secretVerifier.verifySecret(secretObj).then(verdict => {
+              if (verdict && verdict.verdict) {
+                secretObj.vulnerabilityVerdict = verdict.verdict;
+                secretObj.verdictDetails = verdict.details;
+              }
+            }).catch(() => {});
+          }
+          this.discoveredSecrets.push(secretObj);
+          newSecretsCount++;
+        }
+      }
+    }
+
+    // Update Chrome Tab Badge (Zero User Interruption)
+    if (tab && tab.id && SENTINEL_CONFIG.badgeCounter) {
+      try {
+        const totalSec = this.discoveredSecrets.length;
+        const totalEp = this.discoveredEndpoints.length;
+        if (totalSec > 0) {
+          chrome.action.setBadgeText({ tabId: tab.id, text: '!' + totalSec });
+          chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#ef4444' });
+        } else if (totalEp > 0) {
+          chrome.action.setBadgeText({ tabId: tab.id, text: String(Math.min(99, totalEp)) });
+          chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#06b6d4' });
+        }
+      } catch (e) {}
+    }
+
+    if (newEndpointsCount > 0 || newSecretsCount > 0) {
+      this.sendMessageToPopup('sentinelUpdate', {
+        newEndpoints: newEndpointsCount,
+        newSecrets: newSecretsCount,
+        totalEndpoints: this.discoveredEndpoints.length,
+        totalSecrets: this.discoveredSecrets.length
+      });
+    }
+  }
+
   handleSniffedRequest(reqData) {
     if (!reqData || !reqData.url) return;
     this.sniffedRequests.unshift(reqData);
@@ -6949,7 +7045,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       return true;
 
     case 'wsFrameCaptured':
-      if (hunter.isSniffing) {
+      if (hunter.isSniffing || SENTINEL_CONFIG.enabled) {
         hunter.handleWsFrame(request.data);
       }
       sendResponse({ received: true });
@@ -7184,6 +7280,22 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       sendResponse({ success: true });
       return true;
 
+    
+    case 'getSentinelConfig':
+      sendResponse({ config: SENTINEL_CONFIG });
+      return true;
+
+    case 'setSentinelConfig':
+      SENTINEL_CONFIG = { ...SENTINEL_CONFIG, ...request.config };
+      chrome.storage.local.set({ sentinelConfig: SENTINEL_CONFIG });
+      sendResponse({ success: true, config: SENTINEL_CONFIG });
+      return true;
+
+    case 'passiveSentinelFindings':
+      hunter.handlePassiveSentinelFindings(request.data, sender.tab);
+      sendResponse({ received: true });
+      return true;
+
     case 'getCrawlConfig':
       sendResponse({ config: CRAWL_CONFIG });
       return true;
@@ -7222,7 +7334,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
 (async function loadConfig() {
   try {
-    const data = await chrome.storage.local.get(['telegramConfig', 'webhookConfig', 'crawlConfig', 'globalAuth']);
+    const data = await chrome.storage.local.get(['telegramConfig', 'webhookConfig', 'crawlConfig', 'globalAuth', 'sentinelConfig']);
+    if (data.sentinelConfig) { SENTINEL_CONFIG = { ...SENTINEL_CONFIG, ...data.sentinelConfig }; }
     if (data.globalAuth) {
       GLOBAL_AUTH = { ...GLOBAL_AUTH, ...data.globalAuth };
     }

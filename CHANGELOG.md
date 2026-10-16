@@ -62,6 +62,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Universal Target Web Tab Resolver (`getTargetWebTab`)**: Automatically detects the user's active web target tab when running inside a full-screen tab or detached window so `🎯 SCAN CURRENT` and `📡 SCAN (ALL)` work flawlessly from any view mode.
 - **🪟 Dock to Side Panel**: Quick action button to dock back into the native Chrome Side Panel at any time.
 
+#### 🛡️ Silent Background Sentinel: Zero-Interruption Passive Recon
+- **Zero-Interruption Background Monitoring**: Operates 100% passively in the background without navigating, refreshing, opening tabs, stealing keyboard focus, or causing frame drops.
+- **Idle-Time Gentle Extraction**: Executes on `requestIdleCallback` after DOM load to gently extract API endpoints from loaded scripts, form attributes, and SSR hydration states (`__NEXT_DATA__`).
+- **Passive Runtime Network Listener**: Automatically intercepts runtime `fetch`, `axios`, and `XHR` calls that the target web application makes during normal user interactions.
+- **Smart Chrome Icon Badge Counter**: Discreetly displays the number of discovered endpoints on the active tab in neon cyan, or switches to alert red (`!1`) if an exposed high-entropy API key or secret is detected.
+- **Sensitive Exclusions Whitelist**: Automatically skips personal authentication, banking, and payment gateways (`accounts.google.com`, `paypal.com`, `chase.com`, etc.) to protect personal browsing privacy.
+
 ---
 
 ## [9.0.0] - 2026-10-16

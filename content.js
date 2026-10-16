@@ -553,5 +553,116 @@
 
   });
 
+  
+  // ================================================================
+  // 🛡️ BACKGROUND SENTINEL PASSIVE EXTRACTOR (ZERO USER INTERRUPTION)
+  // ================================================================
+  const SENSITIVE_EXCLUSIONS = [
+    'accounts.google.com',
+    'login.live.com',
+    'login.microsoftonline.com',
+    'paypal.com',
+    'chase.com',
+    'bankofamerica.com',
+    'wellsfargo.com',
+    'americanexpress.com',
+    'myaccount.google.com',
+    'appleid.apple.com'
+  ];
+
+  function runPassiveSentinelExtraction() {
+    if (SENSITIVE_EXCLUSIONS.some(ex => window.location.hostname.includes(ex))) {
+      return;
+    }
+
+    const runner = window.requestIdleCallback || ((cb) => setTimeout(cb, 1200));
+    runner(() => {
+      try {
+        const foundEndpoints = [];
+        const foundSecrets = [];
+        const seenUrls = new Set();
+
+        const addEndpoint = (url, method, type, src) => {
+          if (!url || typeof url !== 'string') return;
+          const clean = url.trim().replace(/^['"`]+|['"`]+$/g, '');
+          if (clean.length < 3 || clean.startsWith('data:') || clean.startsWith('javascript:')) return;
+          if (seenUrls.has(clean)) return;
+          seenUrls.add(clean);
+          foundEndpoints.push({ url: clean, method: method || 'GET', type: type || 'api', source: src || 'sentinel-passive' });
+        };
+
+        // 1. Script sources
+        document.querySelectorAll('script[src]').forEach(s => {
+          if (s.src) addEndpoint(s.src, 'GET', 'script', 'script-src');
+        });
+
+        // 2. Links, forms, and API attributes
+        document.querySelectorAll('a[href], form[action], [data-url], [data-api], [data-endpoint]').forEach(el => {
+          const href = el.getAttribute('href') || el.getAttribute('action') || el.getAttribute('data-url') || el.getAttribute('data-api') || el.getAttribute('data-endpoint');
+          if (href && (href.startsWith('/') || href.includes('/api/') || href.includes('.json'))) {
+            addEndpoint(href, el.method || 'GET', 'api', 'dom-attr');
+          }
+        });
+
+        // 3. Hydration state
+        const nextData = document.getElementById('__NEXT_DATA__');
+        if (nextData && nextData.textContent) {
+          try {
+            const parsed = JSON.parse(nextData.textContent);
+            const str = JSON.stringify(parsed);
+            const routeMatches = str.match(/["'](\/[a-zA-Z0-9_\-./]+)["']/g) || [];
+            routeMatches.slice(0, 30).forEach(m => {
+              const r = m.replace(/["']/g, '');
+              if (r.length > 2 && (r.startsWith('/api') || r.startsWith('/v1') || r.startsWith('/v2') || r.startsWith('/v3'))) {
+                addEndpoint(r, 'GET', 'api', 'next-data');
+              }
+            });
+          } catch(e) {}
+        }
+
+        // 4. Scan inline scripts for endpoints and secrets
+        document.querySelectorAll('script:not([src])').forEach(s => {
+          const code = s.textContent || '';
+          if (code.length > 20 && code.length < 500000) {
+            const epMatches = code.match(/['"`]\/(?:api|v[0-9]|rest|graphql|oauth|auth|user|admin)[^'"\s\<\>]+['"`]/gi) || [];
+            epMatches.slice(0, 25).forEach(m => {
+              addEndpoint(m.replace(/['"`]/g, ''), 'GET', 'api', 'inline-script');
+            });
+
+            const googleKey = code.match(/AIzaSy[A-Za-z0-9_-]{33}/);
+            if (googleKey) foundSecrets.push({ name: 'Google API Key', value: googleKey[0], severity: 'high', type: 'google' });
+
+            const stripeKey = code.match(/sk_live_[0-9a-zA-Z]{24,}/);
+            if (stripeKey) foundSecrets.push({ name: 'Stripe Secret Key', value: stripeKey[0], severity: 'critical', type: 'stripe' });
+
+            const awsKey = code.match(/AKIA[0-9A-Z]{16}/);
+            if (awsKey) foundSecrets.push({ name: 'AWS Access Key ID', value: awsKey[0], severity: 'high', type: 'aws' });
+          }
+        });
+
+        if (foundEndpoints.length > 0 || foundSecrets.length > 0) {
+          chrome.runtime.sendMessage({
+            action: 'passiveSentinelFindings',
+            data: {
+              url: window.location.href,
+              endpoints: foundEndpoints,
+              secrets: foundSecrets
+            }
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    });
+  }
+
+  // Check Sentinel state on page load
+  try {
+    chrome.runtime.sendMessage({ action: 'getSentinelConfig' }, (res) => {
+      if (res && res.config && res.config.enabled) {
+        window.postMessage({ type: '__EH_TOGGLE_SNIFFER__', active: true }, '*');
+        runPassiveSentinelExtraction();
+      }
+    });
+  } catch (e) {}
+
   console.log('[ENDPOINT_HUNTER] ✅ Content script v10.0 ready');
 })();

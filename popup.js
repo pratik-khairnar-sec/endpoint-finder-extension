@@ -42,6 +42,7 @@ class PopupController {
     this.detectAndApplyViewMode();
     this.load();
     this.loadSettings();
+    this.loadSentinelSettings();
     this.loadGlobalAuth();
     this.startRealtimeUpdates();
     this.loadLogs();
@@ -171,6 +172,8 @@ class PopupController {
     this.openPopoutBtn = document.getElementById('openPopoutBtn');
     this.dockToSidePanelBtn = document.getElementById('dockToSidePanelBtn');
     this.viewModeBadge = document.getElementById('viewModeBadge');
+    this.sentinelToggle = document.getElementById('sentinelToggle');
+    this.sentinelStateLabel = document.getElementById('sentinelStateLabel');
 
     // Export Controls
     this.exportBtn = document.getElementById('exportBtn');
@@ -325,6 +328,7 @@ class PopupController {
     if (this.openFullTabBtn) this.openFullTabBtn.addEventListener('click', () => this.openFullTab());
     if (this.openPopoutBtn) this.openPopoutBtn.addEventListener('click', () => this.openPopoutWindow());
     if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.addEventListener('click', () => this.dockToSidePanel());
+    if (this.sentinelToggle) this.sentinelToggle.addEventListener('change', () => this.toggleSentinel());
 
     // Bind Export Buttons
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportJSON());
@@ -2094,6 +2098,46 @@ class PopupController {
     } catch (e) {
       this.log('❌ Telegram dispatch error: ' + e.message, 'error');
     }
+  }
+
+
+  async toggleSentinel() {
+    try {
+      const enabled = this.sentinelToggle ? this.sentinelToggle.checked : false;
+      await chrome.runtime.sendMessage({
+        action: 'setSentinelConfig',
+        config: { enabled }
+      });
+      if (this.sentinelStateLabel) {
+        this.sentinelStateLabel.textContent = enabled ? '⚡ ACTIVE' : 'OFF';
+        this.sentinelStateLabel.style.color = enabled ? '#38bdf8' : 'var(--text-muted)';
+      }
+      // Notify active tab
+      const tab = await this.getTargetWebTab();
+      if (tab && tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          action: 'setSnifferState',
+          active: enabled
+        }).catch(() => {});
+      }
+      this.log(enabled ? '🛡️ Silent Background Sentinel ACTIVE (Zero User Interruption)' : '🛡️ Background Sentinel PAUSED', enabled ? 'success' : 'info');
+    } catch (e) {
+      this.log('❌ Sentinel toggle error: ' + e.message, 'error');
+    }
+  }
+
+  async loadSentinelSettings() {
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'getSentinelConfig' });
+      if (res && res.config) {
+        const enabled = !!res.config.enabled;
+        if (this.sentinelToggle) this.sentinelToggle.checked = enabled;
+        if (this.sentinelStateLabel) {
+          this.sentinelStateLabel.textContent = enabled ? '⚡ ACTIVE' : 'OFF';
+          this.sentinelStateLabel.style.color = enabled ? '#38bdf8' : 'var(--text-muted)';
+        }
+      }
+    } catch (e) {}
   }
 
   async saveTelegramSettings() {

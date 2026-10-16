@@ -712,6 +712,20 @@
 
 <!-- CONTROL DECK -->
 <div class="control-deck">
+  <!-- 🛡️ SILENT BACKGROUND SENTINEL -->
+  <div class="sentinel-bar" style="display:flex; justify-content:space-between; align-items:center; background:rgba(6, 182, 212, 0.08); border:1px solid rgba(6, 182, 212, 0.25); border-radius:var(--radius-xs); padding:5px 8px; margin-bottom:8px;">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:12px;">🛡️</span>
+      <div>
+        <div style="font-size:8.5px; font-weight:800; color:var(--cyan); letter-spacing:0.5px;">BACKGROUND SENTINEL</div>
+        <div style="font-size:7px; color:var(--text-muted);">Silent Passive Recon (Zero User Interruption)</div>
+      </div>
+    </div>
+    <label style="display:flex; align-items:center; gap:4px; font-size:7.5px; cursor:pointer;">
+      <input type="checkbox" id="sentinelToggle">
+      <span id="sentinelStateLabel" style="font-weight:700; color:var(--text-muted);">OFF</span>
+    </label>
+  </div>
   <div class="deck-primary">
     <button class="btn btn-scan-hero" id="scanBtn">📡 SCAN (ALL)</button>
     <button class="btn btn-outline-cyan" id="scanCurrentBtn">🎯 SCAN CURRENT</button>
