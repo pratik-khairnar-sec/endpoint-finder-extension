@@ -4173,6 +4173,148 @@ echo "[✓] Pipeline execution finished. Results saved in: ${OUTDIR}"
   }
 }
 
+
+// ================================================================
+// 🔑 SecretVulnerabilityVerifier - ACTIVE KEY POSTURE & VULNERABILITY CHECKER
+// ================================================================
+class SecretVulnerabilityVerifier {
+  async verifySecret(secret) {
+    if (!secret) return { status: 'INVALID', details: 'No secret provided' };
+    const val = (secret.value || secret.raw || '').trim();
+    const type = (secret.name || '').toLowerCase();
+
+    // 1. Google API Key test
+    if (val.startsWith('AIza') || type.includes('google')) {
+      try {
+        const testUrl = 'https://www.googleapis.com/customsearch/v1?key=' + encodeURIComponent(val) + '&q=test';
+        const resp = await fetch(testUrl);
+        const data = await resp.json().catch(() => ({}));
+        if (resp.status === 200) {
+          return {
+            verdict: 'VULNERABLE (ACTIVE & UNRESTRICTED)',
+            severity: 'CRITICAL',
+            details: 'Google API Key is active and unrestricted! Custom Search accepted unauthenticated request.',
+            remediation: 'Restrict key in Google Cloud Console to specific HTTP Referrers, IPs, and APIs.',
+            active: true
+          };
+        } else if (data.error && data.error.message && data.error.message.includes('API key not valid')) {
+          return {
+            verdict: 'REVOKED / INACTIVE',
+            severity: 'LOW',
+            details: 'Google API Key was rejected as invalid or deleted by Google Cloud.',
+            remediation: 'No immediate action required (already dead).',
+            active: false
+          };
+        } else if (resp.status === 403) {
+          return {
+            verdict: 'RESTRICTED (PARTIALLY HARDENED)',
+            severity: 'MEDIUM',
+            details: 'Key exists in Google Cloud, but Custom Search is restricted or billing is disabled: ' + (data.error?.message || 'Access Forbidden'),
+            remediation: 'Verify if other Google APIs (Maps, Vision, Geocoding) are also restricted.',
+            active: true
+          };
+        }
+      } catch (e) {
+        return { verdict: 'NETWORK_ERROR', details: e.message };
+      }
+    }
+
+    // 2. Firebase Database test
+    if (type.includes('firebase') || val.includes('firebaseio.com')) {
+      try {
+        let dbUrl = val;
+        if (!dbUrl.endsWith('/.json')) dbUrl = dbUrl.replace(/\/?$/, '/.json');
+        const resp = await fetch(dbUrl);
+        if (resp.status === 200) {
+          const txt = await resp.text();
+          if (txt && !txt.includes('Permission denied')) {
+            return {
+              verdict: 'CRITICAL VULNERABILITY (OPEN DATABASE)',
+              severity: 'CRITICAL',
+              details: 'Firebase Realtime Database has open read rules! Full database dump possible without credentials.',
+              remediation: 'Enforce auth != null in Firebase Database Rules.',
+              active: true
+            };
+          }
+        }
+        return {
+          verdict: 'SECURE (PERMISSION DENIED)',
+          severity: 'LOW',
+          details: 'Firebase Database correctly enforces authentication. Public read blocked.',
+          remediation: 'None needed.',
+          active: true
+        };
+      } catch (e) {
+        return { verdict: 'NETWORK_ERROR', details: e.message };
+      }
+    }
+
+    // 3. Stripe Key check
+    if (val.startsWith('sk_live_')) {
+      return {
+        verdict: 'CRITICAL LIVE SECRET KEY',
+        severity: 'CRITICAL',
+        details: 'Live production Stripe secret key! Grants full access to customer charges, refunds, and bank account data.',
+        remediation: 'Roll and delete this key immediately in the Stripe Dashboard.',
+        active: true
+      };
+    } else if (val.startsWith('sk_test_')) {
+      return {
+        verdict: 'TEST ENVIRONMENT SECRET KEY',
+        severity: 'MEDIUM',
+        details: 'Stripe test environment secret key. No real money loss, but reveals pipeline configuration.',
+        remediation: 'Rotate key if sandbox contains sensitive test data.',
+        active: true
+      };
+    } else if (val.startsWith('pk_live_') || val.startsWith('pk_test_')) {
+      return {
+        verdict: 'PUBLISHABLE KEY (NORMAL BEHAVIOR)',
+        severity: 'INFO',
+        details: 'Stripe publishable keys are designed to be exposed in frontend JavaScript for Elements.',
+        remediation: 'Ensure no secret backend API operations are authorized using this public key.',
+        active: true
+      };
+    }
+
+    // 4. AWS Access Key (AKIA...)
+    if (val.startsWith('AKIA')) {
+      return {
+        verdict: 'CONFIRMED AWS IAM ACCESS KEY',
+        severity: 'CRITICAL',
+        details: 'Valid AWS Root or IAM access key identifier format. If Secret Key is also exposed, full AWS account takeover is possible.',
+        remediation: 'Check with AWS CLI: aws sts get-caller-identity',
+        active: true
+      };
+    }
+
+    // 5. JWT Token
+    if (val.startsWith('eyJ') && val.split('.').length === 3) {
+      try {
+        const parts = val.split('.');
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        const isExpired = payload.exp && (payload.exp * 1000 < Date.now());
+        const hasAdmin = payload.role === 'admin' || payload.is_admin || payload.admin;
+        return {
+          verdict: isExpired ? 'EXPIRED JWT TOKEN' : 'ACTIVE JWT TOKEN',
+          severity: isExpired ? 'LOW' : (hasAdmin ? 'CRITICAL' : 'HIGH'),
+          details: 'Decoded Claims: ' + JSON.stringify(payload).slice(0, 100) + '... | Status: ' + (isExpired ? 'Expired' : 'Active'),
+          remediation: 'Inspect token claims and ensure signature is strictly verified with strong secret.',
+          active: !isExpired
+        };
+      } catch (e) {}
+    }
+
+    // 6. Generic Secret
+    return {
+      verdict: 'HIGH-ENTROPY CREDENTIAL EXPOSED',
+      severity: secret.severity || 'HIGH',
+      details: 'High-entropy credential detected in frontend bundle. Can be extracted by anyone inspecting page assets.',
+      remediation: 'Move sensitive token logic to server-side backend or environment variables.',
+      active: true
+    };
+  }
+}
+
 class CrawlEngine {
   constructor() {
     // ===== OLD PROPERTIES (PRESERVED) =====
@@ -4278,6 +4420,7 @@ class CrawlEngine {
     this.rulesEngine = new CustomRulesEngine();
     this.complianceExporter = new EnterpriseComplianceReportExporter();
     this.cliBridge = new HunterUltimateCLIBridge();
+    this.secretVerifier = new SecretVulnerabilityVerifier();
     this.discoveredPII = [];
     this.wsFrames = [];
     this.unpackedSourceMaps = new Map();

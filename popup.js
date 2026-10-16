@@ -1504,34 +1504,84 @@ class PopupController {
   }
 
   renderSecrets() {
-    const list = document.getElementById('secretList');
+    const list = document.getElementById('secretsList') || document.getElementById('secretList');
     if (!list) return;
 
-    if (this.secrets.length === 0) {
+    if (!this.secrets || this.secrets.length === 0) {
       list.innerHTML = `<div class="empty">No secrets or API tokens discovered yet.<br>Scripts and HTML will be analyzed during scan.</div>`;
       return;
     }
 
     list.innerHTML = this.secrets.map((sec, idx) => {
-      const sevClass = (sec.severity || 'medium').toLowerCase();
+      const sev = (sec.severity || 'HIGH').toUpperCase();
+      const sevClass = sev.toLowerCase();
+      const rawVal = sec.value || sec.raw || '';
+      const maskedVal = sec.masked || (rawVal.length > 8 ? rawVal.slice(0, 4) + '••••••••' + rawVal.slice(-4) : '••••••••');
+      const timeStr = sec.foundAt || (sec.timestamp ? new Date(sec.timestamp).toLocaleTimeString() : 'Discovered');
+
+      // Direct vulnerability verdict analysis
+      let vulVerdict = '⚠️ EXPOSURE RISK: High-entropy secret token exposed in client asset.';
+      let verdictColor = 'var(--accent-amber)';
+      const typeLower = (sec.name || '').toLowerCase();
+
+      if (typeLower.includes('aws') || rawVal.startsWith('AKIA')) {
+        vulVerdict = '🚨 CRITICAL VULNERABILITY: AWS IAM Access Key exposed! May allow complete cloud infrastructure takeover via AWS CLI.';
+        verdictColor = 'var(--accent-rose)';
+      } else if (rawVal.startsWith('sk_live_')) {
+        vulVerdict = '🚨 CRITICAL VULNERABILITY: Live Stripe Secret Key! Grants full access to customer charges, refunds, and bank account balances.';
+        verdictColor = 'var(--accent-rose)';
+      } else if (rawVal.startsWith('sk_test_')) {
+        vulVerdict = '⚠️ TEST KEY RISK: Stripe Test Environment Key. Reveals testing pipelines and staging transaction data.';
+        verdictColor = 'var(--accent-amber)';
+      } else if (rawVal.startsWith('pk_')) {
+        vulVerdict = 'ℹ️ PUBLIC CLIENT KEY: Publishable Stripe key (Intended for frontend Elements, not a direct vulnerability).';
+        verdictColor = 'var(--accent-teal)';
+      } else if (typeLower.includes('google') || rawVal.startsWith('AIza')) {
+        vulVerdict = '⚠️ CLOUD KEY EXPOSURE: Google Cloud API Key. Vulnerable if unrestricted (can incur unauthorized API billing).';
+        verdictColor = 'var(--accent-amber)';
+      } else if (typeLower.includes('github') || rawVal.startsWith('ghp_')) {
+        vulVerdict = '🚨 CRITICAL VULNERABILITY: GitHub Personal Access Token! Grants read/write access to private code repositories.';
+        verdictColor = 'var(--accent-rose)';
+      } else if (typeLower.includes('firebase')) {
+        vulVerdict = '🚨 DATABASE EXPOSURE: Firebase Realtime Database. Vulnerable if /.json allows unauthenticated public read/write.';
+        verdictColor = 'var(--accent-rose)';
+      } else if (typeLower.includes('jwt') || rawVal.startsWith('eyJ')) {
+        vulVerdict = 'ℹ️ AUTH TOKEN: Client-side JSON Web Token. Check claims, signature algorithm, and expiration.';
+        verdictColor = 'var(--cyan)';
+      }
+
       return `
-        <div class="secret-card ${sevClass}">
-          <div class="secret-title">
-            <span>🔑 ${this.escape(sec.name)}</span>
-            <span class="badge ${sevClass === 'critical' ? 'status-bad' : 'status-warn'}">${sec.severity || 'HIGH'}</span>
+        <div class="secret-card ${sevClass}" style="margin-bottom:8px; border:1px solid var(--border); border-left:3px solid ${verdictColor}; background:var(--bg-glass); border-radius:var(--radius-xs); padding:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-weight:800; font-size:9.5px; color:var(--text-main);">🔑 ${this.escape(sec.name || 'API Token')}</span>
+            <span class="badge" style="background:${verdictColor}; color:#000; font-weight:800; font-size:7.5px;">${sev}</span>
           </div>
-          <div class="secret-val" id="secVal_${idx}">
-            ${this.escape(sec.masked)}
+
+          <!-- DIRECT VULNERABILITY VERDICT BANNER -->
+          <div style="background:rgba(0,0,0,0.35); border-left:2px solid ${verdictColor}; padding:4px 6px; margin:4px 0; font-size:7.5px; line-height:1.4; color:var(--text-main);">
+            <b>Verdict:</b> ${this.escape(vulVerdict)}
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
-            <span style="font-size:7px; color:var(--text-faint);">Found: ${new Date(sec.timestamp).toLocaleTimeString()}</span>
-            <div style="display:flex; gap:2px;">
-              <button class="btn btn-sm toggle-sec" data-idx="${idx}" data-raw="${this.escape(sec.raw)}" data-masked="${this.escape(sec.masked)}">👁</button>
-              <button class="btn btn-sm copy-sec" data-val="${this.escape(sec.raw)}">📋</button>
+
+          <!-- MASKED / RAW VALUE BOX -->
+          <div class="secret-raw" id="secVal_${idx}" style="font-family:var(--font-mono); font-size:8px; color:var(--cyan); word-break:break-all; padding:4px 6px; background:var(--bg-inset); border-radius:3px; margin:4px 0;">
+            ${this.escape(maskedVal)}
+          </div>
+
+          <!-- ACTION BUTTONS -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+            <span style="font-size:7px; color:var(--text-faint);">Found: ${this.escape(timeStr)}</span>
+            <div style="display:flex; gap:3px;">
+              <button class="btn-sm-action toggle-sec" data-idx="${idx}" data-raw="${this.escape(rawVal)}" data-masked="${this.escape(maskedVal)}" title="Toggle Reveal / Hide">👁 Reveal</button>
+              <button class="btn-sm-action copy-sec" data-val="${this.escape(rawVal)}" title="Copy Full Raw Key">📋 Copy</button>
+              <button class="btn-sm-action verify-sec-btn" data-idx="${idx}" style="color:var(--cyan); border-color:rgba(56,189,248,0.4);" title="Directly check if this key is active or unrestricted">⚡ Verify Key</button>
             </div>
           </div>
-          <div style="font-size:7px; color:var(--text-faint); margin-top:2px;">
-            Source: ${this.escape(sec.source)}
+
+          <!-- LIVE VERDICT RESULTS CONTAINER -->
+          <div id="secVerdictBox_${idx}" style="margin-top:4px;"></div>
+
+          <div style="font-size:6.5px; color:var(--text-muted); margin-top:4px; word-break:break-all;">
+            <b>Source:</b> ${this.escape(sec.source || 'inline')}
           </div>
         </div>
       `;
@@ -1542,12 +1592,14 @@ class PopupController {
       btn.addEventListener('click', () => {
         const idx = btn.dataset.idx;
         const valEl = document.getElementById(`secVal_${idx}`);
-        if (valEl.textContent === btn.dataset.masked) {
+        if (valEl.textContent.trim() === btn.dataset.masked) {
           valEl.textContent = btn.dataset.raw;
-          btn.textContent = '🔒';
+          valEl.style.color = '#fca5a5';
+          btn.textContent = '🔒 Hide';
         } else {
           valEl.textContent = btn.dataset.masked;
-          btn.textContent = '👁';
+          valEl.style.color = 'var(--cyan)';
+          btn.textContent = '👁 Reveal';
         }
       });
     });
@@ -1555,8 +1607,47 @@ class PopupController {
     list.querySelectorAll('.copy-sec').forEach(btn => {
       btn.addEventListener('click', () => {
         navigator.clipboard.writeText(btn.dataset.val);
-        btn.textContent = '✔';
-        setTimeout(() => { btn.textContent = '📋'; }, 1500);
+        btn.textContent = '✔ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy'; }, 1500);
+      });
+    });
+
+    // Attach ⚡ Verify Key Live listeners
+    list.querySelectorAll('.verify-sec-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        const sec = this.secrets[idx];
+        const vBox = document.getElementById(`secVerdictBox_${idx}`);
+        if (!sec || !vBox) return;
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Testing...';
+        vBox.innerHTML = '<div style="font-size:7px; color:var(--cyan);">⏳ Testing key validity & restrictions with target API...</div>';
+
+        try {
+          const res = await chrome.runtime.sendMessage({ action: 'verifySecretKey', secret: sec });
+          const r = res?.result;
+          if (r) {
+            const isCrit = r.severity === 'CRITICAL';
+            const color = isCrit ? 'var(--accent-rose)' : r.severity === 'LOW' ? 'var(--accent-teal)' : 'var(--accent-amber)';
+            vBox.innerHTML = `
+              <div style="background:var(--bg-inset); border:1px solid ${color}; border-radius:3px; padding:4px 6px; font-size:7px; line-height:1.4;">
+                <div style="font-weight:800; color:${color}; font-size:8px;">${this.escape(r.verdict)}</div>
+                <div style="color:var(--text-main); margin-top:2px;">${this.escape(r.details)}</div>
+                ${r.remediation ? `<div style="color:var(--text-muted); margin-top:2px;"><b>Remediation:</b> ${this.escape(r.remediation)}</div>` : ''}
+              </div>
+            `;
+            btn.textContent = '✔ Tested';
+          } else {
+            vBox.innerHTML = '<div style="font-size:7px; color:var(--accent-amber);">⚠️ Test completed without response data.</div>';
+            btn.textContent = '⚡ Verify Key';
+            btn.disabled = false;
+          }
+        } catch (e) {
+          vBox.innerHTML = '<div style="font-size:7px; color:var(--accent-rose);">❌ ' + this.escape(e.message) + '</div>';
+          btn.textContent = '⚡ Verify Key';
+          btn.disabled = false;
+        }
       });
     });
   }
@@ -1768,7 +1859,16 @@ class PopupController {
   }
 
   addSecret(sec) {
-    if (!this.secrets.find(s => s.raw === sec.raw)) {
+    if (!sec) return;
+    const val = sec.value || sec.raw;
+    if (!val) return;
+    sec.value = val;
+    sec.raw = val;
+    sec.masked = sec.masked || (val.length > 8 ? val.slice(0, 4) + '••••••••' + val.slice(-4) : '••••••••');
+    sec.timestamp = sec.timestamp || Date.now();
+    sec.foundAt = sec.foundAt || new Date().toLocaleTimeString();
+
+    if (!this.secrets.find(s => (s.value || s.raw) === val)) {
       this.secrets.unshift(sec);
       this.renderSecrets();
       this.updateStats();
