@@ -631,6 +631,290 @@
     }
   }
 
+
+  /* ================================================================
+     📑 ENTERPRISE VERTICAL TABS WORKSPACE STYLING (v10.0)
+     ================================================================ */
+  .app-workspace {
+    display: flex;
+    flex: 1;
+    min-height: calc(100vh - 80px);
+    position: relative;
+    gap: 14px;
+    width: 100%;
+  }
+
+  /* Default state: hidden on compact mobile/sidepanel unless toggled */
+  .vertical-sidebar {
+    display: none;
+  }
+
+  /* When layout-vertical is active, or in full-tab / popout window mode */
+  body.layout-vertical .vertical-sidebar,
+  body.view-mode-tab .vertical-sidebar,
+  body.view-mode-window .vertical-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 255px;
+    min-width: 255px;
+    max-width: 255px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(56, 189, 248, 0.03);
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+    transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    position: sticky;
+    top: 10px;
+    max-height: calc(100vh - 85px);
+    z-index: 20;
+    flex-shrink: 0;
+  }
+
+  /* Hide horizontal tabs track when vertical layout is active */
+  body.layout-vertical .tabs-track,
+  body.view-mode-tab .tabs-track,
+  body.view-mode-window .tabs-track {
+    display: none !important;
+  }
+
+  /* Workspace main content container */
+  .workspace-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  /* Collapsed sidebar (icon rail) */
+  .vertical-sidebar.collapsed {
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+  }
+  .vertical-sidebar.collapsed .vtab-label,
+  .vertical-sidebar.collapsed .vtab-chip,
+  .vertical-sidebar.collapsed .vtab-category-title,
+  .vertical-sidebar.collapsed .vtab-search-box,
+  .vertical-sidebar.collapsed .vtab-brand-title,
+  .vertical-sidebar.collapsed .vtab-count-badge,
+  .vertical-sidebar.collapsed #vtabCollapseText {
+    display: none !important;
+  }
+  .vertical-sidebar.collapsed .vtab-item {
+    justify-content: center;
+    padding: 8px 0;
+  }
+  .vertical-sidebar.collapsed .vtab-header {
+    padding: 8px 4px;
+    justify-content: center;
+  }
+  .vertical-sidebar.collapsed .vtab-brand-box {
+    justify-content: center;
+  }
+
+  /* Sidebar Header */
+  .vtab-header {
+    padding: 10px 10px 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(4, 7, 14, 0.7);
+    flex-shrink: 0;
+  }
+  .vtab-brand-box {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 7px;
+  }
+  .vtab-brand-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan-glow);
+    display: inline-block;
+  }
+  .vtab-brand-title {
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: var(--cyan);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+  .vtab-count-badge {
+    margin-left: auto;
+    font-size: 7.5px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    padding: 1px 5px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Sidebar Search Box */
+  .vtab-search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xs);
+    padding: 4px 8px;
+    transition: all 0.2s ease;
+  }
+  .vtab-search-box:focus-within {
+    border-color: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan-glow);
+  }
+  .vtab-search-icon {
+    font-size: 9.5px;
+    color: var(--text-muted);
+  }
+  .vtab-search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    width: 100%;
+  }
+  .vtab-search-input::placeholder {
+    color: var(--text-faint);
+  }
+  .vtab-clear-search {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 8.5px;
+    padding: 0 2px;
+  }
+  .vtab-clear-search:hover { color: #fff; }
+
+  /* Sidebar Scroll Area */
+  .vtab-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .vtab-scroll-area::-webkit-scrollbar { width: 3px; }
+  .vtab-scroll-area::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.2); border-radius: 3px; }
+
+  /* Tab Category Sections */
+  .vtab-category {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .vtab-category-title {
+    font-size: 7.5px;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 0.6px;
+    font-family: var(--font-mono);
+    padding: 3px 8px 2px;
+    text-transform: uppercase;
+    user-select: none;
+  }
+
+  /* Vertical Tab Item */
+  .vtab-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    user-select: none;
+    position: relative;
+    border: 1px solid transparent;
+  }
+  .vtab-item:hover {
+    color: var(--text-main);
+    background: rgba(56, 189, 248, 0.08);
+    border-color: rgba(56, 189, 248, 0.2);
+    transform: translateX(2px);
+  }
+  .vtab-item.active {
+    color: #ffffff !important;
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.28) 0%, rgba(56, 189, 248, 0.09) 100%) !important;
+    border-color: var(--cyan) !important;
+    border-left: 3px solid var(--cyan) !important;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.22) !important;
+    font-weight: 700;
+  }
+  .vtab-icon {
+    font-size: 11.5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    flex-shrink: 0;
+  }
+  .vtab-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .vtab-chip {
+    font-size: 7.5px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .vtab-chip.cyan { background: rgba(56, 189, 248, 0.15); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+  .vtab-chip.red { background: rgba(244, 63, 94, 0.18); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.4); }
+  .vtab-chip.purple { background: rgba(192, 132, 252, 0.18); color: var(--accent-purple); border: 1px solid rgba(192, 132, 252, 0.4); }
+  .vtab-chip.amber { background: rgba(251, 191, 36, 0.18); color: var(--accent-amber); border: 1px solid rgba(251, 191, 36, 0.4); }
+  .vtab-chip.rose { background: rgba(244, 63, 94, 0.18); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.4); }
+
+  /* Sidebar Footer */
+  .vtab-footer {
+    padding: 6px 8px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(4, 7, 14, 0.7);
+    flex-shrink: 0;
+  }
+  .vtab-collapse-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    padding: 5px;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .vtab-collapse-btn:hover {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: var(--cyan);
+    color: #fff;
+  }
+
 </style>
 </head>
 <body data-scan-state="idle">
@@ -646,6 +930,9 @@
   </div>
   <div class="header-actions">
     <div class="view-controls" style="display:flex; gap:4px; align-items:center;">
+      <button class="header-btn" id="toggleTabsLayoutBtn" title="Toggle between Vertical Sidebar Tabs and Horizontal Top Tabs" style="background:rgba(192, 132, 252, 0.14); border-color:var(--accent-purple); color:var(--accent-purple);">
+        <span id="tabsLayoutIcon">📑</span> <span id="tabsLayoutLabel">VERTICAL TABS</span>
+      </button>
       <button class="header-btn" id="openFullTabBtn" title="Maximize & Open in Full Page Tab (New Tab Dashboard)" style="background:rgba(56, 189, 248, 0.12); border-color:var(--cyan); color:var(--cyan);">
         ↗️ FULL TAB
       </button>
@@ -662,6 +949,184 @@
     </div>
   </div>
 </header>
+
+
+<!-- WORKSPACE LAYOUT -->
+<div class="app-workspace" id="appWorkspace">
+  <!-- 🛡️ VERTICAL NAVIGATION SIDEBAR -->
+  <aside class="vertical-sidebar" id="verticalSidebar">
+    <div class="vtab-header">
+      <div class="vtab-brand-box">
+        <span class="vtab-brand-dot"></span>
+        <span class="vtab-brand-title">RECON MODULES</span>
+        <span class="vtab-count-badge">28</span>
+      </div>
+      <div class="vtab-search-box">
+        <span class="vtab-search-icon">🔍</span>
+        <input type="text" id="vtabSearchInput" class="vtab-search-input" placeholder="Filter tabs... (e.g. rep, sec)" autocomplete="off">
+        <button id="vtabClearSearch" class="vtab-clear-search" style="display:none;" title="Clear filter">✕</button>
+      </div>
+    </div>
+
+    <div class="vtab-scroll-area" id="vtabScrollArea">
+      <!-- 🌐 SURFACE & RECON -->
+      <div class="vtab-category">
+        <div class="vtab-category-title">🌐 SURFACE &amp; RECON</div>
+        <div class="vtab-item tab active" data-tab="endpoints" title="Discovered API Endpoints &amp; Client Routes">
+          <span class="vtab-icon">🔗</span>
+          <span class="vtab-label">Endpoints</span>
+          <span class="vtab-chip cyan" id="vtabEndpointsBadge">0</span>
+        </div>
+        <div class="vtab-item tab" data-tab="paths" title="Extracted Directory &amp; URL Paths">
+          <span class="vtab-icon">📁</span>
+          <span class="vtab-label">Paths</span>
+        </div>
+        <div class="vtab-item tab" data-tab="topology" title="Interactive HTML5 Canvas Attack Surface Graph">
+          <span class="vtab-icon">🌐</span>
+          <span class="vtab-label">Topology Graph</span>
+        </div>
+        <div class="vtab-item tab" data-tab="fingerprint" title="Tech Stack Signature &amp; Engine Fingerprinter">
+          <span class="vtab-icon">🏗️</span>
+          <span class="vtab-label">Tech Stack</span>
+        </div>
+        <div class="vtab-item tab" data-tab="sourcemaps" title="Source Map Unpacker &amp; TypeScript Trees">
+          <span class="vtab-icon">🗺️</span>
+          <span class="vtab-label">SourceMaps</span>
+        </div>
+        <div class="vtab-item tab" data-tab="swagger" title="Swagger &amp; OpenAPI Documentation Importer">
+          <span class="vtab-icon">📜</span>
+          <span class="vtab-label">Swagger / API</span>
+        </div>
+      </div>
+
+      <!-- 🔑 SECRETS & IDENTITIES -->
+      <div class="vtab-category">
+        <div class="vtab-category-title">🔑 SECRETS &amp; IDENTITIES</div>
+        <div class="vtab-item tab" data-tab="secrets" title="High-Entropy Leaked Secrets, Keys &amp; Active Verifier">
+          <span class="vtab-icon">🔑</span>
+          <span class="vtab-label">Leaked Secrets</span>
+          <span class="vtab-chip red" id="vtabSecretsBadge">0</span>
+        </div>
+        <div class="vtab-item tab" data-tab="jwt" title="JWT Token Security Inspector &amp; Claim Decoder">
+          <span class="vtab-icon">🎫</span>
+          <span class="vtab-label">JWT Inspector</span>
+        </div>
+        <div class="vtab-item tab" data-tab="cloud" title="Public Cloud Buckets (S3, GCP, Azure)">
+          <span class="vtab-icon">☁️</span>
+          <span class="vtab-label">Cloud Buckets</span>
+          <span class="vtab-chip purple" id="vtabCloudBadge">0</span>
+        </div>
+      </div>
+
+      <!-- ⚡ TRAFFIC & INTERCEPT -->
+      <div class="vtab-category">
+        <div class="vtab-category-title">⚡ TRAFFIC &amp; INTERCEPT</div>
+        <div class="vtab-item tab" data-tab="sniffer" title="Live Runtime Traffic Sniffer (Fetch/XHR/Axios)">
+          <span class="vtab-icon">⚡</span>
+          <span class="vtab-label">Live Sniffer</span>
+        </div>
+        <div class="vtab-item tab" data-tab="ws" title="WebSocket &amp; SSE Real-Time Frame Interceptor">
+          <span class="vtab-icon">🔌</span>
+          <span class="vtab-label">WS / SSE</span>
+          <span class="vtab-chip amber" id="vtabWsBadge">0</span>
+        </div>
+        <div class="vtab-item tab" data-tab="repeater" title="In-Browser Burp-Style HTTP Repeater &amp; Dispatcher">
+          <span class="vtab-icon">🧪</span>
+          <span class="vtab-label">HTTP Repeater</span>
+        </div>
+        <div class="vtab-item tab" data-tab="graphql" title="GraphQL Introspection &amp; Mock Query Builder">
+          <span class="vtab-icon">🌸</span>
+          <span class="vtab-label">GraphQL</span>
+        </div>
+      </div>
+
+      <!-- 🕷️ ACTIVE AUDIT & ATTACK -->
+      <div class="vtab-category">
+        <div class="vtab-category-title">🕷️ ACTIVE AUDIT &amp; ATTACK</div>
+        <div class="vtab-item tab" data-tab="security" title="Active Security Posture Probers (CORS, Headers, Storage)">
+          <span class="vtab-icon">🛡️</span>
+          <span class="vtab-label">Security Probers</span>
+          <span class="vtab-chip rose" id="vtabSecBadge">0</span>
+        </div>
+        <div class="vtab-item tab" data-tab="fuzzer" title="Endpoint &amp; Parameter Route Fuzzer">
+          <span class="vtab-icon">🕷️</span>
+          <span class="vtab-label">Route Fuzzer</span>
+        </div>
+        <div class="vtab-item tab" data-tab="fuzzschema" title="API Schema Boundary &amp; Precision Fuzzer">
+          <span class="vtab-icon">📐</span>
+          <span class="vtab-label">Schema Fuzzer</span>
+        </div>
+        <div class="vtab-item tab" data-tab="ssrf" title="SSRF Candidate Scanner &amp; Header Injection">
+          <span class="vtab-icon">🌐</span>
+          <span class="vtab-label">SSRF Canary</span>
+        </div>
+        <div class="vtab-item tab" data-tab="dorks" title="Automated Reconnaissance Google Dorks">
+          <span class="vtab-icon">🕵️</span>
+          <span class="vtab-label">Google Dorks</span>
+        </div>
+        <div class="vtab-item tab" data-tab="auditplus" title="Enterprise Audit+ (CRLF, Forms, Crypto, SRI)">
+          <span class="vtab-icon">🛡️</span>
+          <span class="vtab-label">Audit+ Probers</span>
+        </div>
+        <div class="vtab-item tab" data-tab="playground" title="Vulnerability Probing &amp; Payload Lab">
+          <span class="vtab-icon">🔬</span>
+          <span class="vtab-label">Probing Lab</span>
+        </div>
+      </div>
+
+      <!-- 🎖️ INTELLIGENCE & GOVERNANCE -->
+      <div class="vtab-category">
+        <div class="vtab-category-title">🎖️ INTELLIGENCE &amp; OPS</div>
+        <div class="vtab-item tab" data-tab="orchestrator" title="Zero-Day Automated Multi-Layer Orchestrator">
+          <span class="vtab-icon">🎖️</span>
+          <span class="vtab-label">Zero-Day Orchestrator</span>
+        </div>
+        <div class="vtab-item tab" data-tab="scorecard" title="CVSS v3.1 Risk Scorecard &amp; Posture Grade Gauge">
+          <span class="vtab-icon">🏆</span>
+          <span class="vtab-label">CVSS Scorecard</span>
+        </div>
+        <div class="vtab-item tab" data-tab="mitre" title="MITRE ATT&amp;CK Enterprise TTP Correlation">
+          <span class="vtab-icon">🛡️</span>
+          <span class="vtab-label">MITRE ATT&amp;CK</span>
+        </div>
+        <div class="vtab-item tab" data-tab="changelog" title="Recon Diff &amp; Time-Travel Snapshot Analysis">
+          <span class="vtab-icon">📊</span>
+          <span class="vtab-label">Recon Diff</span>
+        </div>
+        <div class="vtab-item tab" data-tab="sessions" title="Multi-Role Session Profiles (Admin/User/Guest)">
+          <span class="vtab-icon">👥</span>
+          <span class="vtab-label">Session Profiles</span>
+        </div>
+        <div class="vtab-item tab" data-tab="advanced" title="Advanced Exploits (WAF, DOM XSS, Cache Poisoning)">
+          <span class="vtab-icon">⚡</span>
+          <span class="vtab-label">Advanced Matrix</span>
+        </div>
+      </div>
+
+      <!-- ⚙️ SYSTEM & AUDIT -->
+      <div class="vtab-category">
+        <div class="vtab-category-title">⚙️ SYSTEM &amp; AUDIT</div>
+        <div class="vtab-item tab" data-tab="logs" title="Live Diagnostics &amp; Event Stream">
+          <span class="vtab-icon">📝</span>
+          <span class="vtab-label">Activity Logs</span>
+        </div>
+        <div class="vtab-item tab" data-tab="settings" title="Telegram, Webhook, Crawler &amp; Auth Configuration">
+          <span class="vtab-icon">⚙️</span>
+          <span class="vtab-label">Settings &amp; Alerts</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vtab-footer">
+      <button class="vtab-collapse-btn" id="vtabCollapseBtn" title="Toggle Sidebar Collapse (Expand / Narrow)">
+        <span id="vtabCollapseIcon">◀</span>
+        <span id="vtabCollapseText">Collapse Sidebar</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- WORKSPACE MAIN AREA -->
+  <main class="workspace-main" id="workspaceMain">
 
 <!-- STATS CARDS -->
 <div class="stats-grid">
@@ -1401,6 +1866,8 @@
   </section>
 
 </main>
+  </main>
+</div>
 
 <!-- LIVE ACTIVITY TICKER STRIP -->
 <div class="live-strip">

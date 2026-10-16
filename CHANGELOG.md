@@ -61,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **🗗 Standalone Popout Window with OS Maximize / Minimize**: Opens Endpoint Hunter in a dedicated detached floating desktop window (`sidepanel.html?view=window`) with full native minimize, maximize, and multi-monitor window snapping.
 - **Universal Target Web Tab Resolver (`getTargetWebTab`)**: Automatically detects the user's active web target tab when running inside a full-screen tab or detached window so `🎯 SCAN CURRENT` and `📡 SCAN (ALL)` work flawlessly from any view mode.
 - **🪟 Dock to Side Panel**: Quick action button to dock back into the native Chrome Side Panel at any time.
+- **📑 Enterprise Vertical Tabs Workspace (Sidebar Navigation)**: Transformed Full Tab and Detached Window modes into a desktop-class cybersecurity workstation with categorized vertical tabs (Surface & Recon, Secrets & Identities, Traffic & Intercept, Active Audit & Attack, Intelligence & Ops, System & Audit).
+- **🔍 Instant Tab Fuzzy Search**: Real-time filter input in the vertical sidebar allowing instant keyboard filtering across all 28 recon modules.
+- **◀ Collapsible Navigation Rail**: 1-click collapse toggle to shrink the vertical sidebar into an ultra-clean 58px icon rail with hover tooltips for maximum screen width.
+- **🔀 1-Click Orientation Switcher**: Header button `[ 📑 VERTICAL TABS / ▭ HORIZONTAL TABS ]` to switch layout orientation on the fly, preserved in `localStorage`.
 
 #### 🛡️ Silent Background Sentinel: Zero-Interruption Passive Recon
 - **Zero-Interruption Background Monitoring**: Operates 100% passively in the background without navigating, refreshing, opening tabs, stealing keyboard focus, or causing frame drops.

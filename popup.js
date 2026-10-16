@@ -58,6 +58,7 @@ class PopupController {
       const params = new URLSearchParams(window.location.search);
       const view = params.get('view');
       const isSidepanelFile = window.location.pathname.endsWith('sidepanel.html');
+      const savedLayout = localStorage.getItem('eh_tabs_layout');
 
       if (isSidepanelFile) {
         if (view === 'tab') {
@@ -66,21 +67,51 @@ class PopupController {
           if (this.openPopoutBtn) this.openPopoutBtn.style.display = 'inline-flex';
           if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.style.display = 'inline-flex';
           document.body.classList.add('view-mode-tab');
+          // Full Tab defaults to Vertical Tabs layout for elite experience
+          const useVertical = savedLayout ? (savedLayout === 'vertical') : true;
+          this.setTabsLayout(useVertical);
         } else if (view === 'window') {
           if (this.viewModeBadge) this.viewModeBadge.textContent = 'Detached Window (Maximize / Minimize) • v10.0.0';
           if (this.openPopoutBtn) this.openPopoutBtn.style.display = 'none';
           if (this.openFullTabBtn) this.openFullTabBtn.style.display = 'inline-flex';
           if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.style.display = 'inline-flex';
           document.body.classList.add('view-mode-window');
+          // Detached Window defaults to Vertical Tabs layout
+          const useVertical = savedLayout ? (savedLayout === 'vertical') : true;
+          this.setTabsLayout(useVertical);
         } else {
           if (this.viewModeBadge) this.viewModeBadge.textContent = 'Persistent Side Panel • v10.0.0';
           if (this.openFullTabBtn) this.openFullTabBtn.style.display = 'inline-flex';
           if (this.openPopoutBtn) this.openPopoutBtn.style.display = 'inline-flex';
           if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.style.display = 'none';
           document.body.classList.add('view-mode-sidepanel');
+          const useVertical = savedLayout === 'vertical';
+          this.setTabsLayout(useVertical);
         }
+      } else {
+        const useVertical = savedLayout === 'vertical';
+        this.setTabsLayout(useVertical);
       }
     } catch (e) {}
+  }
+
+  setTabsLayout(isVertical) {
+    if (isVertical) {
+      document.body.classList.add('layout-vertical');
+    } else {
+      document.body.classList.remove('layout-vertical');
+    }
+    const label = document.getElementById('tabsLayoutLabel');
+    if (label) label.textContent = isVertical ? '▭ HORIZONTAL' : '📑 VERTICAL TABS';
+    const icon = document.getElementById('tabsLayoutIcon');
+    if (icon) icon.textContent = isVertical ? '▭' : '📑';
+  }
+
+  toggleTabsLayout() {
+    const isNowVertical = !document.body.classList.contains('layout-vertical');
+    this.setTabsLayout(isNowVertical);
+    localStorage.setItem('eh_tabs_layout', isNowVertical ? 'vertical' : 'horizontal');
+    this.log(isNowVertical ? '📑 Activated Vertical Sidebar Tabs' : '▭ Switched to Horizontal Top Tabs', 'info');
   }
 
   async openFullTab() {
@@ -330,6 +361,56 @@ class PopupController {
     if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.addEventListener('click', () => this.dockToSidePanel());
     if (this.sentinelToggle) this.sentinelToggle.addEventListener('change', () => this.toggleSentinel());
 
+    // 📑 Vertical Tabs Layout & Sidebar Navigation (v10.0)
+    const toggleLayoutBtn = document.getElementById('toggleTabsLayoutBtn');
+    if (toggleLayoutBtn) toggleLayoutBtn.addEventListener('click', () => this.toggleTabsLayout());
+
+    const vtabSearchInput = document.getElementById('vtabSearchInput');
+    const vtabClearSearch = document.getElementById('vtabClearSearch');
+    if (vtabSearchInput) {
+      vtabSearchInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (vtabClearSearch) vtabClearSearch.style.display = q ? 'inline-block' : 'none';
+        document.querySelectorAll('.vtab-item').forEach(item => {
+          const txt = (item.textContent || '').toLowerCase();
+          const match = !q || txt.includes(q);
+          item.style.display = match ? 'flex' : 'none';
+        });
+        document.querySelectorAll('.vtab-category').forEach(cat => {
+          const visible = cat.querySelectorAll('.vtab-item:not([style*="display: none"])');
+          cat.style.display = (q && visible.length === 0) ? 'none' : 'flex';
+        });
+      });
+    }
+    if (vtabClearSearch) {
+      vtabClearSearch.addEventListener('click', () => {
+        if (vtabSearchInput) {
+          vtabSearchInput.value = '';
+          vtabSearchInput.dispatchEvent(new Event('input'));
+          vtabSearchInput.focus();
+        }
+      });
+    }
+
+    const vtabCollapseBtn = document.getElementById('vtabCollapseBtn');
+    const vtabSidebar = document.getElementById('verticalSidebar');
+    const vtabCollapseIcon = document.getElementById('vtabCollapseIcon');
+    const vtabCollapseText = document.getElementById('vtabCollapseText');
+    if (vtabCollapseBtn && vtabSidebar) {
+      vtabCollapseBtn.addEventListener('click', () => {
+        const collapsed = vtabSidebar.classList.toggle('collapsed');
+        if (vtabCollapseIcon) vtabCollapseIcon.textContent = collapsed ? '▶' : '◀';
+        if (vtabCollapseText) vtabCollapseText.textContent = collapsed ? '' : 'Collapse Sidebar';
+        localStorage.setItem('eh_sidebar_collapsed', collapsed ? 'true' : 'false');
+      });
+      if (localStorage.getItem('eh_sidebar_collapsed') === 'true') {
+        vtabSidebar.classList.add('collapsed');
+        if (vtabCollapseIcon) vtabCollapseIcon.textContent = '▶';
+        if (vtabCollapseText) vtabCollapseText.textContent = '';
+      }
+    }
+
+
     // Bind Export Buttons
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportJSON());
     if (this.pdfBtn) this.pdfBtn.addEventListener('click', () => this.exportPDF());
@@ -452,11 +533,11 @@ class PopupController {
     // Bind Tabs
     document.querySelectorAll('.tab').forEach(tabEl => {
       tabEl.addEventListener('click', () => {
+        const tabId = tabEl.dataset.tab;
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tabEl.classList.add('active');
+        document.querySelectorAll(`.tab[data-tab="${tabId}"]`).forEach(t => t.classList.add('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
 
-        const tabId = tabEl.dataset.tab;
         const target = document.getElementById(tabId + 'Tab');
         if (target) target.style.display = 'block';
 
@@ -1972,6 +2053,15 @@ class PopupController {
 
     const badgeSec = document.getElementById('secretsBadge');
     if (badgeSec) badgeSec.textContent = this.secrets.length;
+
+    const vtabSec = document.getElementById('vtabSecretsBadge');
+    if (vtabSec) vtabSec.textContent = this.secrets.length;
+
+    const vtabEp = document.getElementById('vtabEndpointsBadge');
+    if (vtabEp) vtabEp.textContent = this.endpoints.length;
+
+    const vtabWs = document.getElementById('vtabWsBadge');
+    if (vtabWs) vtabWs.textContent = this.wsFrames ? this.wsFrames.length : 0;
   }
 
   addEndpoint(ep) {

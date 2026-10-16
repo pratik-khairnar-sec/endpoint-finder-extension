@@ -132,6 +132,7 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 - **📢 Real-Time Telegram Alerts with Domain ZIP Package**: Configurable Telegram alerts that dispatch a rich HTML vulnerability & route breakdown alongside an attached **target domain-named ZIP archive** (`recon_<domain>_full_audit.zip`) containing all 15 audit artifacts (Endpoints JSON/TXT, Verified Secrets, Burp Suite XML, Postman Collection & Env, Wordlist, Bash CLI pipeline, and Compliance Audit).
 - **⚡ Active Secret Vulnerability Verifier**: 1-click active posture verification testing uncovered keys (Google API Keys, Stripe Secrets, Firebase DBs, AWS IAM, JWT) for live unrestricted exploitation with instant severity badges and remediation instructions.
 - **🛡️ Silent Background Sentinel (Zero User Interruption)**: Quietly operates in the background as you browse. Extracts API routes from loaded scripts, form attributes, and SSR hydration memory (`__NEXT_DATA__`) using `requestIdleCallback` with zero lag, zero tab hijacking, and automatic discreet Chrome badge updates.
+- **📑 Enterprise Vertical Tabs Workspace**: Modern desktop-class sidebar navigation with categorized modules, real-time tab keyword search, 1-click collapse rail (`◀▶`), and orientation toggle button (`[ 📑 VERTICAL TABS / ▭ HORIZONTAL TABS ]`).
 
 ---
 
