@@ -627,14 +627,14 @@ footer a { color: var(--accent-cyan); text-decoration: none; }
 <header class="hero">
   <div class="container">
     <div class="hero-pill">
-      ⚡ Chrome MV3 • WebSocket / SSE • Parameter Miner • SPA DOM Walker • HAR 1.2 Export • In-Browser Repeater
+      ⚡ v10.0 Enterprise • Zero-Day Orchestrator • CVSS v3.1 Scorecard • MITRE ATT&CK • Topology Graph • Schema Fuzzer • Burp XML
     </div>
     <h1>
       Next-Gen Client-Side API &amp; <br>
       <span class="gradient">Route Reconnaissance Suite</span>
     </h1>
     <p class="lead">
-      Extract hidden REST endpoints, intercept live WebSocket/SSE traffic, mine hidden query parameters (Arjun-style), walk Single Page Application DOMs, and export standard HAR 1.2 archives for Burp Suite &amp; Caido.
+      The definitive Chromium Manifest V3 platform for deep client-side reconnaissance, real-time CVSS v3.1 risk scoring, MITRE ATT&CK mapping, attack surface topology visualization, schema boundary fuzzing, and compliance auditing with zero false positives.
     </p>
 
     <div class="hero-cta-group">
@@ -677,7 +677,9 @@ footer a { color: var(--accent-cyan); text-decoration: none; }
           <button class="preset-btn" onclick="loadPreset('secrets')">2. Leaked Cloud Secrets</button>
           <button class="preset-btn" onclick="loadPreset('graphql')">3. GraphQL Schema &amp; Routes</button>
           <button class="preset-btn" onclick="loadPreset('noisy')">4. Noise Suppression Test</button>
-          <button class="preset-btn" onclick="loadPreset('custom')">5. Custom Input</button>
+          <button class="preset-btn" onclick="loadPreset('cvss')">5. CVSS &amp; MITRE Assessment</button>
+          <button class="preset-btn" onclick="loadPreset('fuzz')">6. API Schema Fuzzing</button>
+          <button class="preset-btn" onclick="loadPreset('custom')">7. Custom Input</button>
         </div>
       </div>
 
@@ -731,13 +733,29 @@ footer a { color: var(--accent-cyan); text-decoration: none; }
               <div class="stat-num" id="statFpDropped">0</div>
               <div class="stat-name">Noise Dropped</div>
             </div>
+            <div class="stat-box" style="border-color:rgba(52,211,153,0.3);">
+              <div class="stat-num" id="statCvssGrade" style="color:var(--accent-teal);">A+</div>
+              <div class="stat-name">Posture Grade</div>
+            </div>
           </div>
 
           <div class="results-scroll" id="simResultsList">
             <!-- Populated via JS -->
           </div>
         </div>
+      
+      <!-- TOPOLOGY CANVAS CONTAINER -->
+      <div style="margin-top:20px; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <span style="font-weight:700; color:var(--accent-cyan); font-size:14px;">🌐 Live Attack Surface Topology Canvas</span>
+            <span style="color:var(--text-muted); font-size:12px; margin-left:8px;">Real-time interactive node-link cluster visualization</span>
+          </div>
+          <button class="preset-btn" onclick="renderDemoTopology()">⚡ Redraw Topology</button>
+        </div>
+        <canvas id="demoTopologyCanvas" width="1050" height="240" style="background:#030712; border-radius:8px; width:100%; display:block; border:1px solid rgba(56,189,248,0.15);"></canvas>
       </div>
+
     </div>
   </div>
 </section>
@@ -792,57 +810,111 @@ Accept: application/json</pre>
 
     <div class="features-grid">
       <div class="feature-card">
+        <div class="feature-icon">🎖️</div>
+        <h3>Zero-Day Recon Orchestrator</h3>
+        <p>Automated multi-layer mission coordinator executing non-blocking posture checks across CORS, headers, environment files, CRLF, and CSP bypasses with consolidated pass/fail timelines.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>CVSS v3.1 Security Scorecard</h3>
+        <p>Real-time vulnerability impact calculation computing exact CVSS v3.1 vector strings and numeric scores (0.0 to 10.0) with an attack surface posture grade gauge (A+ to F).</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Enterprise MITRE ATT&amp;CK Matrix</h3>
+        <p>Automatically correlates discovered routes, credentials, and network behaviors to official MITRE techniques (T1592, T1595, T1552, T1190, T1530) across Reconnaissance and Access tactics.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>Interactive Topology Graph</h3>
+        <p>Real-time HTML5 Canvas network graph rendering target origin, major cluster hubs (/api, /auth, /admin, /static), and leaf status nodes with live interactive redrawing.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📐</div>
+        <h3>API Schema Boundary Fuzzer</h3>
+        <p>Generates typed boundary test vectors for integer, string, boolean, array, and object parameters (32/64-bit int limits, IEEE-754 precision limits, null bytes, unicode normalization).</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">✈️</div>
+        <h3>CORS Preflight Simulator</h3>
+        <p>Simulates safe OPTIONS requests with custom origins and headers, evaluating Access-Control-Allow-Origin, Allow-Credentials, and flagging wildcard CSRF risks.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🎲</div>
+        <h3>Shannon Entropy Calculation Lab</h3>
+        <p>Computes Shannon entropy (0.0 to 8.0) on responses and tokens to distinguish high-randomness cryptographic secrets from plain text and static HTML templates.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🏗️</div>
+        <h3>Tech Stack Fingerprinter</h3>
+        <p>Multi-layer signature detection identifying backend engines (Express, Django, Rails, Spring, PHP) and modern frontend frameworks (Next.js, Nuxt, React, Angular).</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3>Burp Suite XML &amp; Postman Env</h3>
+        <p>Native exports for Burp Suite Target Site Map XML (burp_sitemap.xml) and Postman Environment JSON (postman_environment.json) with auto-populated baseUrl and bearer tokens.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Compliance Exporter (OWASP / SOC2 / ISO)</h3>
+        <p>Generates compliance_report.json mapping findings directly to OWASP Top 10 (2021/2025), SOC 2 Type II Common Criteria, and ISO/IEC 27001:2022 controls.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">💻</div>
+        <h3>Hunter Ultimate CLI Pipeline Bridge</h3>
+        <p>Generates recon_pipeline.sh orchestrating ffuf, httpx, and nuclei with discovered parameters, wordlists, and status codes for terminal automation.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Polyglot Injection Probers</h3>
+        <p>Targeted probers for SSTI ({{7*7}}), SQLi syntax error detection, XXE canary entities, client prototype pollution, and CRLF response splitting.</p>
+      </div>
+
+      <div class="feature-card">
         <div class="feature-icon">🧪</div>
         <h3>In-Browser Mini-Repeater</h3>
-        <p>Interactive request dispatcher supporting GET, POST, PUT, DELETE with custom headers, JSON payloads, live latency timers, status code triage, and one-click copy.</p>
+        <p>Burp-style HTTP dispatcher supporting GET, POST, PUT, DELETE, PATCH with custom headers, multi-role session switching, latency measurement, and JSON formatter.</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon">🌸</div>
-        <h3>GraphQL Schema Introspection</h3>
-        <p>Discovers schema definitions via standard IntrospectionQuery, categorizes all Queries and Mutations, and generates 1-click test templates for the Repeater.</p>
+        <h3>GraphQL Introspection &amp; Mock Ops</h3>
+        <p>Introspects GraphQL schemas, maps Queries and Mutations, and automatically synthesizes executable query operations with mock variables.</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon">🗺️</div>
         <h3>Source-Map (.map) Unpacker</h3>
-        <p>Reconstructs original TypeScript/JS source file trees from webpack and vite `.map` files, unearthing internal routes and API gateways stripped by bundlers.</p>
+        <p>Reconstructs original TypeScript/JS source file trees from webpack and vite .map files, unearthing internal routes stripped from production bundles.</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon">🔑</div>
         <h3>TruffleHog Secrets Harvester</h3>
-        <p>High-entropy regex scans client-side assets for leaked AWS credentials, Google API keys, GitHub PATs, Stripe tokens, Slack/Discord webhooks, OpenAI keys, and JWTs.</p>
+        <p>High-entropy regex scans client-side assets for leaked AWS credentials, Google API keys, GitHub PATs, Stripe tokens, Slack/Discord webhooks, and JWTs.</p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">🕷️</div>
-        <h3>Micro-Fuzzer &amp; Route Dictionary</h3>
-        <p>Rapid non-destructive dictionary probing for Swagger/OpenAPI docs, Spring Boot Actuators, Admin consoles, `.env` files, and `.git/HEAD` leaks with stealth delays.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🛠️</div>
-        <h3>Chrome DevTools (F12) &amp; Side Panel</h3>
-        <p>Inspect applications side-by-side using the persistent Chrome Side Panel or directly inside Developer Tools (F12) right alongside Console and Network.</p>
+        <div class="feature-icon">🔌</div>
+        <h3>WebSocket &amp; SSE Interceptor</h3>
+        <p>Real-time frame capture of window.WebSocket (send/message) and window.EventSource streams with direction markers and payload mutator.</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon">🛑</div>
-        <h3>Zero Auto-Scan Invariant</h3>
-        <p>Never spies on your background browsing. Scanning and sniffing strictly run when you explicitly click Start, with an immediate kill switch on Stop.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">📦</div>
-        <h3>Multi-Format Exporters</h3>
-        <p>Export directly to Postman Collection v2.1, OpenAPI 3.0 specification, clean CLI TXT lists for ffuf and nuclei, structured JSON, or printable triage PDF.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🛡️</div>
-        <h3>100% Offline &amp; Private</h3>
-        <p>Zero external telemetry, zero tracking pixels, and zero remote servers. Everything executes inside your local browser context.</p>
+        <h3>Zero Auto-Scan &amp; 100% Offline</h3>
+        <p>Strictly enforces a zero auto-start policy. Never scans without your explicit button click, zero telemetry, and zero remote communication.</p>
       </div>
     </div>
   </div>
@@ -870,60 +942,67 @@ Accept: application/json</pre>
         </thead>
         <tbody>
           <tr>
-            <td><strong>In-Browser Execution</strong></td>
-            <td class="highlight"><span class="check">✔</span> Native Chromium Extension</td>
-            <td><span class="cross">✖</span> Requires Java Desktop Proxy</td>
+            <td><strong>In-Browser Native Execution</strong></td>
+            <td class="highlight"><span class="check">✔</span> Native Chromium Extension (MV3)</td>
+            <td><span class="cross">✖</span> Heavyweight Java Desktop App</td>
             <td><span class="cross">✖</span> Separate Desktop App</td>
             <td><span class="cross">✖</span> CLI Tooling Only</td>
           </tr>
           <tr>
-            <td><strong>Zero Auto-Scan Policy</strong></td>
-            <td class="highlight"><span class="check">✔</span> 100% Manual User Control</td>
-            <td><span class="cross">✖</span> Passive background proxy</td>
-            <td><span class="cross">✖</span> Manual requests</td>
-            <td><span class="check">✔</span> Manual CLI invocation</td>
+            <td><strong>Zero Auto-Scan Privacy Policy</strong></td>
+            <td class="highlight"><span class="check">✔</span> 100% Manual Trigger Buttons Only</td>
+            <td><span class="cross">✖</span> Passive background proxy sniffing</td>
+            <td><span class="cross">✖</span> Cloud workspace sync</td>
+            <td><span class="check">✔</span> Manual invocation</td>
           </tr>
           <tr>
-            <td><strong>In-Browser Mini-Repeater</strong></td>
-            <td class="highlight"><span class="check">✔</span> Built-in with Latency &amp; Status</td>
-            <td><span class="cross">✖</span> Separate Desktop Tool</td>
-            <td><span class="check">✔</span> Core feature</td>
+            <td><strong>CVSS v3.1 &amp; Posture Scorecard</strong></td>
+            <td class="highlight"><span class="check">✔</span> Built-in Automated Scoring (A+ to F)</td>
+            <td><span class="cross">✖</span> Manual severity tagging</td>
+            <td><span class="cross">✖</span> None</td>
             <td><span class="cross">✖</span> None</td>
           </tr>
           <tr>
-            <td><strong>GraphQL Schema Introspection</strong></td>
-            <td class="highlight"><span class="check">✔</span> Automatic Query/Mutation Templates</td>
-            <td><span class="cross">✖</span> Requires third-party Bapp</td>
-            <td><span class="cross">✖</span> Manual schema import</td>
+            <td><strong>MITRE ATT&amp;CK Enterprise Matrix</strong></td>
+            <td class="highlight"><span class="check">✔</span> Auto TTP Mapping (T1592, T1595, T1552)</td>
+            <td><span class="cross">✖</span> None</td>
+            <td><span class="cross">✖</span> None</td>
             <td><span class="cross">✖</span> None</td>
           </tr>
           <tr>
-            <td><strong>Source-Map (.map) Unpacker</strong></td>
-            <td class="highlight"><span class="check">✔</span> Unbundles source tree &amp; routes</td>
-            <td><span class="cross">✖</span> Basic mapping only</td>
+            <td><strong>Attack Surface Topology Canvas</strong></td>
+            <td class="highlight"><span class="check">✔</span> Real-Time Node-Link Network Graph</td>
+            <td><span class="cross">✖</span> Tree view only</td>
+            <td><span class="cross">✖</span> List view only</td>
+            <td><span class="cross">✖</span> Terminal output</td>
+          </tr>
+          <tr>
+            <td><strong>API Schema Boundary Fuzzer</strong></td>
+            <td class="highlight"><span class="check">✔</span> Type-aware boundary edge-cases</td>
+            <td><span class="cross">✖</span> Requires manual wordlists</td>
             <td><span class="cross">✖</span> None</td>
-            <td><span class="cross">✖</span> Requires separate package</td>
-          </tr>
-          <tr>
-            <td><strong>TruffleHog Secrets Harvester</strong></td>
-            <td class="highlight"><span class="check">✔</span> High-entropy AWS, GitHub, Stripe, JWT</td>
-            <td><span class="cross">✖</span> Basic regex only</td>
             <td><span class="cross">✖</span> None</td>
-            <td><span class="cross">✖</span> Separate CLI tool</td>
           </tr>
           <tr>
-            <td><strong>Micro-Fuzzer &amp; Route Dictionary</strong></td>
-            <td class="highlight"><span class="check">✔</span> Stealth Swagger/Actuator/Admin probes</td>
-            <td><span class="cross">✖</span> High-noise Intruder</td>
-            <td><span class="cross">✖</span> Collection Runner</td>
-            <td><span class="check">✔</span> ffuf CLI needed</td>
+            <td><strong>Burp Site Map XML &amp; Postman Env</strong></td>
+            <td class="highlight"><span class="check">✔</span> 1-Click Burp XML &amp; Postman Env</td>
+            <td><span class="check">✔</span> Proprietary XML only</td>
+            <td><span class="check">✔</span> Native Env format</td>
+            <td><span class="cross">✖</span> None</td>
           </tr>
           <tr>
-            <td><strong>Postman v2.1 &amp; OpenAPI 3.0 Export</strong></td>
-            <td class="highlight"><span class="check">✔</span> 1-Click Export ready to import</td>
-            <td><span class="cross">✖</span> Manual copy</td>
-            <td><span class="check">✔</span> Native format</td>
-            <td><span class="cross">✖</span> Plain text output</td>
+            <td><strong>Compliance Reports (OWASP/SOC2/ISO)</strong></td>
+            <td class="highlight"><span class="check">✔</span> Automated Framework JSON export</td>
+            <td><span class="cross">✖</span> Paid Enterprise feature</td>
+            <td><span class="cross">✖</span> None</td>
+            <td><span class="cross">✖</span> None</td>
+          </tr>
+          <tr>
+            <td><strong>Automated CLI Pipeline Bridge</strong></td>
+            <td class="highlight"><span class="check">✔</span> Generates recon_pipeline.sh (ffuf/httpx/nuclei)</td>
+            <td><span class="cross">✖</span> None</td>
+            <td><span class="cross">✖</span> Newman runner only</td>
+            <td><span class="cross">✖</span> None</td>
           </tr>
         </tbody>
       </table>
@@ -1082,12 +1161,131 @@ const badPath = "/node_modules/lodash/debounce.js";
 const realAdmin = "/admin/console/v2/logs";
 `,
 
+  cvss: `// Enterprise Multi-Layer Finding Simulation
+// (Simulating high-value API endpoints, secrets, and CORS/SSRF candidates)
+
+const AWS_SECRET_KEY = "AKIAIOSFODNN7EXAMPLE";
+const STRIPE_SECRET = "sk_test_51MzEXAMPLESECRETKEY99887766";
+const ADMIN_PORTAL = "/admin/v2/super-dashboard";
+const REPEAT_REDIRECT = "/oauth/v2/callback?redirect_uri=https://internal-service.local";
+
+fetch('/api/v3/internal/cloud-credentials?user=admin');
+fetch('/api/v1/users/export?file=s3://customer-backups-2026/dump.sql');
+`,
+
+  fuzz: `// API Schema Boundary Fuzzing Vectors Preview
+// Parameter: "userId" (Integer)
+// Payloads: -1, 0, 2147483647 (Max Int32), 2147483648 (Overflow), 9223372036854775807 (Max Int64)
+
+fetch('/api/v2/users/2147483647/profile');
+fetch('/api/v2/transactions?offset=-1&limit=999999');
+fetch('/api/v1/orders/null%00/receipt');
+`,
+
   custom: `// Paste any custom JavaScript, HTML, or API references here!
 fetch('/api/v1/custom/endpoint?param=test');
 axios.get('/internal/secret-route');
 const key = "AIzaSyD-99887766554433221100aabbccddeeff";
 `
 };
+
+
+// ================================================================
+// 🌐 DEMO TOPOLOGY CANVAS RENDERER (v10.0)
+// ================================================================
+function renderDemoTopology() {
+  const canvas = document.getElementById('demoTopologyCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2;
+
+  const clusters = [
+    { name: '/api/v1', color: '#38bdf8', count: 4 },
+    { name: '/auth', color: '#c084fc', count: 3 },
+    { name: '/admin', color: '#f87171', count: 3 },
+    { name: '/graphql', color: '#2dd4bf', count: 2 },
+    { name: '/users', color: '#fbbf24', count: 4 },
+    { name: '/static', color: '#94a3b8', count: 3 }
+  ];
+
+  const totalClusters = clusters.length;
+
+  clusters.forEach((c, idx) => {
+    const angle = (idx / totalClusters) * Math.PI * 2;
+    const rad = 75;
+    const px = cx + Math.cos(angle) * (rad * 1.5);
+    const py = cy + Math.sin(angle) * (rad * 0.9);
+
+    // Connecting line to center
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(px, py);
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Cluster Node
+    ctx.beginPath();
+    ctx.arc(px, py, 12, 0, Math.PI * 2);
+    ctx.fillStyle = '#0b1329';
+    ctx.fill();
+    ctx.strokeStyle = c.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(c.name, px, py + 22);
+
+    // Leaf nodes
+    for (let j = 0; j < c.count; j++) {
+      const leafAngle = angle + ((j - (c.count - 1) / 2) * 0.4);
+      const leafRad = 36;
+      const lx = px + Math.cos(leafAngle) * leafRad;
+      const ly = py + Math.sin(leafAngle) * leafRad;
+
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(lx, ly);
+      ctx.strokeStyle = 'rgba(45, 212, 191, 0.25)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(lx, ly, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = j === 0 ? '#34d399' : j === 1 ? '#38bdf8' : '#f87171';
+      ctx.fill();
+    }
+  });
+
+  // Center Origin Node
+  ctx.beginPath();
+  ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+  ctx.fillStyle = '#050b1a';
+  ctx.fill();
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 2.8;
+  ctx.stroke();
+
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('TARGET.COM', cx, cy + 4);
+}
+
+// Initial draw when DOM loads
+window.addEventListener('load', () => {
+  setTimeout(renderDemoTopology, 150);
+});
+
 
 // Zero False Positive Validator
 function isFalsePositive(str) {
@@ -1201,6 +1399,23 @@ function runSimScan() {
   document.getElementById('statParams').textContent = params.size;
   document.getElementById('statSecrets').textContent = secrets.length;
   document.getElementById('statFpDropped').textContent = droppedNoise.length;
+
+  const cvssBadge = document.getElementById('statCvssGrade');
+  if (cvssBadge) {
+    if (secrets.some(s => s.sev === 'CRITICAL')) {
+      cvssBadge.textContent = 'F (9.8)';
+      cvssBadge.style.color = 'var(--accent-red)';
+    } else if (secrets.length > 0) {
+      cvssBadge.textContent = 'D (7.5)';
+      cvssBadge.style.color = 'var(--accent-red)';
+    } else if (endpoints.size > 8) {
+      cvssBadge.textContent = 'B (4.3)';
+      cvssBadge.style.color = 'var(--accent-amber)';
+    } else {
+      cvssBadge.textContent = 'A+ (0.0)';
+      cvssBadge.style.color = 'var(--accent-teal)';
+    }
+  }
 
   // Render items
   resultsContainer.innerHTML = '';
