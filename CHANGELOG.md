@@ -73,6 +73,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Smart Chrome Icon Badge Counter**: Discreetly displays the number of discovered endpoints on the active tab in neon cyan, or switches to alert red (`!1`) if an exposed high-entropy API key or secret is detected.
 - **Sensitive Exclusions Whitelist**: Automatically skips personal authentication, banking, and payment gateways (`accounts.google.com`, `paypal.com`, `chase.com`, etc.) to protect personal browsing privacy.
 
+#### 🧹 Codebase Cleanup & Modular Architecture (Zero Bloat & 100% Reliability)
+- **Modular ES Service Worker Deconstruction**: Decomposed the monolithic 7,300+ line background script into 7 focused, single-responsibility modules under `modules/`:
+  - `modules/auth.js`: Dedicated Login credentials, Session role profiles (Admin/UserB/Guest), OAuth 2.0 flow auditing, JWT inspection, Cookie security, and banking/auth privacy whitelist.
+  - `modules/secrets.js`: TruffleHog secrets harvester, Shannon entropy analysis, and active vulnerability verification for Google API, Stripe, Firebase, AWS, and JWT.
+  - `modules/exporters.js`: Pure MV3 `WebZip` binary compiler, `DomainArchiveBundler` (15 audit assets), Burp XML, Postman collection & environment, OpenAPI 3.0, and compliance report generator.
+  - `modules/alerts.js`: Real-time Telegram dispatcher with domain ZIP document attachment, Discord, and Slack webhooks.
+  - `modules/sentinel.js`: Silent background sentinel, action badge counter, and privacy domain filter.
+  - `modules/probers.js`: CORS simulator, security headers analyzer, schema fuzzer, CVSS v3.1 calculator, and MITRE ATT&CK mapper.
+  - `modules/crawler.js`: High-speed, 100% deterministic DOM and script endpoint extractor.
+- **Removed Artificial Simulation Junk**: Eliminated obsolete `StealthEngine` loops (fake mouse movements, fake scroll script injections) that caused browser lag and offered zero genuine security utility.
+- **Repository Bloat Cleanup**: Purged all deprecated legacy release zip packages (`v1` through `v9`) from both root and `docs/`, keeping only the latest verified `endpoint-hunter-v10.0.0.zip`.
+
 ---
 
 ## [9.0.0] - 2026-10-16
