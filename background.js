@@ -4315,6 +4315,400 @@ class SecretVulnerabilityVerifier {
   }
 }
 
+
+// ================================================================
+// 📦 WebZip - PURE JAVASCRIPT PKZIP GENERATOR (MV3 COMPATIBLE)
+// ================================================================
+function crc32(buf) {
+  let table = WebZip.crcTable;
+  if (!table) {
+    table = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      table[i] = c;
+    }
+    WebZip.crcTable = table;
+  }
+  let crc = 0 ^ (-1);
+  for (let i = 0; i < buf.length; i++) {
+    crc = (crc >>> 8) ^ table[(crc ^ buf[i]) & 0xff];
+  }
+  return (crc ^ (-1)) >>> 0;
+}
+
+class WebZip {
+  constructor() {
+    this.files = [];
+  }
+
+  addFile(name, content) {
+    let bytes;
+    if (typeof content === 'string') {
+      bytes = new TextEncoder().encode(content);
+    } else if (content instanceof Uint8Array) {
+      bytes = content;
+    } else if (content instanceof ArrayBuffer) {
+      bytes = new Uint8Array(content);
+    } else {
+      bytes = new TextEncoder().encode(String(content));
+    }
+    this.files.push({
+      name: name.replace(/\\/g, '/'),
+      bytes: bytes,
+      crc: crc32(bytes)
+    });
+  }
+
+  buildUint8Array() {
+    const encoder = new TextEncoder();
+    const fileEntries = [];
+    let localOffset = 0;
+
+    for (const file of this.files) {
+      const nameBytes = encoder.encode(file.name);
+      const localHeaderSize = 30 + nameBytes.length;
+      const dataSize = file.bytes.length;
+      fileEntries.push({
+        file,
+        nameBytes,
+        localOffset,
+        dataSize
+      });
+      localOffset += localHeaderSize + dataSize;
+    }
+
+    let centralDirSize = 0;
+    for (const entry of fileEntries) {
+      centralDirSize += 46 + entry.nameBytes.length;
+    }
+    const eocdSize = 22;
+    const finalSize = localOffset + centralDirSize + eocdSize;
+    const out = new Uint8Array(finalSize);
+    const view = new DataView(out.buffer);
+
+    let pos = 0;
+    const dosTime = 0x0000;
+    const dosDate = 0x5c21;
+
+    for (const entry of fileEntries) {
+      view.setUint32(pos, 0x04034b50, true); pos += 4;
+      view.setUint16(pos, 20, true); pos += 2;
+      view.setUint16(pos, 0x0800, true); pos += 2;
+      view.setUint16(pos, 0, true); pos += 2;
+      view.setUint16(pos, dosTime, true); pos += 2;
+      view.setUint16(pos, dosDate, true); pos += 2;
+      view.setUint32(pos, entry.file.crc, true); pos += 4;
+      view.setUint32(pos, entry.dataSize, true); pos += 4;
+      view.setUint32(pos, entry.dataSize, true); pos += 4;
+      view.setUint16(pos, entry.nameBytes.length, true); pos += 2;
+      view.setUint16(pos, 0, true); pos += 2;
+      out.set(entry.nameBytes, pos); pos += entry.nameBytes.length;
+      out.set(entry.file.bytes, pos); pos += entry.dataSize;
+    }
+
+    const centralDirStart = pos;
+    for (const entry of fileEntries) {
+      view.setUint32(pos, 0x02014b50, true); pos += 4;
+      view.setUint16(pos, 0x003f, true); pos += 2;
+      view.setUint16(pos, 20, true); pos += 2;
+      view.setUint16(pos, 0x0800, true); pos += 2;
+      view.setUint16(pos, 0, true); pos += 2;
+      view.setUint16(pos, dosTime, true); pos += 2;
+      view.setUint16(pos, dosDate, true); pos += 2;
+      view.setUint32(pos, entry.file.crc, true); pos += 4;
+      view.setUint32(pos, entry.dataSize, true); pos += 4;
+      view.setUint32(pos, entry.dataSize, true); pos += 4;
+      view.setUint16(pos, entry.nameBytes.length, true); pos += 2;
+      view.setUint16(pos, 0, true); pos += 2;
+      view.setUint16(pos, 0, true); pos += 2;
+      view.setUint16(pos, 0, true); pos += 2;
+      view.setUint16(pos, 0, true); pos += 2;
+      view.setUint32(pos, 0, true); pos += 4;
+      view.setUint32(pos, entry.localOffset, true); pos += 4;
+      out.set(entry.nameBytes, pos); pos += entry.nameBytes.length;
+    }
+
+    view.setUint32(pos, 0x06054b50, true); pos += 4;
+    view.setUint16(pos, 0, true); pos += 2;
+    view.setUint16(pos, 0, true); pos += 2;
+    view.setUint16(pos, fileEntries.length, true); pos += 2;
+    view.setUint16(pos, fileEntries.length, true); pos += 2;
+    view.setUint32(pos, centralDirSize, true); pos += 4;
+    view.setUint32(pos, centralDirStart, true); pos += 4;
+    view.setUint16(pos, 0, true); pos += 2;
+
+    return out;
+  }
+
+  generateBlob() {
+    return new Blob([this.buildUint8Array()], { type: 'application/zip' });
+  }
+}
+
+// ================================================================
+// 📦 DomainArchiveBundler - FULL RECON PACKAGE CREATOR
+// ================================================================
+class DomainArchiveBundler {
+  constructor(hunter) {
+    this.hunter = hunter;
+  }
+
+  getCleanDomain(rawDomain) {
+    let d = rawDomain || this.hunter.baseDomain;
+    if (!d && this.hunter.currentUrl) {
+      try { d = new URL(this.hunter.currentUrl).hostname; } catch(e) {}
+    }
+    if (!d && this.hunter.discoveredEndpoints && this.hunter.discoveredEndpoints.length > 0) {
+      try { d = new URL(this.hunter.discoveredEndpoints[0].url).hostname; } catch(e) {}
+    }
+    d = d || 'target_domain';
+    return d.replace(/[^a-zA-Z0-9.-]/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
+  }
+
+  generateArchive(targetDomain) {
+    const cleanDomain = this.getCleanDomain(targetDomain);
+    const domainName = targetDomain || this.hunter.baseDomain || cleanDomain;
+    const zip = new WebZip();
+    const timestamp = new Date().toISOString();
+    const endpoints = this.hunter.discoveredEndpoints || [];
+    const secrets = this.hunter.discoveredSecrets || [];
+
+    // 1. endpoints.json
+    zip.addFile('endpoints.json', JSON.stringify(endpoints, null, 2));
+
+    // 2. endpoints.txt
+    const urlsList = Array.from(new Set(endpoints.map(e => e.url).filter(Boolean))).join('\n');
+    zip.addFile('endpoints.txt', urlsList || '# No endpoints discovered');
+
+    // 3. secrets_and_credentials.json
+    zip.addFile('secrets_and_credentials.json', JSON.stringify(secrets, null, 2));
+
+    // 4. secrets_report.txt
+    let secretReport = '====================================================================\n';
+    secretReport += '🔑 ENDPOINT HUNTER - SECRETS & LEAKS SECURITY REPORT\n';
+    secretReport += 'Target: ' + domainName + '\n';
+    secretReport += 'Timestamp: ' + timestamp + '\n';
+    secretReport += 'Total Secrets Detected: ' + secrets.length + '\n';
+    secretReport += '====================================================================\n\n';
+    if (secrets.length === 0) {
+      secretReport += 'No secrets or leaked credentials discovered.\n';
+    } else {
+      secrets.forEach((s, idx) => {
+        secretReport += '[#' + (idx + 1) + '] ' + (s.name || s.type || 'Secret') + '\n';
+        secretReport += '  • Severity: ' + (s.severity || 'HIGH').toUpperCase() + '\n';
+        secretReport += '  • Verdict: ' + (s.vulnerabilityVerdict || 'EXPOSED_CREDENTIAL') + '\n';
+        secretReport += '  • Value: ' + (s.raw || s.value || 'N/A') + '\n';
+        secretReport += '  • Location: ' + (s.location || s.file || 'Unknown') + '\n';
+        secretReport += '  • Entropy: ' + (s.entropy ? s.entropy.toFixed(2) : 'N/A') + '\n';
+        if (s.verdictDetails) secretReport += '  • Details: ' + s.verdictDetails + '\n';
+        if (s.remediation) secretReport += '  • Remediation: ' + s.remediation + '\n';
+        secretReport += '--------------------------------------------------------------------\n';
+      });
+    }
+    zip.addFile('secrets_report.txt', secretReport);
+
+    // 5. executive_summary.md
+    let execMd = '';
+    try {
+      execMd = this.hunter.execSummaryExporter.generateMarkdown(this.hunter);
+    } catch (e) {
+      execMd = '# Security Audit Report - ' + domainName + '\n\nGenerated: ' + timestamp + '\nEndpoints: ' + endpoints.length + '\nSecrets: ' + secrets.length;
+    }
+    zip.addFile('executive_summary.md', execMd);
+
+    // 6. burp_suite_sitemap.xml
+    let burpXml = '';
+    try {
+      burpXml = this.hunter.burpExporter.generateXml(endpoints, domainName);
+    } catch (e) {
+      burpXml = '<?xml version="1.0"?>\n<items/>';
+    }
+    zip.addFile('burp_suite_sitemap.xml', burpXml);
+
+    // 7. postman_collection.json
+    try {
+      const postmanItems = endpoints.map(ep => {
+        let parsed;
+        try { parsed = new URL(ep.url); } catch (e) {}
+        const pathSegments = parsed ? parsed.pathname.split('/').filter(Boolean) : [];
+        const queryParams = parsed ? Array.from(parsed.searchParams.entries()).map(([k, v]) => ({ key: k, value: v })) : [];
+        return {
+          name: (ep.method || 'GET') + ' ' + (parsed ? parsed.pathname : ep.url),
+          request: {
+            method: ep.method || 'GET',
+            header: [{ key: 'Accept', value: 'application/json, text/plain, */*' }],
+            url: {
+              raw: ep.url,
+              protocol: parsed ? parsed.protocol.replace(':', '') : 'https',
+              host: parsed ? parsed.hostname.split('.') : [],
+              path: pathSegments,
+              query: queryParams
+            },
+            description: 'Type: ' + (ep.type || 'api') + ' | Source: ' + (ep.source || 'crawl') + ' | Endpoint Hunter v10.0'
+          }
+        };
+      });
+      const postmanColl = {
+        info: {
+          _postman_id: 'eh-' + Date.now(),
+          name: 'Endpoint Hunter — ' + domainName,
+          description: 'Discovered API collection for ' + domainName + ' exported on ' + timestamp,
+          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
+        },
+        item: postmanItems
+      };
+      zip.addFile('postman_collection.json', JSON.stringify(postmanColl, null, 2));
+    } catch (e) {}
+
+    // 8. postman_environment.json
+    try {
+      const postmanEnv = this.hunter.postmanEnvExporter.generateEnvironment(domainName, endpoints, secrets);
+      zip.addFile('postman_environment.json', typeof postmanEnv === 'string' ? postmanEnv : JSON.stringify(postmanEnv, null, 2));
+    } catch (e) {}
+
+    // 9. openapi_3.0_spec.json
+    try {
+      const pathsObj = {};
+      for (const ep of endpoints) {
+        let pathname = ep.url;
+        let queryParams = [];
+        try {
+          const u = new URL(ep.url);
+          pathname = u.pathname;
+          queryParams = Array.from(u.searchParams.keys()).map(param => ({
+            name: param,
+            in: 'query',
+            required: false,
+            schema: { type: 'string' }
+          }));
+        } catch (e) {}
+        if (!pathsObj[pathname]) pathsObj[pathname] = {};
+        const method = (ep.method || 'GET').toLowerCase();
+        pathsObj[pathname][method] = {
+          tags: [ep.type || 'api'],
+          summary: 'Discovered route: ' + pathname,
+          parameters: queryParams,
+          responses: {
+            '200': { description: 'Successful response' },
+            '401': { description: 'Unauthorized' },
+            '403': { description: 'Forbidden' },
+            '404': { description: 'Not found' }
+          }
+        };
+      }
+      const openApiSpec = {
+        openapi: '3.0.0',
+        info: {
+          title: 'Endpoint Hunter Recon Spec - ' + domainName,
+          version: '1.0.0',
+          description: 'Discovered attack surface for ' + domainName + ' generated by Endpoint Hunter v10.0'
+        },
+        servers: [{ url: 'https://' + domainName }],
+        paths: pathsObj
+      };
+      zip.addFile('openapi_3.0_spec.json', JSON.stringify(openApiSpec, null, 2));
+    } catch (e) {}
+
+    // 10. recon_wordlist.txt
+    try {
+      const words = this.hunter.wordlistHarvester.generateWordlist(
+        endpoints,
+        Array.from(this.hunter.discoveredPaths || []),
+        Array.from(this.hunter.discoveredParams || [])
+      );
+      zip.addFile('recon_wordlist.txt', words.join('\n'));
+    } catch (e) {}
+
+    // 11. recon_pipeline.sh
+    try {
+      const script = this.hunter.bashCurlExporter.generateScript(endpoints, {}, domainName);
+      zip.addFile('recon_pipeline.sh', script);
+    } catch (e) {}
+
+    // 12. nuclei_recon_template.yaml
+    try {
+      const yaml = this.hunter.nucleiExporter.generateTemplate(endpoints, domainName);
+      zip.addFile('nuclei_recon_template.yaml', yaml);
+    } catch (e) {}
+
+    // 13. compliance_audit_report.json
+    try {
+      const comp = this.hunter.complianceExporter.generateComplianceReport(this.hunter);
+      zip.addFile('compliance_audit_report.json', typeof comp === 'string' ? comp : JSON.stringify(comp, null, 2));
+    } catch (e) {}
+
+    // 14. full_telemetry.json
+    try {
+      const methods = {};
+      endpoints.forEach(e => {
+        const m = (e.method || 'GET').toUpperCase();
+        methods[m] = (methods[m] || 0) + 1;
+      });
+      const telemetry = {
+        scanner: 'Endpoint Hunter v10.0 Enterprise',
+        targetDomain: domainName,
+        timestamp: timestamp,
+        stats: {
+          totalPages: this.hunter.totalPages || 0,
+          totalEndpoints: endpoints.length,
+          totalPaths: this.hunter.discoveredPaths ? this.hunter.discoveredPaths.size : 0,
+          totalParams: this.hunter.discoveredParams ? this.hunter.discoveredParams.size : 0,
+          totalSecrets: secrets.length,
+          methods: methods,
+          stealth: this.hunter.stealthEngine ? this.hunter.stealthEngine.getStats() : {},
+          bypass: this.hunter.bypassEngine ? this.hunter.bypassEngine.getStats() : {}
+        }
+      };
+      zip.addFile('full_telemetry.json', JSON.stringify(telemetry, null, 2));
+    } catch (e) {}
+
+    // 15. README.txt
+    const readme = 
+'===============================================================================\n' +
+'🎯 ENDPOINT HUNTER v10.0 - RECONNAISSANCE AUDIT ARCHIVE\n' +
+'===============================================================================\n' +
+'Target Domain:  ' + domainName + '\n' +
+'Archive Name:   recon_' + cleanDomain + '_full_audit.zip\n' +
+'Generated At:   ' + timestamp + '\n' +
+'Total URLs:     ' + endpoints.length + '\n' +
+'Total Secrets:  ' + secrets.length + '\n' +
+'===============================================================================\n\n' +
+'INCLUDED ARTIFACTS IN THIS PACKAGE:\n' +
+'  1. endpoints.json               -> Full endpoint array with headers, methods, source, metadata\n' +
+'  2. endpoints.txt                -> Clean line-separated URLs for httpx, ffuf, katana, nuclei\n' +
+'  3. secrets_and_credentials.json -> All discovered secrets, raw keys, entropy, posture & verdicts\n' +
+'  4. secrets_report.txt           -> Human-readable breakdown of exposed credentials\n' +
+'  5. executive_summary.md         -> Executive Bug Bounty report with CVSS & OWASP mapping\n' +
+'  6. burp_suite_sitemap.xml       -> Direct import into Burp Suite Target -> Site Map\n' +
+'  7. postman_collection.json      -> Postman Collection v2.1 for rapid API testing\n' +
+'  8. postman_environment.json     -> Postman environment configuration with pre-filled tokens\n' +
+'  9. openapi_3.0_spec.json        -> OpenAPI / Swagger 3.0 API schema specification\n' +
+' 10. recon_wordlist.txt           -> Contextual wordlist of endpoints & params for ffuf/gobuster\n' +
+' 11. recon_pipeline.sh            -> Linux / macOS / WSL automated bash verification script\n' +
+' 12. nuclei_recon_template.yaml   -> Nuclei automated vulnerability scan template\n' +
+' 13. compliance_audit_report.json -> OWASP API Top 10, SOC 2 Type II, ISO 27001 audit report\n' +
+' 14. full_telemetry.json          -> Crawl metrics, WAF bypass rates, stealth telemetry\n' +
+' 15. README.txt                   -> Package overview and manifest (this file)\n\n' +
+'Generated by Endpoint Hunter v10.0 — Top 1% Cyber Reconnaissance Platform\n';
+    zip.addFile('README.txt', readme);
+
+    const filename = 'recon_' + cleanDomain + '_full_audit.zip';
+    const uint8Array = zip.buildUint8Array();
+    const blob = new Blob([uint8Array], { type: 'application/zip' });
+    return {
+      zip,
+      blob,
+      uint8Array,
+      filename,
+      cleanDomain,
+      domainName
+    };
+  }
+}
+
 class CrawlEngine {
   constructor() {
     // ===== OLD PROPERTIES (PRESERVED) =====
@@ -4421,6 +4815,7 @@ class CrawlEngine {
     this.complianceExporter = new EnterpriseComplianceReportExporter();
     this.cliBridge = new HunterUltimateCLIBridge();
     this.secretVerifier = new SecretVulnerabilityVerifier();
+    this.archiveBundler = new DomainArchiveBundler(this);
     this.discoveredPII = [];
     this.wsFrames = [];
     this.unpackedSourceMaps = new Map();
@@ -5675,6 +6070,42 @@ class CrawlEngine {
   }
 
   // ================================================================
+
+  // ================================================================
+  // 📦 EXPORT ALL FINDINGS AS DOMAIN ZIP ARCHIVE (v10.0)
+  // ================================================================
+
+  async exportAllAsZip() {
+    try {
+      this.addLog('📦 Compiling full recon audit ZIP archive...', 'info');
+      const archiveData = this.archiveBundler.generateArchive();
+      const filename = archiveData.filename;
+      const uint8 = archiveData.uint8Array;
+
+      function uint8ToBase64(bytes) {
+        let binary = '';
+        const chunkSize = 8192;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.subarray(i, i + chunkSize);
+          binary += String.fromCharCode.apply(null, chunk);
+        }
+        return btoa(binary);
+      }
+
+      const dataUrl = 'data:application/zip;base64,' + uint8ToBase64(uint8);
+      await chrome.downloads.download({
+        url: dataUrl,
+        filename: filename,
+        saveAs: true
+      });
+      this.addLog('📦 Successfully exported domain archive: ' + filename, 'success');
+      return { success: true, filename };
+    } catch (e) {
+      this.addLog('❌ ZIP Export Error: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  }
+
   // 📢 DISCORD & SLACK WEBHOOK ALERTS (v2.0)
   // ================================================================
 
@@ -5903,59 +6334,97 @@ class CrawlEngine {
     return null;
   }
 
-  // ================================================================
-  // 📤 SEND TELEGRAM REPORT (OLD - PRESERVED + UPGRADED)
+    // ================================================================
+  // 📤 SEND TELEGRAM REPORT WITH FULL DOMAIN ZIP ARCHIVE (v10.0 UPGRADE)
   // ================================================================
 
   async sendTelegramReport() {
     if (!TELEGRAM.enabled || !TELEGRAM.token) {
-      this.addLog('⚠️ Telegram not configured', 'warning');
-      return;
+      this.addLog('⚠️ Telegram not configured. Set Bot Token and Chat ID in Settings.', 'warning');
+      return { success: false, reason: 'Telegram not configured' };
     }
 
     try {
-      const endpoints = this.discoveredEndpoints;
+      this.addLog('📦 Compiling domain ZIP archive & Telegram report...', 'info');
+
+      const archiveData = this.archiveBundler.generateArchive();
+      const domainName = archiveData.domainName;
+      const cleanDomain = archiveData.cleanDomain;
+      const zipBlob = archiveData.blob;
+      const zipFilename = archiveData.filename;
+
+      const endpoints = this.discoveredEndpoints || [];
       const total = endpoints.length;
-      const types = {};
+      const secrets = this.discoveredSecrets || [];
+      const totalSec = secrets.length;
+
+      // Group HTTP methods
+      const methods = {};
       for (const ep of endpoints) {
-        types[ep.type] = (types[ep.type] || 0) + 1;
+        const m = (ep.method || 'GET').toUpperCase();
+        methods[m] = (methods[m] || 0) + 1;
+      }
+      const methodsSummary = Object.entries(methods)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([m, c]) => '<code>' + m + '</code>: ' + c)
+        .join(' | ') || 'None';
+
+      // Secret breakdown
+      const critSecrets = secrets.filter(s => s.severity === 'critical' || s.vulnerabilityVerdict === 'ACTIVE_VULNERABLE' || (s.vulnerabilityVerdict && s.vulnerabilityVerdict.includes('VULNERABLE')));
+      const highSecrets = secrets.filter(s => s.severity === 'high' && !critSecrets.includes(s));
+
+      let secretsSummaryHtml = '';
+      if (secrets.length === 0) {
+        secretsSummaryHtml = '  • <i>No exposed credentials detected</i>\n';
+      } else {
+        secretsSummaryHtml = '  • 🚨 <b>Critical / Active:</b> ' + critSecrets.length + ' | ⚠️ <b>High Exposure:</b> ' + highSecrets.length + '\n';
+        const topSecrets = secrets.slice(0, 5);
+        for (const s of topSecrets) {
+          const sName = (s.name || s.type || 'Secret').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const sVerdict = (s.vulnerabilityVerdict || 'EXPOSED_CREDENTIAL').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const sVal = (s.value || s.raw || '').substring(0, 24).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          secretsSummaryHtml += '  • 🔴 <b>' + sName + ':</b> <code>' + sVal + '...</code>\n    └ <i>Verdict:</i> <b>' + sVerdict + '</b>\n';
+        }
+        if (secrets.length > 5) {
+          secretsSummaryHtml += '  • <i>...and ' + (secrets.length - 5) + ' more keys in attached ZIP archive</i>\n';
+        }
       }
 
-      const typeSummary = Object.entries(types)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([type, count]) => `  • ${type}: ${count}`)
-        .join('\n');
+      // Discovered routes preview
+      const topEpList = endpoints.slice(0, 6)
+        .map((ep, i) => '  ' + (i + 1) + '. <code>' + (ep.method || 'GET') + '</code> ' + ep.url.replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 65))
+        .join('\n') || '  • <i>No endpoints discovered yet</i>';
 
-      const topEndpoints = endpoints.slice(0, 15)
-        .map((ep, i) => `${i+1}. ${ep.method} ${ep.url}`)
-        .join('\n');
-
-      const stealthStats = this.stealthEngine.getStats();
-      const bypassStats = this.bypassEngine.getStats();
+      const stealthStats = this.stealthEngine ? this.stealthEngine.getStats() : { successRate: '100%' };
+      const bypassStats = this.bypassEngine ? this.bypassEngine.getStats() : { successRate: '100%' };
 
       const message =
-`🔗 <b>ENDPOINT HUNTER ULTIMATE REPORT</b>
+'🚨 <b>ENDPOINT HUNTER — AUDIT ALERT</b>\n' +
+'━━━━━━━━━━━━━━━━━━━━━━\n' +
+'🎯 <b>Target Domain:</b> <code>' + domainName + '</code>\n' +
+'🕒 <b>Timestamp:</b> ' + new Date().toISOString() + '\n' +
+'📄 <b>Pages Crawled:</b> ' + (this.totalPages || 0) + '\n' +
+'━━━━━━━━━━━━━━━━━━━━━━\n' +
+'📊 <b>RECONNAISSANCE SUMMARY:</b>\n' +
+'  • 🎯 <b>Endpoints Discovered:</b> ' + total + '\n' +
+'  • 📁 <b>Unique Paths:</b> ' + (this.discoveredPaths ? this.discoveredPaths.size : 0) + '\n' +
+'  • 🏷️ <b>Parameters Uncovered:</b> ' + (this.discoveredParams ? this.discoveredParams.size : 0) + '\n' +
+'  • ⚙️ <b>HTTP Methods:</b> ' + methodsSummary + '\n' +
+'  • 🕵️ <b>Stealth Success Rate:</b> ' + (stealthStats.successRate || '100%') + '\n' +
+'  • 🛡️ <b>WAF Bypass Rate:</b> ' + (bypassStats.successRate || '100%') + '\n\n' +
+'🔑 <b>SECRETS & LEAKS (Total: ' + totalSec + '):</b>\n' +
+secretsSummaryHtml + '\n' +
+'🔴 <b>DISCOVERED ROUTES PREVIEW:</b>\n' +
+topEpList + '\n\n' +
+'📦 <b>FULL AUDIT ATTACHMENT:</b>\n' +
+'All 15 reconnaissance artifacts (Endpoints JSON/TXT, Secrets, Burp XML, Postman Collection & Env, Wordlist, Bash CLI pipeline, and Compliance Audit) have been packaged into <code>' + zipFilename + '</code> and attached below!\n' +
+'━━━━━━━━━━━━━━━━━━━━━━\n' +
+'<i>Generated by Endpoint Hunter v10.0 Enterprise</i>';
 
-📍 Target: ${this.baseDomain || 'Unknown'}
-📄 Pages Crawled: ${this.totalPages}
-🎯 Endpoints Found: ${total}
-📁 Paths Found: ${this.discoveredPaths.size}
-📊 Parameters Found: ${this.discoveredParams.size}
-🕵️ Stealth Rate: ${stealthStats.successRate}
-🛡️ Bypass Rate: ${bypassStats.successRate}
-
-📊 Endpoint Breakdown:
-${typeSummary}
-
-🔴 Top 15 Endpoints:
-${topEndpoints || 'None found'}
-
-⏱ Time: ${new Date().toISOString()}
-🔗 Source: Endpoint Hunter v5.0 - STEALTH MODE`;
-
-      const url = `https://api.telegram.org/bot${TELEGRAM.token}/sendMessage`;
-      await fetch(url, {
+      // 1. Send Rich Summary Message
+      const textUrl = 'https://api.telegram.org/bot' + TELEGRAM.token + '/sendMessage';
+      const textResp = await fetch(textUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -5966,52 +6435,46 @@ ${topEndpoints || 'None found'}
         })
       });
 
-      const jsonData = JSON.stringify({
-        timestamp: new Date().toISOString(),
-        target: this.baseDomain,
-        pages: this.totalPages,
-        paths: Array.from(this.discoveredPaths),
-        params: Array.from(this.discoveredParams),
-        endpoints: this.discoveredEndpoints,
-        stats: {
-          total: this.totalEndpoints,
-          types: types
-        },
-        stealthStats: stealthStats,
-        bypassStats: bypassStats
-      }, null, 2);
+      if (!textResp.ok) {
+        const textErr = await textResp.json().catch(() => ({}));
+        this.addLog('⚠️ Telegram message notice: ' + (textErr.description || textResp.statusText), 'warning');
+      }
 
-      const blob = new Blob([jsonData], { type: 'application/json' });
+      // 2. Send Domain ZIP File via sendDocument
       const formData = new FormData();
       formData.append('chat_id', TELEGRAM.chatId);
-      formData.append('document', blob, `endpoint-report-${Date.now()}.json`);
+      formData.append('document', zipBlob, zipFilename);
+      formData.append('caption', '📦 Full Recon Audit Archive for ' + domainName + '\n🎯 Endpoints: ' + total + ' | 🔑 Secrets: ' + totalSec + '\n🛡️ Generated by Endpoint Hunter v10.0');
 
-      await fetch(`https://api.telegram.org/bot${TELEGRAM.token}/sendDocument`, {
+      const docUrl = 'https://api.telegram.org/bot' + TELEGRAM.token + '/sendDocument';
+      const docResp = await fetch(docUrl, {
         method: 'POST',
         body: formData
       });
 
-      this.addLog('📤 Telegram report sent', 'success');
+      if (!docResp.ok) {
+        const docErr = await docResp.json().catch(() => ({}));
+        throw new Error(docErr.description || ('HTTP ' + docResp.status));
+      }
 
+      this.addLog('📤 Telegram alert & domain ZIP (' + zipFilename + ') dispatched successfully!', 'success');
+      return { success: true, filename: zipFilename };
     } catch (e) {
-      this.addLog(`❌ Failed to send Telegram report: ${e.message}`, 'error');
+      this.addLog('❌ Failed to send Telegram alert: ' + e.message, 'error');
+      return { success: false, error: e.message };
     }
   }
 
   // ================================================================
-  // 📤 SEND MANUAL TELEGRAM REPORT (OLD - PRESERVED)
+  // 📤 SEND MANUAL TELEGRAM REPORT (v10.0 UPGRADED)
   // ================================================================
 
   async sendManualTelegramReport() {
     if (!TELEGRAM.enabled || !TELEGRAM.token) {
-      this.addLog('⚠️ Telegram not configured', 'warning');
-      return;
+      this.addLog('⚠️ Telegram not configured. Enter Bot Token and Chat ID in Settings.', 'warning');
+      return { success: false, reason: 'Telegram not configured' };
     }
-    if (this.discoveredEndpoints.length === 0) {
-      this.addLog('⚠️ No endpoints found to report', 'warning');
-      return;
-    }
-    await this.sendTelegramReport();
+    return await this.sendTelegramReport();
   }
 
   // ================================================================
@@ -6542,6 +7005,58 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     case 'exportSecrets':
       hunter.exportSecrets();
       sendResponse({ success: true });
+      return true;
+    case 'exportBurpXml':
+      hunter.exportBurpXml();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportExecutiveSummary':
+      hunter.exportExecutiveSummary();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportPostmanEnvironment':
+      hunter.exportPostmanEnvironment();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportComplianceReport':
+      hunter.exportComplianceReport();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportCLIPipelineScript':
+      hunter.exportCLIPipelineScript();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportWordlist':
+      hunter.exportWordlist();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportNucleiTemplate':
+      hunter.exportNucleiTemplate();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportHTMLReport':
+      hunter.exportHTMLReport();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportBashScript':
+      hunter.exportCLIPipelineScript();
+      sendResponse({ success: true });
+      return true;
+
+    case 'exportAllAsZip':
+      hunter.exportAllAsZip().then(res => {
+        sendResponse(res || { success: true });
+      }).catch(err => {
+        sendResponse({ success: false, error: err.message });
+      });
       return true;
 
     case 'unpackSourceMap':

@@ -128,8 +128,9 @@ Modern Single Page Applications (React, Vue, Angular, Next.js, Nuxt) package hun
 - **⚡ Passive Runtime Network Sniffer**: Main-world injected hook non-intrusively captures real fetch and XHR calls made as you interact with the target application.
 - **🎯 Live Status Prober & Security Triage**: Batch-probes discovered endpoints to tag `200 OK`, `401/403 Protected`, and `500 Error`. Heuristically flags query parameters prone to `SSRF`, `IDOR`, and `LFI`.
 - **🛠️ Chrome DevTools (F12) & Side Panel**: Open Endpoint Hunter in the Chrome Side Panel or as a native Developer Tools panel right next to Network and Console.
-- **📦 Multi-Format Exporters**: 1-click export to **Postman Collection v2.1**, **OpenAPI 3.0 Specification**, **Clean TXT** (for `ffuf`, `nuclei`, `katana`), **JSON**, and printable **PDF**.
-- **📢 Tri-Platform Webhook Alerts**: Configurable notifications dispatched to **Telegram**, **Discord**, or **Slack** when sensitive credentials or admin portals are uncovered.
+- **📦 Multi-Format Exporters**: 1-click export to **Target Domain-Named ZIP (`recon_<domain>_full_audit.zip`)**, **Burp Suite XML**, **Postman Collection v2.1 & Environment**, **OpenAPI 3.0**, **Clean TXT** (for `ffuf`, `nuclei`, `katana`), **JSON**, **Recon Pipeline Bash**, and printable **PDF**.
+- **📢 Real-Time Telegram Alerts with Domain ZIP Package**: Configurable Telegram alerts that dispatch a rich HTML vulnerability & route breakdown alongside an attached **target domain-named ZIP archive** (`recon_<domain>_full_audit.zip`) containing all 15 audit artifacts (Endpoints JSON/TXT, Verified Secrets, Burp Suite XML, Postman Collection & Env, Wordlist, Bash CLI pipeline, and Compliance Audit).
+- **⚡ Active Secret Vulnerability Verifier**: 1-click active posture verification testing uncovered keys (Google API Keys, Stripe Secrets, Firebase DBs, AWS IAM, JWT) for live unrestricted exploitation with instant severity badges and remediation instructions.
 
 ---
 

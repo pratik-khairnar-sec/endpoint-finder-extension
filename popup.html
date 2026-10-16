@@ -790,6 +790,7 @@
     <button class="btn btn-ghost-danger" id="clearBtn">🗑 CLEAR</button>
   </div>
   <div class="deck-secondary">
+    <button class="btn btn-export" id="exportAllZipBtn" style="background:linear-gradient(135deg, #059669, #10b981); color:#fff; font-weight:800; border:none;" title="Download All Findings in Target Domain Named ZIP (recon_<domain>_full_audit.zip)">📦 DOWNLOAD ALL (ZIP)</button>
     <button class="btn btn-export har-highlight" id="harBtn" title="Export HTTP Archive (.har 1.2) for Burp Suite / Caido">📦 HAR 1.2</button>
     <button class="btn btn-export" id="postmanBtn" title="Export Postman v2.1 Collection">📦 POSTMAN</button>
     <button class="btn btn-export" id="openapiBtn" title="Export OpenAPI 3.0 specification">📜 OPENAPI</button>
@@ -1415,7 +1416,10 @@
         <input type="text" id="telegramChatIdInput" class="search-input" placeholder="Chat ID">
         <label style="font-size:8px; display:flex; align-items:center; gap:2px;"><input type="checkbox" id="telegramEnabledInput"> On</label>
       </div>
-      <button class="btn-sm-action" id="saveTelegramBtn" style="margin-bottom:6px;">Save Telegram</button>
+      <div style="display:flex; gap:4px; margin-bottom:6px;">
+        <button class="btn-sm-action" id="saveTelegramBtn" style="flex:1;">Save Telegram</button>
+        <button class="btn-sm-action" id="testTelegramBtn" style="flex:1.4; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; border:none; font-weight:700;" title="Send Complete Audit & Domain ZIP Archive to Telegram">🚀 Send Alert & Domain ZIP</button>
+      </div>
 
       <label style="font-size:7.5px; color:var(--text-muted); display:block;">Discord Webhook URL:</label>
       <div style="display:grid; grid-template-columns: 1fr auto; gap:4px; margin:2px 0 5px 0; align-items:center;">

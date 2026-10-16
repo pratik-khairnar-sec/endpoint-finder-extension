@@ -45,6 +45,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### 💻 Hunter Ultimate CLI Orchestration Bridge (`HunterUltimateCLIBridge`)
 - **1-Click CLI Automation Script**: Generates `recon_pipeline.sh` orchestrating `ffuf`, `httpx`, and `nuclei` with discovered parameters, wordlists, and status codes.
 
+#### 📦 Full Domain-Named ZIP Exporter & Telegram Alert Dispatcher (`DomainArchiveBundler` & `WebZip`)
+- **Domain-Named Reconnaissance ZIP (`recon_<domain>_full_audit.zip`)**: Packages all 15 audit files (Endpoints JSON/TXT, Verified Secrets, Executive Summary MD, Burp Suite XML, Postman Collection & Env, Wordlist, Bash CLI pipeline, and Compliance Report) into a cleanly formatted ZIP archive named after the target domain.
+- **Upgraded Telegram Bot Alerts**: Dispatches a rich HTML summary breakdown (Endpoints, Paths, Parameters, HTTP Methods, Stealth/Bypass rates, and Secret Leaks) alongside the full domain ZIP archive attachment via Telegram's `sendDocument` API.
+- **1-Click "DOWNLOAD ALL (ZIP)"**: One-click download button in both Popup and Side Panel to export all findings directly into `recon_<domain>_full_audit.zip`.
+- **Manual "Send Alert & Domain ZIP"**: Direct button in Webhook Settings to dispatch the live alert and audit ZIP to Telegram on demand.
+
+#### ⚡ Active Secret Vulnerability Verifier (`SecretVulnerabilityVerifier`)
+- **Live Active Credential Testing**: Direct 1-click active testing of uncovered keys (Google API Keys, Stripe Secret Keys, Firebase Realtime Databases, AWS Access Keys, and JWT tokens).
+- **Instant Exploitation Verdicts**: Displays live verdicts (`ACTIVE_VULNERABLE` vs `RESTRICTED` vs `INACTIVE`) with clear technical justification and remediation guidance.
+- **Fixed Blank Secret List Render**: Resolved UI container ID mismatch so all discovered secrets render with full metadata, entropy scores, copy buttons, and active verification badges.
+
 ---
 
 ## [9.0.0] - 2026-10-16

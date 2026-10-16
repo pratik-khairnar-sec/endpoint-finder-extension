@@ -66,6 +66,7 @@ class PopupController {
     this.openapiBtn = document.getElementById('openapiBtn');
     this.txtBtn = document.getElementById('txtBtn');
     this.exportSecretsBtn = document.getElementById('exportSecretsBtn');
+    this.exportAllZipBtn = document.getElementById('exportAllZipBtn');
 
     // Sniffer & Prober Controls
     this.probeStatusBtn = document.getElementById('probeStatusBtn');
@@ -187,6 +188,7 @@ class PopupController {
     this.telegramChatIdInput = document.getElementById('telegramChatIdInput');
     this.telegramEnabledInput = document.getElementById('telegramEnabledInput');
     this.saveTelegramBtn = document.getElementById('saveTelegramBtn');
+    this.testTelegramBtn = document.getElementById('testTelegramBtn');
 
     this.discordWebhookInput = document.getElementById('discordWebhookInput');
     this.discordEnabledInput = document.getElementById('discordEnabledInput');
@@ -215,6 +217,7 @@ class PopupController {
     if (this.openapiBtn) this.openapiBtn.addEventListener('click', () => this.exportOpenAPI());
     if (this.txtBtn) this.txtBtn.addEventListener('click', () => this.exportTXT());
     if (this.exportSecretsBtn) this.exportSecretsBtn.addEventListener('click', () => this.exportSecrets());
+    if (this.exportAllZipBtn) this.exportAllZipBtn.addEventListener('click', () => this.exportAllAsZip());
 
     // Bind Sniffer & Prober
     if (this.probeStatusBtn) this.probeStatusBtn.addEventListener('click', () => this.probeEndpoints());
@@ -322,6 +325,7 @@ class PopupController {
 
     // Bind Settings
     if (this.saveTelegramBtn) this.saveTelegramBtn.addEventListener('click', () => this.saveTelegramSettings());
+    if (this.testTelegramBtn) this.testTelegramBtn.addEventListener('click', () => this.sendTelegramReportNow());
     if (this.saveWebhooksBtn) this.saveWebhooksBtn.addEventListener('click', () => this.saveWebhookSettings());
     if (this.saveCrawlBtn) this.saveCrawlBtn.addEventListener('click', () => this.saveCrawlSettings());
 
@@ -1945,6 +1949,35 @@ class PopupController {
         if (this.followExternalInput) this.followExternalInput.checked = !!crawlRes.config.followExternal;
       }
     } catch (e) {}
+  }
+
+
+  async exportAllAsZip() {
+    this.log('📦 Compiling complete domain ZIP archive (all findings & reports)...', 'info');
+    try {
+      const resp = await chrome.runtime.sendMessage({ action: 'exportAllAsZip' });
+      if (resp && resp.success) {
+        this.log('✅ Exported domain ZIP archive: ' + (resp.filename || 'recon_<domain>_full_audit.zip'), 'success');
+      } else {
+        this.log('❌ ZIP Export error: ' + (resp?.error || 'Unknown error'), 'error');
+      }
+    } catch (e) {
+      this.log('❌ ZIP Export error: ' + e.message, 'error');
+    }
+  }
+
+  async sendTelegramReportNow() {
+    this.log('🚀 Generating domain ZIP & dispatching Telegram alert...', 'info');
+    try {
+      const resp = await chrome.runtime.sendMessage({ action: 'sendTelegramReport' });
+      if (resp && resp.success) {
+        this.log('✅ Telegram alert & domain ZIP (' + (resp.filename || 'recon_audit.zip') + ') dispatched successfully!', 'success');
+      } else {
+        this.log('⚠️ Telegram alert note: ' + (resp?.error || resp?.reason || 'Check Telegram settings & logs'), 'warning');
+      }
+    } catch (e) {
+      this.log('❌ Telegram dispatch error: ' + e.message, 'error');
+    }
   }
 
   async saveTelegramSettings() {
