@@ -39,11 +39,120 @@ class PopupController {
     this.currentResponseText = '';
 
     this.setup();
+    this.detectAndApplyViewMode();
     this.load();
     this.loadSettings();
     this.loadGlobalAuth();
     this.startRealtimeUpdates();
     this.loadLogs();
+  }
+
+
+  // ================================================================
+  // 🪟 VIEWPORT / FULL TAB / WINDOW SWITCHER (v10.0)
+  // ================================================================
+
+  detectAndApplyViewMode() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view');
+      const isSidepanelFile = window.location.pathname.endsWith('sidepanel.html');
+
+      if (isSidepanelFile) {
+        if (view === 'tab') {
+          if (this.viewModeBadge) this.viewModeBadge.textContent = 'Full Tab Dashboard • v10.0.0';
+          if (this.openFullTabBtn) this.openFullTabBtn.style.display = 'none';
+          if (this.openPopoutBtn) this.openPopoutBtn.style.display = 'inline-flex';
+          if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.style.display = 'inline-flex';
+          document.body.classList.add('view-mode-tab');
+        } else if (view === 'window') {
+          if (this.viewModeBadge) this.viewModeBadge.textContent = 'Detached Window (Maximize / Minimize) • v10.0.0';
+          if (this.openPopoutBtn) this.openPopoutBtn.style.display = 'none';
+          if (this.openFullTabBtn) this.openFullTabBtn.style.display = 'inline-flex';
+          if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.style.display = 'inline-flex';
+          document.body.classList.add('view-mode-window');
+        } else {
+          if (this.viewModeBadge) this.viewModeBadge.textContent = 'Persistent Side Panel • v10.0.0';
+          if (this.openFullTabBtn) this.openFullTabBtn.style.display = 'inline-flex';
+          if (this.openPopoutBtn) this.openPopoutBtn.style.display = 'inline-flex';
+          if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.style.display = 'none';
+          document.body.classList.add('view-mode-sidepanel');
+        }
+      }
+    } catch (e) {}
+  }
+
+  async openFullTab() {
+    try {
+      const url = chrome.runtime.getURL('sidepanel.html?view=tab');
+      await chrome.tabs.create({ url, active: true });
+      if (window.location.pathname.endsWith('popup.html')) {
+        window.close();
+      }
+    } catch (e) {
+      this.log('❌ Error opening full tab: ' + e.message, 'error');
+    }
+  }
+
+  async openPopoutWindow() {
+    try {
+      const url = chrome.runtime.getURL('sidepanel.html?view=window');
+      const width = Math.min(1440, (window.screen?.availWidth || 1440) - 80);
+      const height = Math.min(920, (window.screen?.availHeight || 900) - 80);
+      const left = Math.max(20, Math.round(((window.screen?.availWidth || 1440) - width) / 2));
+      const top = Math.max(20, Math.round(((window.screen?.availHeight || 900) - height) / 2));
+
+      await chrome.windows.create({
+        url,
+        type: 'popup',
+        width,
+        height,
+        left,
+        top,
+        focused: true
+      });
+      if (window.location.pathname.endsWith('popup.html')) {
+        window.close();
+      }
+    } catch (e) {
+      this.log('❌ Error opening popout window: ' + e.message, 'error');
+    }
+  }
+
+  async dockToSidePanel() {
+    try {
+      const targetTab = await this.getTargetWebTab();
+      if (targetTab && chrome.sidePanel && chrome.sidePanel.open) {
+        await chrome.sidePanel.open({ windowId: targetTab.windowId });
+        this.log('🪟 Docked into Chrome Side Panel', 'success');
+      } else {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && chrome.sidePanel && chrome.sidePanel.open) {
+          await chrome.sidePanel.open({ windowId: tab.windowId });
+          this.log('🪟 Docked into Chrome Side Panel', 'success');
+        }
+      }
+    } catch (e) {
+      this.log('⚠️ Side Panel dock notice: ' + e.message, 'warning');
+    }
+  }
+
+  async getTargetWebTab() {
+    try {
+      const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (currentTab && currentTab.url && (currentTab.url.startsWith('http://') || currentTab.url.startsWith('https://'))) {
+        return currentTab;
+      }
+      const windowTabs = await chrome.tabs.query({ currentWindow: true });
+      const candidateWin = windowTabs.find(t => t.url && (t.url.startsWith('http://') || t.url.startsWith('https://')));
+      if (candidateWin) return candidateWin;
+
+      const allTabs = await chrome.tabs.query({});
+      const candidateAll = allTabs.find(t => t.url && (t.url.startsWith('http://') || t.url.startsWith('https://')));
+      return candidateAll || currentTab;
+    } catch (e) {
+      return null;
+    }
   }
 
   // ================================================================
@@ -58,6 +167,10 @@ class PopupController {
     this.resumeBtn = document.getElementById('resumeBtn');
     this.clearBtn = document.getElementById('clearBtn');
     this.openSidePanelBtn = document.getElementById('openSidePanelBtn');
+    this.openFullTabBtn = document.getElementById('openFullTabBtn');
+    this.openPopoutBtn = document.getElementById('openPopoutBtn');
+    this.dockToSidePanelBtn = document.getElementById('dockToSidePanelBtn');
+    this.viewModeBadge = document.getElementById('viewModeBadge');
 
     // Export Controls
     this.exportBtn = document.getElementById('exportBtn');
@@ -209,6 +322,9 @@ class PopupController {
     if (this.resumeBtn) this.resumeBtn.addEventListener('click', () => this.resumeScan());
     if (this.clearBtn) this.clearBtn.addEventListener('click', () => this.clear());
     if (this.openSidePanelBtn) this.openSidePanelBtn.addEventListener('click', () => this.openSidePanel());
+    if (this.openFullTabBtn) this.openFullTabBtn.addEventListener('click', () => this.openFullTab());
+    if (this.openPopoutBtn) this.openPopoutBtn.addEventListener('click', () => this.openPopoutWindow());
+    if (this.dockToSidePanelBtn) this.dockToSidePanelBtn.addEventListener('click', () => this.dockToSidePanel());
 
     // Bind Export Buttons
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportJSON());
@@ -496,9 +612,9 @@ class PopupController {
 
   async scanAll() {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('brave://') || tab.url.startsWith('edge://')) {
-        this.log('❌ Cannot scan internal browser pages', 'error');
+      const tab = await this.getTargetWebTab();
+      if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('brave://') || tab.url.startsWith('edge://') || tab.url.startsWith('chrome-extension://')) {
+        this.log('⚠️ No active web target tab found. Please open your target website in a browser tab.', 'warning');
         return;
       }
 
@@ -522,9 +638,9 @@ class PopupController {
 
   async scanCurrent() {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('brave://') || tab.url.startsWith('edge://')) {
-        this.log('❌ Cannot scan internal browser pages', 'error');
+      const tab = await this.getTargetWebTab();
+      if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('brave://') || tab.url.startsWith('edge://') || tab.url.startsWith('chrome-extension://')) {
+        this.log('⚠️ No active web target tab found. Please open your target website in a browser tab.', 'warning');
         return;
       }
 

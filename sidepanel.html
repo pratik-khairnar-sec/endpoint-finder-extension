@@ -581,6 +581,56 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.02);
     color: var(--text-muted);
   }
+
+  .header-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 8px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    text-transform: uppercase;
+  }
+  .header-btn:hover {
+    color: #fff;
+    background: rgba(56, 189, 248, 0.18);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  }
+
+  /* Full-Page Widescreen Dashboard Enhancements */
+  @media (min-width: 900px) {
+    body {
+      padding: 16px 28px;
+      max-width: 1750px;
+      margin: 0 auto;
+    }
+    .stats-grid {
+      grid-template-columns: repeat(8, 1fr) !important;
+      gap: 8px !important;
+    }
+    .deck-primary {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+    }
+    .deck-secondary {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+      gap: 6px !important;
+    }
+    .tab-pill {
+      font-size: 10px !important;
+      padding: 6px 12px !important;
+    }
+  }
+
 </style>
 </head>
 <body data-scan-state="idle">
@@ -591,10 +641,21 @@
     <img src="icon48.png" alt="Endpoint Hunter Logo" class="brand-logo">
     <div class="brand-info">
       <div class="brand-title">Endpoint Hunter</div>
-      <div class="brand-sub">Persistent Side Panel • v10.0.0</div>
+      <div class="brand-sub" id="viewModeBadge">Persistent Side Panel • v10.0.0</div>
     </div>
   </div>
   <div class="header-actions">
+    <div class="view-controls" style="display:flex; gap:4px; align-items:center;">
+      <button class="header-btn" id="openFullTabBtn" title="Maximize & Open in Full Page Tab (New Tab Dashboard)" style="background:rgba(56, 189, 248, 0.12); border-color:var(--cyan); color:var(--cyan);">
+        ↗️ FULL TAB
+      </button>
+      <button class="header-btn" id="openPopoutBtn" title="Open as Standalone Floating Window (Minimize & Maximize Controls)">
+        🗗 WINDOW
+      </button>
+      <button class="header-btn" id="dockToSidePanelBtn" style="display:none;" title="Dock back into Chrome Side Panel">
+        🪟 DOCK PANEL
+      </button>
+    </div>
     <div class="beacon-pill" id="statusDot">
       <span class="beacon-dot"></span>
       <span>● READY</span>

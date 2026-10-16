@@ -723,9 +723,17 @@
     </div>
   </div>
   <div class="header-actions">
-    <button class="header-btn" id="openSidePanelBtn" title="Pin into Chrome Side Panel for persistent recon">
-      🪟 SIDE PANEL
-    </button>
+    <div class="view-controls" style="display:flex; gap:3px; align-items:center;">
+      <button class="header-btn" id="openFullTabBtn" title="Maximize & Open in Full Page Tab (New Tab Dashboard)" style="background:rgba(56, 189, 248, 0.12); border-color:var(--cyan); color:var(--cyan);">
+        ↗️ FULL TAB
+      </button>
+      <button class="header-btn" id="openPopoutBtn" title="Open Standalone Window with Maximize / Minimize">
+        🗗 WINDOW
+      </button>
+      <button class="header-btn" id="openSidePanelBtn" title="Pin into Chrome Side Panel for persistent recon">
+        🪟 PANEL
+      </button>
+    </div>
     <div class="beacon-pill" id="statusDot">
       <span class="beacon-dot"></span>
       <span>● READY</span>

@@ -56,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Instant Exploitation Verdicts**: Displays live verdicts (`ACTIVE_VULNERABLE` vs `RESTRICTED` vs `INACTIVE`) with clear technical justification and remediation guidance.
 - **Fixed Blank Secret List Render**: Resolved UI container ID mismatch so all discovered secrets render with full metadata, entropy scores, copy buttons, and active verification badges.
 
+#### 🪟 Multi-Viewport Workspace: Full Tab Dashboard & Popout Window
+- **↗️ 1-Click Full Page Tab**: Direct button to expand Endpoint Hunter into a full-screen browser tab (`sidepanel.html?view=tab`), taking advantage of the entire display width for extensive endpoint lists, topology graphs, and API repeaters.
+- **🗗 Standalone Popout Window with OS Maximize / Minimize**: Opens Endpoint Hunter in a dedicated detached floating desktop window (`sidepanel.html?view=window`) with full native minimize, maximize, and multi-monitor window snapping.
+- **Universal Target Web Tab Resolver (`getTargetWebTab`)**: Automatically detects the user's active web target tab when running inside a full-screen tab or detached window so `🎯 SCAN CURRENT` and `📡 SCAN (ALL)` work flawlessly from any view mode.
+- **🪟 Dock to Side Panel**: Quick action button to dock back into the native Chrome Side Panel at any time.
+
 ---
 
 ## [9.0.0] - 2026-10-16
